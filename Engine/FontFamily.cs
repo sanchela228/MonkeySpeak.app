@@ -1,4 +1,5 @@
 using System.Numerics;
+using Engine.Managers;
 using Raylib_cs;
 
 namespace Engine;
@@ -12,5 +13,10 @@ public struct FontFamily
     public float Spacing { get; set; }
 
     public Vector2 CalcTextSize(string text) => Raylib.MeasureTextEx(Font, text, Size, Spacing);
-    
+
+    public void ChangeSize(int newSize)
+    {
+        Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", newSize);
+        Size = newSize;
+    }
 }

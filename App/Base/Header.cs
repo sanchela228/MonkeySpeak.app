@@ -20,11 +20,11 @@ public class Header
     {
         Platforms.Windows.Mouse.GetCursorPos(out var globalMousePos);
         
-        Font font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 24);
+        Font font = Resources.Instance.FontEx("Midami-Normal.ttf", 26);
             
         _fontFamily = new()
         {
-            Size = 24,
+            Size = 26,
             Font = font,
             Rotation = 0,
             Spacing = 1f,
@@ -76,7 +76,7 @@ public class Header
     
     public void Draw()
     {
-        Engine.Helpers.Text.DrawPro(_fontFamily, "MonkeySpeak", new Vector2(Raylib.GetRenderWidth() / 2, 28));
+        Engine.Helpers.Text.DrawPro(_fontFamily, "MonkeySpeak", new Vector2(Raylib.GetRenderWidth() / 2, 24));
 
         Color yellowColor = _isNear ? Color.Yellow : new Color(70, 70, 70);
         Color redColor = _isNear ? Color.Red : new Color(70, 70, 70);

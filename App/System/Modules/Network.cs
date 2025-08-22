@@ -31,6 +31,27 @@ public class Network : IDisposable
     {
         Config = config;
     }
+
+    public async Task<HttpResponseMessage> Get(string relativeUrl)
+    {
+        using var httpClient = new HttpClient();
+        return await httpClient.GetAsync( GetUrl(relativeUrl) );
+    }
+
+    private string GetUrl(string relativeUrl)
+    {
+        string url = "";
+        
+        url += Config.UseSSL ? "https://" : "http://";
+        url += Config.Domain + ":" + Config.Port;
+
+        if (!relativeUrl.StartsWith("/"))
+            relativeUrl = "/" + relativeUrl;
+
+        url += relativeUrl;
+        
+        return url;
+    }
     
     public void Dispose()
     {

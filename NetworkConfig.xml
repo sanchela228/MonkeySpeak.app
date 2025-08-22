@@ -2,7 +2,7 @@
 <NetworkConfig>
     <Domain>localhost</Domain>
     <UseSSL>false</UseSSL>
-    <Port>8080</Port>
+    <Port>5000</Port>
     <STUNServer>stun:stun.l.google.com:19302</STUNServer>
     <TURNServer></TURNServer>
     <ConnectionTimeout>30</ConnectionTimeout>

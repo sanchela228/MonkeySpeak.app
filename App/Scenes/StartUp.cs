@@ -5,8 +5,10 @@ using Engine.Helpers;
 using Engine.Managers;
 using Graphics;
 using Interface;
+using Interface.Buttons;
 using Raylib_cs;
 using PointRendering = Engine.PointRendering;
+using Rectangle = Raylib_cs.Rectangle;
 
 namespace App.Scenes;
 
@@ -21,6 +23,7 @@ public class StartUp: Scene
 
     public StartUp()
     {
+        
         _textureMainPic = Resources.Instance.Texture("Images\\LogoMain90.png");
         _mainFontStartup = new FontFamily()
         {
@@ -35,18 +38,18 @@ public class StartUp: Scene
             Color color = Color.White;
             color.A = (byte)(progress * 255);
             
-            Texture.DrawEx(_textureMainPic, new Vector2(400, 200), color: color);
+            Texture.DrawEx(_textureMainPic, new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 - 100), color: color);
             Text.DrawPro(
                 _mainFontStartup, 
                 "Create your p2p voice chat right now!", 
-                new Vector2(400, 280),
+                new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 - 20),
                 color: color
             );
             
             Text.DrawWrapped(
                 _mainFontStartup, 
                 "Communication that no one limits", 
-                new Vector2(400 - 120, 310), 
+                new Vector2(Raylib.GetRenderWidth()/ 2 - 120, Raylib.GetRenderHeight() / 2 + 10), 
                 240,
                 TextAlignment.Center,
                 color: color
@@ -58,68 +61,106 @@ public class StartUp: Scene
         }, duration: 1.3f, mirror: false, removable: false, repeat: false);
 
 
+        
 
-        test = new Button("Text buttons ffff") {
-            Position = new Vector2(250, 100),
-            Font = new FontFamily()
-            {
-                Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 28),
-                Size = 28,
-                Spacing = 0.05f,
-                Color = Color.White
-            },
-            CornerRadius = 0.4f,
-            CornerWidth = 2f,
-            CornerColor = new Color(30, 30, 30),
-            BackgroundColor = new Color(15, 15, 15),
-            Padding = new Vector2(40, 20),
-        };
-
-
-        test.OnClick += (sender) =>
+        test2 = new Classic(_mainFontStartup)
         {
-            Console.WriteLine("CLICK");
+            Position = new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 + 120),
+            Padding = new Vector2(70, 18),
+            Text = "Create a room",
+            IsActive = false
         };
-            
-        AddNode(test);
-        test.IsActive = false;
+        
+        test3 = new Classic(_mainFontStartup)
+        {
+            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 180),
+            Padding = new Vector2(130, 18),
+            Text = "Connect",
+            IsActive = false
+        };
+        
+        
+        
+        AddNode(test2);
+        AddNode(test3);
 
+        var fontFamilyRetry = new FontFamily
+        {
+            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 22),
+            Size = 22,
+            Spacing = 0.05f,
+            Color = Color.Gray
+        };
 
+        retryLink = new Link(fontFamilyRetry)
+        {
+            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 150),
+            Text = "Retry",
+            IsActive = false
+        };
+        
+        retryLink.OnClick += (sender) => Context.Instance.Authorization.Auth();
+
+        
+        AddNode(retryLink);
     }
 
 
-    public Button test;
+    public Button test2;
+    public Button test3;
+    public Link retryLink;
+    private bool _drawErrorText = false;
+    private bool _load;
 
     protected override void Update(float deltaTime)
     {
         Loader.Update(deltaTime);
         Animator.Update(deltaTime);
+
+        if (Context.Instance.Authorization.State == Authorization.AuthState.Pending)
+        {
+            _load = true;
+            retryLink.IsActive = false;
+            _drawErrorText = false;
+            
+            test2.IsActive = false;
+            test3.IsActive = false;
+        }
+        else _load = false;
+        
+        if (Context.Instance.Authorization.State == Authorization.AuthState.Error)
+        {
+            retryLink.IsActive = true;
+            _drawErrorText = true;
+            
+            test2.IsActive = false;
+            test3.IsActive = false;
+        }
+        
+        if (Context.Instance.Authorization.State == Authorization.AuthState.Success)
+        {
+            retryLink.IsActive = false;
+            _drawErrorText = false;
+            
+            test2.IsActive = true;
+            test3.IsActive = true;
+        }
     }
 
     protected override void Draw()
     {
         Animator.Draw();
         
-        if (Context.Instance.Authorization.State == Authorization.AuthState.Pending)
-        {
-            Loader.Draw();
-        }
-
-        if (Context.Instance.Authorization.State == Authorization.AuthState.Error)
+        if (_load) Loader.Draw();
+        
+        if (_drawErrorText)
         {
             Text.DrawPro(
                 _mainFontStartup, 
                 Context.Instance.Authorization.ErrorMessage, 
-                new Vector2(400, 420),
+                new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 120),
                 color: Color.Red
             );
-            
-            test.IsActive = true;
-        }
-
-        if (Context.Instance.Authorization.State == Authorization.AuthState.Success)
-        {
-           
         }
     }
 

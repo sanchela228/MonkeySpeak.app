@@ -28,7 +28,6 @@ public class Authorization(Modules.Network net)
             
             await AuthRequest();
 
-            throw new Exception("Tralala");
             State = AuthState.Success;
         }
         catch (Exception ex)
@@ -45,5 +44,7 @@ public class Authorization(Modules.Network net)
     protected async Task AuthRequest()
     {
         await Task.Delay(2000); 
+        
+        await Network.Get("test");
     }
 }

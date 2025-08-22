@@ -21,16 +21,19 @@ public class Button : Node
     public event Action<Button> OnHoverExit;
     public event Action<Button> OnPress;
     public event Action<Button> OnRelease;
+    
+    protected event Action<Button> OnDraw;
 
     #region Properties
     public string Text { get; set; } = "Test";
-    public FontFamily Font { get; set; }
+    public FontFamily FontFamily { get; set; }
     
     public Vector2 Padding { get; set; } = new(10, 5);
     public float CornerRadius { get; set; } = 0;
     
     public float CornerWidth { get; set; } = 0f;
     public Color CornerColor { get; set; } = Color.White;
+    public Color? HoverCornerColor { get; set; } = null;
     public Color BackgroundColor { get; set; } = Color.White;
     public Color? HoverBackgroundColor { get; set; } = null;
     public Color? PressedBackgroundColor { get; set; } = null;
@@ -51,13 +54,13 @@ public class Button : Node
             
             float textWidth = 0f;
             if (!string.IsNullOrEmpty(Text))
-                textWidth = Raylib.MeasureTextEx(Font.Font, Text, Font.Size, Font.Spacing).X;
+                textWidth = Raylib.MeasureTextEx(FontFamily.Font, Text, FontFamily.Size, FontFamily.Spacing).X;
             
             localBounds.X -= textWidth / 2;
             localBounds.Width += textWidth;
-            localBounds.Height += Font.Size + Font.Spacing;
-            localBounds.Y -= Font.Spacing / 2;
-            localBounds.Y -= Font.Size / 2;
+            localBounds.Height += FontFamily.Size + FontFamily.Spacing;
+            localBounds.Y -= FontFamily.Spacing / 2;
+            localBounds.Y -= FontFamily.Size / 2;
             
             return localBounds;
         }
@@ -73,18 +76,12 @@ public class Button : Node
     private bool _isPressed = false;
     #endregion
 
-    public Button(string text = "", FontFamily? font = null)
+    public Button(FontFamily font, string text = "")
     {
         if (!string.IsNullOrEmpty(text))
             Text = text;
-        
-        Font = font ?? new FontFamily
-        {
-            Font = Raylib.GetFontDefault(),
-            Size = 16,
-            Color = Color.Black,
-            Spacing = 1f
-        };
+
+        FontFamily = font;
     }
     
     private void UpdateState()
@@ -120,9 +117,14 @@ public class Button : Node
         };
     }
     
+    protected Color GetBorderColor()
+    {
+        return State == ButtonState.Hovered ? HoverCornerColor ?? CornerColor : CornerColor;
+    }
+    
     protected Color GetCurrentTextColor()
     {
-        return State == ButtonState.Disabled ? DisabledTextColor ?? Font.Color  : TextColor ?? Font.Color;
+        return State == ButtonState.Disabled ? DisabledTextColor ?? FontFamily.Color  : TextColor ?? FontFamily.Color;
     }
     
     private void HandleInput()
@@ -181,6 +183,7 @@ public class Button : Node
         if (!IsActive) return;
         
         var backgroundColor = GetCurrentBackgroundColor();
+        var borderColor = GetBorderColor();
         var textColor = GetCurrentTextColor();
         var localBounds = GetLocalBounds;
         
@@ -210,23 +213,25 @@ public class Button : Node
                 CornerRadius, 
                 10, 
                 CornerWidth,
-                CornerColor
+                borderColor
             );
         }
         
         if (!string.IsNullOrEmpty(Text))
         {
             Engine.Helpers.Text.DrawPro(
-                Font, 
+                FontFamily, 
                 Text , 
                 new Vector2(Bounds.X, Bounds.Y), 
                 null, 
                 0f, 
                 textColor, 
-                Font.Size, 
-                Font.Spacing
+                FontFamily.Size, 
+                FontFamily.Spacing
             );
         }
+        
+        OnDraw?.Invoke(this);
     }
     
     public override void Dispose()
@@ -236,6 +241,7 @@ public class Button : Node
         OnHoverExit = null;
         OnPress = null;
         OnRelease = null;
+        OnDraw = null;
     }
 }
 
