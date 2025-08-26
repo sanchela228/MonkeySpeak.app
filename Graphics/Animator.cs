@@ -65,7 +65,8 @@ public class Animator
 
             float deltaProgress = deltaTime / task.Duration;
             task.Progress += task.IsPlayingForward ? deltaProgress : -deltaProgress;
-            
+            task.Progress = Math.Clamp(task.Progress, 0f, 1f);
+                
             if (task.IsPlayingForward && task.Progress >= 1f)
             {
                 if (task.Mirror)

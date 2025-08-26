@@ -10,13 +10,6 @@ public class Context
     public AppConfig AppConfig { get; private set; }
     public System.Modules.Network Network { get; private set; }
     public Authorization Authorization { get; private set; }
-    
-    public static Rectangle WorkflowSpace() => new(
-        20, 
-        60, 
-        Raylib.GetScreenWidth() - 40, 
-        Raylib.GetScreenHeight() - 80
-    );
 
     public void SetUp()
     {

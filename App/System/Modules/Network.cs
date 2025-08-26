@@ -1,5 +1,7 @@
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using App.Configurations;
@@ -8,7 +10,7 @@ using App.System.Services.CallServices;
 namespace App.System.Modules;
 
 
-public class Network : IDisposable
+public class Network(INetworkConfig config) : IDisposable
 {
     public enum NetworkState
     {
@@ -18,7 +20,7 @@ public class Network : IDisposable
         Reconnecting,
         Error
     }
-    public INetworkConfig Config { get; set; }
+    public INetworkConfig Config { get; set; } = config;
     public NetworkState State { get; set; } = NetworkState.Disconnected;
     
     public ICallService CallService
@@ -26,10 +28,126 @@ public class Network : IDisposable
         get => Config.CallService;
         protected set => Config.CallService = value;
     }
-
-    public Network(INetworkConfig config)
+    
+    public async Task ConnectServer()
+    {   
+        State = NetworkState.Connecting;
+        Task.Run( CheckConnectionAsync );
+    }
+    
+    
+    private ClientWebSocket _webSocket;
+    private CancellationTokenSource _cancellationTokenSource;
+    
+    public event Action<string> OnMessageReceived;
+    public event Action OnConnected;
+    public event Action OnDisconnected;
+    
+    private async Task CheckConnectionAsync()
     {
-        Config = config;
+        await Task.Delay(400);
+        var ping = await PingServer();
+        int retries = 0;
+        
+        while (true)
+        {
+            if (Config.MaxRetries < retries)
+            {
+                State = NetworkState.Disconnected;
+                break;
+            }
+            
+            if (ping)
+            {
+                try
+                {
+                    Console.WriteLine("Пытаюсь подключиться...");
+                    var client = new WebSocketClient(Config);
+                    client.OnMessageReceived += message => Console.WriteLine($"Message: {message}");
+                    client.OnConnected += () => State = NetworkState.Connected;
+                    client.OnDisconnected += () => State = NetworkState.Disconnected;
+                    
+                    
+                    // var message = JsonSerializer.Serialize<WebsocketMessage>(new WebsocketMessage()
+                    // {
+                    //     Type = WebsocketMessage.MessageType.CreateSession,
+                    //     ApplicationId = "test"
+                    // });
+                    
+                    await client.ConnectAsync();
+                    // await Task.Delay(4000);
+                    // await client.SendAsync(message);
+                }
+                catch (Exception ex)
+                {
+                    State = NetworkState.Error;
+                    Console.WriteLine($"Ошибка подключения: {ex.Message}");
+                }
+                
+                break;
+            }
+            
+            State = NetworkState.Reconnecting;
+            await Task.Delay(1000);
+            retries++;
+                
+            ping = await PingServer();
+        }
+    }
+    
+    private async Task ReceiveMessages()
+    {
+        var buffer = new byte[4096];
+        
+        try
+        {
+            while (_webSocket.State == WebSocketState.Open)
+            {
+                var result = await _webSocket.ReceiveAsync(
+                    new ArraySegment<byte>(buffer),
+                    _cancellationTokenSource.Token
+                );
+                
+                if (result.MessageType == WebSocketMessageType.Text)
+                {
+                    string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    OnMessageReceived?.Invoke(message);
+                }
+                else if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Соединение прервано");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка приема сообщений: {ex.Message}");
+        }
+        finally
+        {
+            OnDisconnected?.Invoke();
+        }
+    }
+    
+    private async Task<bool> PingServer()
+    {
+        try
+        {
+            using var httpClient = new HttpClient();
+            {
+                var response = await httpClient.GetAsync(MainUrl());
+                return response.IsSuccessStatusCode;
+            }
+        }
+        catch
+        {
+            State = NetworkState.Error;
+            return false;
+        }
     }
 
     public async Task<HttpResponseMessage> Get(string relativeUrl)
@@ -40,17 +158,24 @@ public class Network : IDisposable
 
     private string GetUrl(string relativeUrl)
     {
-        string url = "";
+        string url = MainUrl();
         
-        url += Config.UseSSL ? "https://" : "http://";
-        url += Config.Domain + ":" + Config.Port;
-
         if (!relativeUrl.StartsWith("/"))
             relativeUrl = "/" + relativeUrl;
 
         url += relativeUrl;
         
         return url;
+    }
+    
+    private string MainUrl()
+    {
+        string url = "";
+        
+        url += Config.UseSSL ? "https://" : "http://";
+        url += Config.Domain + ":" + Config.Port;
+        
+        return url; 
     }
     
     public void Dispose()

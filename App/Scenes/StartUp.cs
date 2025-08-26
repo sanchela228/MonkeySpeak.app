@@ -32,37 +32,35 @@ public class StartUp: Scene
             Spacing = 1,
             Color = Color.White
         };
-        
+
         Animator.Task((progress) =>
         {
             Color color = Color.White;
             color.A = (byte)(progress * 255);
-            
-            Texture.DrawEx(_textureMainPic, new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 - 100), color: color);
+
+            Texture.DrawEx(_textureMainPic,
+                new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 - 100), color: color);
             Text.DrawPro(
-                _mainFontStartup, 
-                "Create your p2p voice chat right now!", 
-                new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 - 20),
+                _mainFontStartup,
+                "Create your p2p voice chat right now!",
+                new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 - 20),
                 color: color
             );
-            
+
             Text.DrawWrapped(
-                _mainFontStartup, 
-                "Communication that no one limits", 
-                new Vector2(Raylib.GetRenderWidth()/ 2 - 120, Raylib.GetRenderHeight() / 2 + 10), 
+                _mainFontStartup,
+                "Communication with no limits",
+                new Vector2(Raylib.GetRenderWidth() / 2 - 120, Raylib.GetRenderHeight() / 2 + 10),
                 240,
                 TextAlignment.Center,
                 color: color
             );
-           
-        }, onComplete: () => {
-            Context.Instance.Authorization.Auth();
-            // MainBackground.Instance.AnimateSpeedChange(-1f, 2f);
-        }, duration: 1.3f, mirror: false, removable: false, repeat: false);
+
+        }, duration: 1f, mirror: false, removable: false, repeat: false);
+
 
 
         
-
         test2 = new Classic(_mainFontStartup)
         {
             Position = new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 + 120),
@@ -83,7 +81,7 @@ public class StartUp: Scene
         
         AddNode(test2);
         AddNode(test3);
-
+        
         var fontFamilyRetry = new FontFamily
         {
             Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 22),
@@ -91,7 +89,7 @@ public class StartUp: Scene
             Spacing = 0.05f,
             Color = Color.Gray
         };
-
+        
         retryLink = new Link(fontFamilyRetry)
         {
             Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 150),
@@ -100,7 +98,7 @@ public class StartUp: Scene
         };
         
         retryLink.OnClick += (sender) => Context.Instance.Authorization.Auth();
-
+        
         
         AddNode(retryLink);
     }
@@ -145,6 +143,9 @@ public class StartUp: Scene
             test2.IsActive = true;
             test3.IsActive = true;
         }
+
+        // var network = Context.Instance.Network;
+        // Console.WriteLine(network.State);
     }
 
     protected override void Draw()

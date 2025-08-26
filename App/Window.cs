@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 using App.Base;
 using Engine;
@@ -15,7 +16,7 @@ public class Window : IDisposable
         Raylib.SetConfigFlags(ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint);
         Raylib.InitWindow(800, 600, "MonkeySpeak");
         
-       
+        Context.Instance.Network.ConnectServer();
     }
     
     public void Run( Scene startScene ) 
@@ -29,7 +30,7 @@ public class Window : IDisposable
         Graphics.MainBackground.Instance.SetSettings();
         Platforms.Windows.Window.SetWindowRoundedCorners();
         
-        
+        Raylib.SetTargetFPS(Raylib.GetMonitorRefreshRate(Raylib.GetCurrentMonitor()));
         
         while (!Raylib.WindowShouldClose())
         {
