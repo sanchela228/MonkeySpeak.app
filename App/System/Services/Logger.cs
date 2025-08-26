@@ -14,6 +14,7 @@ public static class Logger
 
     public static void Write(Type type, string message)
     {
+#if !DEBUG
         var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
         var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;
         var logsLogFile = Context.Instance.LogsDataDirectory + "/" + NameLogsFile;
@@ -49,10 +50,15 @@ public static class Logger
         {
             Console.WriteLine($"Ошибка записи в лог: {ex.Message}");
         }
+#endif
+#if DEBUG
+        Console.WriteLine($"{DateTime.Now:HH:mm:ss} | {type.ToString()} | - {message}");
+#endif   
     }
     
     public static void Write(Type type, string message, Exception exc)
     {
+#if !DEBUG
         var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
         var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;
         var logsLogFile = Context.Instance.LogsDataDirectory + "/" + NameLogsFile;
@@ -88,6 +94,10 @@ public static class Logger
         {
             Console.WriteLine($"Ошибка записи в лог: {ex.Message}");
         }
+#endif    
+#if DEBUG
+        Console.WriteLine($"{DateTime.Now:HH:mm:ss} | {type.ToString()} | - {message}");
+#endif   
     }
 
     static void CreateOrClearLogFile(string filePath)
