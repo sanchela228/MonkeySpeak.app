@@ -1,6 +1,6 @@
 using App.System;
 
-namespace App.Configurations;
+namespace App.Configurations.Interfaces;
 
 public interface INetworkConfig
 {

@@ -1,3 +1,5 @@
+using App.Configurations.Interfaces;
+
 namespace App.Configurations.Realisation;
 
 public class AppConfig : IAppConfig

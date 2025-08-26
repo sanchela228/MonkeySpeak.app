@@ -1,4 +1,5 @@
 using System.Xml.Serialization;
+using App.Configurations.Interfaces;
 using App.System;
 using App.System.Services.CallServices;
 

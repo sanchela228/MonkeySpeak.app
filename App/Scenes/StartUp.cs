@@ -97,7 +97,6 @@ public class StartUp: Scene
             IsActive = false
         };
         
-        retryLink.OnClick += (sender) => Context.Instance.Authorization.Auth();
         
         
         AddNode(retryLink);
@@ -115,34 +114,34 @@ public class StartUp: Scene
         Loader.Update(deltaTime);
         Animator.Update(deltaTime);
 
-        if (Context.Instance.Authorization.State == Authorization.AuthState.Pending)
-        {
-            _load = true;
-            retryLink.IsActive = false;
-            _drawErrorText = false;
-            
-            test2.IsActive = false;
-            test3.IsActive = false;
-        }
-        else _load = false;
-        
-        if (Context.Instance.Authorization.State == Authorization.AuthState.Error)
-        {
-            retryLink.IsActive = true;
-            _drawErrorText = true;
-            
-            test2.IsActive = false;
-            test3.IsActive = false;
-        }
-        
-        if (Context.Instance.Authorization.State == Authorization.AuthState.Success)
-        {
-            retryLink.IsActive = false;
-            _drawErrorText = false;
-            
-            test2.IsActive = true;
-            test3.IsActive = true;
-        }
+        // if (Context.Instance.Authorization.State == Authorization.AuthState.Pending)
+        // {
+        //     _load = true;
+        //     retryLink.IsActive = false;
+        //     _drawErrorText = false;
+        //     
+        //     test2.IsActive = false;
+        //     test3.IsActive = false;
+        // }
+        // else _load = false;
+        //
+        // if (Context.Instance.Authorization.State == Authorization.AuthState.Error)
+        // {
+        //     retryLink.IsActive = true;
+        //     _drawErrorText = true;
+        //     
+        //     test2.IsActive = false;
+        //     test3.IsActive = false;
+        // }
+        //
+        // if (Context.Instance.Authorization.State == Authorization.AuthState.Success)
+        // {
+        //     retryLink.IsActive = false;
+        //     _drawErrorText = false;
+        //     
+        //     test2.IsActive = true;
+        //     test3.IsActive = true;
+        // }
 
         // var network = Context.Instance.Network;
         // Console.WriteLine(network.State);
@@ -158,7 +157,7 @@ public class StartUp: Scene
         {
             Text.DrawPro(
                 _mainFontStartup, 
-                Context.Instance.Authorization.ErrorMessage, 
+                "SERVER ERROR", 
                 new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 120),
                 color: Color.Red
             );

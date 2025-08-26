@@ -1,34 +1,33 @@
 using System.Xml.Serialization;
-using App.Configurations;
+using App.Configurations.Interfaces;
 using App.Configurations.Realisation;
 using App.System.Services;
+using Language = App.Configurations.Interfaces.Language;
 
 namespace App;
 
 public class Context
 {
-    private static readonly string DataDirectory = Path.Combine(
+    public readonly string DataDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "MonkeySpeak"
     );
     
     public readonly string LogsDataDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "MonkeySpeak/Logs"
+        "MonkeySpeak\\Logs"
     );
     
-    private const string NameDataFile = "AppData.xml";
-    private const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
-    
-    private Guid CurrentSessionTokenKey = Guid.NewGuid();
-    public Guid CurrentSessionToken => CurrentSessionTokenKey;
-    
-    
+    public const string NameDataFile = "AppData.xml";
+    public const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
+
+    public Guid CurrentSessionToken { get; } = Guid.NewGuid();
+
+
     public IAppConfig AppConfig { get; private set; }
     public IContextData ContextData { get; private set; }
     
     public System.Modules.Network Network { get; private set; }
-    public Authorization Authorization { get; private set; }
 
     public void SetUp()
     {
@@ -38,6 +37,15 @@ public class Context
             InitializeDataDirectory();
         
         // TODO: CLEAR THIS CODE
+        
+        var serializerContextData = new XmlSerializer(typeof(ContextData));
+        using var readerContextData = new StreamReader(DataDirectory + "/" + NameDataFile);
+        var context = (ContextData) serializerContextData.Deserialize(readerContextData);
+        
+        ContextData = context;
+        
+        App.System.Services.Language.Load(ContextData.LanguageSelected);
+        
         var fileNetworkconfigXml = "NetworkConfig.xml";
         var fileAppConfigXml = "AppConfig.xml";
         
@@ -52,7 +60,6 @@ public class Context
             AppConfig = (AppConfig) serializer.Deserialize(readerAppConfig);
             
             Network = new System.Modules.Network(configInet);
-            Authorization = new Authorization(Network);
         }
         catch (Exception ex)
         {
@@ -72,14 +79,11 @@ public class Context
             var context = new ContextData()
             {
                 ApplicationId = Guid.NewGuid(),
-                MachineId = ComputerIdentity.GetMacAddress()
+                MachineId = ComputerIdentity.GetMacAddress(),
+                LanguageSelected = Language.English
             };
             
-            var serializer = new XmlSerializer(typeof(ContextData));
-            using var writer = new StreamWriter(DataDirectory + "/" + NameDataFile);
-            serializer.Serialize(writer, context);
-            
-            ContextData = context;
+            context.SaveContext();
         }
         catch (Exception ex)
         {

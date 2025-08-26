@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using App.Configurations;
+using App.Configurations.Interfaces;
 using App.System.Services.CallServices;
 
 namespace App.System.Modules;

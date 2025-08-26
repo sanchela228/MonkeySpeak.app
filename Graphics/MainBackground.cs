@@ -140,8 +140,6 @@ public class MainBackground
         var colorsLoc = Raylib.GetShaderLocation(_shader, "colors");
         var thresholdsLoc = Raylib.GetShaderLocation(_shader, "thresholds");
         
-        
-        
         float[] colorsData = new float[_colors.Length * 3];
         for (int i = 0; i < _colors.Length; i++)
         {
@@ -149,8 +147,6 @@ public class MainBackground
             colorsData[i * 3 + 1] = _colors[i].Y;
             colorsData[i * 3 + 2] = _colors[i].Z;
         }
-        
-        
         
         Raylib.SetShaderValue(_shader, _speedLoc, _speed, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, scaleLoc, 0.4f, ShaderUniformDataType.Float);

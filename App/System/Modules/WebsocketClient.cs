@@ -1,7 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using App.Configurations;
+using App.Configurations.Interfaces;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages;
 

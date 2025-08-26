@@ -1,4 +1,4 @@
-namespace App.Configurations;
+namespace App.Configurations.Interfaces;
 
 public interface IAppConfig
 {
