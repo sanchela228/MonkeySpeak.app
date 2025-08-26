@@ -2,7 +2,6 @@ using System.Xml.Serialization;
 using App.Configurations;
 using App.Configurations.Realisation;
 using App.System.Services;
-using Raylib_cs;
 
 namespace App;
 
@@ -13,13 +12,18 @@ public class Context
         "MonkeySpeak"
     );
     
-    private static readonly string LogsDataDirectory = Path.Combine(
+    public readonly string LogsDataDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "MonkeySpeak/Logs"
     );
     
     private const string NameDataFile = "AppData.xml";
     private const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
+    
+    private Guid CurrentSessionTokenKey = Guid.NewGuid();
+    public Guid CurrentSessionToken => CurrentSessionTokenKey;
+    
+    
     public IAppConfig AppConfig { get; private set; }
     public IContextData ContextData { get; private set; }
     
@@ -28,6 +32,8 @@ public class Context
 
     public void SetUp()
     {
+        Logger.Write(Logger.Type.Info, "------- Starting SetUp context application ---------");
+        
         if (!DataDirectoryInitialized())
             InitializeDataDirectory();
         
@@ -50,6 +56,7 @@ public class Context
         }
         catch (Exception ex)
         {
+            Logger.Write(Logger.Type.Error, "Failed to load network configuration", ex);
             throw new InvalidOperationException("Failed to load network configuration", ex);
         }
     }
@@ -74,10 +81,10 @@ public class Context
             
             ContextData = context;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine(e);
-            throw;
+            Logger.Write(Logger.Type.Error, "Failed to initialize data directory", ex);
+            throw new InvalidOperationException("Failed to initialize data directory", ex);
         }
     }
     

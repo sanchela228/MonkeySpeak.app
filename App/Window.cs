@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Numerics;
 using App.Base;
+using App.System.Services;
 using Engine;
 using Engine.Managers;
 using Raylib_cs;
@@ -21,6 +22,8 @@ public class Window : IDisposable
     
     public void Run( Scene startScene ) 
     {
+        Logger.Write(Logger.Type.Info, "Run application");
+        
         Engine.Managers.Scenes.Instance.PushScene( startScene );
         
         Image image = Raylib.LoadImage(@"Resources\Textures\Images\LogoMain.png");
@@ -55,6 +58,8 @@ public class Window : IDisposable
 
     public void Dispose()
     {
+        Logger.Write(Logger.Type.Info, "Close application");
+        
         Engine.Managers.Scenes.Instance.Dispose();
         Raylib.CloseWindow();
     }
