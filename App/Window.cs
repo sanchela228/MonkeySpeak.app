@@ -10,7 +10,7 @@ namespace App;
 
 public class Window : IDisposable
 {
-    protected Header Header = new();
+    protected Header Header;
     
     public Window() 
     {
@@ -18,6 +18,7 @@ public class Window : IDisposable
         Raylib.InitWindow(800, 600, "MonkeySpeak");
         
         Context.Instance.Network.ConnectServer();
+        Header = new Header();
     }
     
     public void Run( Scene startScene ) 
@@ -34,6 +35,8 @@ public class Window : IDisposable
         Platforms.Windows.Window.SetWindowRoundedCorners();
         
         Raylib.SetTargetFPS(Raylib.GetMonitorRefreshRate(Raylib.GetCurrentMonitor()));
+
+       
         
         while (!Raylib.WindowShouldClose())
         {
@@ -50,7 +53,7 @@ public class Window : IDisposable
             Header.Draw();
             Engine.Managers.Scenes.Instance.Draw();
             
-            Raylib.DrawFPS(10, 10);
+            // Raylib.DrawFPS(10, 10);
             
             Raylib.EndDrawing();
         }

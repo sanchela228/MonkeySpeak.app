@@ -1,5 +1,6 @@
 using System.Numerics;
 using Engine;
+using Engine.Helpers;
 using Engine.Managers;
 using Raylib_cs;
 
@@ -15,6 +16,13 @@ public class Header
     private bool _isNear = false;
     private const int HeaderHeight = 60;
     private const float ButtonRadius = 10f;
+
+    
+    public Texture2D _textureMainPic;
+    public Header()
+    {
+        _textureMainPic = Resources.Instance.Texture("Images\\Browse.png");
+    }
     
     public void Update(float deltaTime)
     {
@@ -57,6 +65,7 @@ public class Header
             }
             else if (closeBtnPosLocal)
             {
+                
                 Raylib.CloseWindow();
             }
         }
@@ -76,12 +85,17 @@ public class Header
     
     public void Draw()
     {
-        Engine.Helpers.Text.DrawPro(_fontFamily, "MonkeySpeak", new Vector2(Raylib.GetRenderWidth() / 2, 24));
-
+        Text.DrawPro(_fontFamily, "MonkeySpeak", new Vector2(Raylib.GetRenderWidth() / 2, 24));
+        
         Color yellowColor = _isNear ? Color.Yellow : new Color(70, 70, 70);
         Color redColor = _isNear ? Color.Red : new Color(70, 70, 70);
         
         Raylib.DrawCircle(Raylib.GetRenderWidth() - 55, 25, 6.5f, yellowColor);
         Raylib.DrawCircle(Raylib.GetRenderWidth() - 30, 25, 6.5f, redColor);
+        
+        Texture.DrawEx(_textureMainPic, new Vector2(70 , 22), color: new Color{R = 255, G = 255, B = 255, A = 115});
+        
+        Raylib.DrawCircle(76, 28, 3.5f, Context.Instance.Network.GetStateColor());
+        
     }
 }

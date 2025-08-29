@@ -4,6 +4,7 @@ using System.Text.Json;
 using App.Configurations.Interfaces;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages;
+using App.System.Services;
 
 namespace App.System.Modules;
 
@@ -14,8 +15,9 @@ public class WebSocketClient(INetworkConfig conf)
     private Uri _uri;
     private INetworkConfig _config = conf;
 
-    public event Action<string> OnMessageReceived;
+    public event Action<App.System.Models.Websocket.Context> OnMessageReceived;
     public event Action OnConnected;
+    public event Action OnReconnecting;
     public event Action OnDisconnected;
 
     public async Task ConnectAsync()
@@ -42,6 +44,9 @@ public class WebSocketClient(INetworkConfig conf)
         }
         catch (Exception ex)
         {
+            OnDisconnected?.Invoke();
+            Task.Delay(1000);
+            
             Console.WriteLine($"Ошибка подключения: {ex.Message}");
             await ReconnectAsync();
         }
@@ -67,9 +72,11 @@ public class WebSocketClient(INetworkConfig conf)
 
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    OnMessageReceived?.Invoke(message);
-                    Console.WriteLine($"Получено: {message}");
+                    var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    App.System.Models.Websocket.Context context = JsonSerializer.Deserialize<App.System.Models.Websocket.Context>(json);
+
+                    if (context is not null)
+                        OnMessageReceived?.Invoke(context);
                 }
             }
             catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
@@ -138,6 +145,7 @@ public class WebSocketClient(INetworkConfig conf)
 
     private async Task ReconnectAsync()
     {
+        OnReconnecting?.Invoke();
         Console.WriteLine("Попытка переподключения...");
         
         await CloseAsync(WebSocketCloseStatus.Empty, "Reconnecting");

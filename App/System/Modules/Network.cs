@@ -5,7 +5,9 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using App.Configurations.Interfaces;
+using App.System.Services;
 using App.System.Services.CallServices;
+using Raylib_cs;
 
 namespace App.System.Modules;
 
@@ -63,20 +65,14 @@ public class Network(INetworkConfig config) : IDisposable
                 {
                     Console.WriteLine("Пытаюсь подключиться...");
                     var client = new WebSocketClient(Config);
-                    client.OnMessageReceived += message => Console.WriteLine($"Message: {message}");
+                    var messageDispatcher = new MessageDispatcher();
+                    
+                    client.OnMessageReceived += message => messageDispatcher.Configure(message);
                     client.OnConnected += () => State = NetworkState.Connected;
                     client.OnDisconnected += () => State = NetworkState.Disconnected;
-                    
-                    
-                    // var message = JsonSerializer.Serialize<WebsocketMessage>(new WebsocketMessage()
-                    // {
-                    //     Type = WebsocketMessage.MessageType.CreateSession,
-                    //     ApplicationId = "test"
-                    // });
+                    client.OnReconnecting += () => State = NetworkState.Reconnecting;
                     
                     await client.ConnectAsync();
-                    // await Task.Delay(4000);
-                    // await client.SendAsync(message);
                 }
                 catch (Exception ex)
                 {
@@ -92,44 +88,6 @@ public class Network(INetworkConfig config) : IDisposable
             retries++;
                 
             ping = await PingServer();
-        }
-    }
-    
-    private async Task ReceiveMessages()
-    {
-        var buffer = new byte[4096];
-        
-        try
-        {
-            while (_webSocket.State == WebSocketState.Open)
-            {
-                var result = await _webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer),
-                    _cancellationTokenSource.Token
-                );
-                
-                if (result.MessageType == WebSocketMessageType.Text)
-                {
-                    string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    OnMessageReceived?.Invoke(message);
-                }
-                else if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    break;
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Соединение прервано");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка приема сообщений: {ex.Message}");
-        }
-        finally
-        {
-            OnDisconnected?.Invoke();
         }
     }
     
@@ -176,6 +134,19 @@ public class Network(INetworkConfig config) : IDisposable
         url += Config.Domain + ":" + Config.Port;
         
         return url; 
+    }
+
+    public Color GetStateColor()
+    {
+        return State switch
+        {
+            NetworkState.Connected => Color.Green,
+            NetworkState.Error => Color.Red,
+            NetworkState.Connecting => Color.Yellow,
+            NetworkState.Reconnecting => Color.Yellow,
+            NetworkState.Disconnected => Color.Gray,
+            _ => Color.Gray
+        };
     }
     
     public void Dispose()
