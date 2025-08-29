@@ -5,8 +5,10 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using App.Configurations.Interfaces;
-using App.System.Services;
+using App.System.Managers;
 using App.System.Services.CallServices;
+using App.System.Utils;
+using Platforms.Windows;
 using Raylib_cs;
 
 namespace App.System.Modules;
@@ -23,7 +25,21 @@ public class Network(INetworkConfig config) : IDisposable
         Error
     }
     public INetworkConfig Config { get; set; } = config;
-    public NetworkState State { get; set; } = NetworkState.Disconnected;
+    private NetworkState _state = NetworkState.Disconnected;
+    public NetworkState State 
+    { 
+        get => _state;
+        set
+        {
+            if (_state != value)
+            {
+                _state = value;
+                StateChanged?.Invoke(this, value);
+            }
+        }
+    }
+    
+    public event EventHandler<NetworkState> StateChanged;
     
     public ICallService CallService
     {
@@ -37,13 +53,8 @@ public class Network(INetworkConfig config) : IDisposable
         Task.Run( CheckConnectionAsync );
     }
     
-    
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cancellationTokenSource;
-    
-    public event Action<string> OnMessageReceived;
-    public event Action OnConnected;
-    public event Action OnDisconnected;
     
     private async Task CheckConnectionAsync()
     {
@@ -113,6 +124,26 @@ public class Network(INetworkConfig config) : IDisposable
         using var httpClient = new HttpClient();
         return await httpClient.GetAsync( GetUrl(relativeUrl) );
     }
+    
+    public string GenerateAuthorizationUrl()
+    {
+        var url = GetUrl("/auth");
+        
+        string codeVerifier = PkceHelper.GenerateCodeVerifier();
+        SecureStorage.Save("temp_code_verifier", codeVerifier);
+        
+        string codeChallenge = PkceHelper.GenerateCodeChallenge(codeVerifier);
+        string publicKey = SecureStorage.Load("device_public_key");
+        
+        string websocketSession = "test";
+        url += $"?client_id=desktop_app_monkeyspeak&" +
+               $"code_challenge={codeChallenge}&" +
+               $"websocket_session={websocketSession}&" +
+               $"code_challenge_method=S256&" +
+               $"device_public_key={Uri.EscapeDataString(publicKey)}&";
+        
+        return url;
+    }
 
     private string GetUrl(string relativeUrl)
     {
@@ -125,7 +156,6 @@ public class Network(INetworkConfig config) : IDisposable
         
         return url;
     }
-    
     private string MainUrl()
     {
         string url = "";
@@ -135,7 +165,6 @@ public class Network(INetworkConfig config) : IDisposable
         
         return url; 
     }
-
     public Color GetStateColor()
     {
         return State switch

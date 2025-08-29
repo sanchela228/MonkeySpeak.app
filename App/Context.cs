@@ -2,6 +2,7 @@ using System.Xml.Serialization;
 using App.Configurations.Interfaces;
 using App.Configurations.Realisation;
 using App.System.Services;
+using Platforms.Windows;
 using Language = App.Configurations.Interfaces.Language;
 
 namespace App;
@@ -26,7 +27,6 @@ public class Context
 
     public IAppConfig AppConfig { get; private set; }
     public IContextData ContextData { get; private set; }
-    
     public System.Modules.Network Network { get; private set; }
 
     public void SetUp()
@@ -69,13 +69,15 @@ public class Context
     }
 
     public bool DataDirectoryInitialized() => Directory.Exists(DataDirectory);
+
+    private string _devicePrivateKey;
     public void InitializeDataDirectory()
     {
         try
         {
             Directory.CreateDirectory(DataDirectory);
             Directory.CreateDirectory(LogsDataDirectory);
-
+            
             var context = new ContextData()
             {
                 ApplicationId = Guid.NewGuid(),
@@ -84,6 +86,18 @@ public class Context
             };
             
             context.SaveContext();
+            ContextData = context;
+            
+            // TODO: ADD ANY PLATFORM ENTRY METHOD
+            _devicePrivateKey = SecureStorage.Load("device_private_key");
+            if (string.IsNullOrEmpty(_devicePrivateKey))
+            {
+                (string publicKey, string privateKey) = DeviceCrypto.GenerateKeyPair();
+                _devicePrivateKey = privateKey;
+        
+                SecureStorage.Save("device_private_key", _devicePrivateKey);
+                SecureStorage.Save("device_public_key", publicKey);
+            }
         }
         catch (Exception ex)
         {

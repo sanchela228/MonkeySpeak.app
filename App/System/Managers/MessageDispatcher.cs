@@ -1,6 +1,6 @@
 using App.System.Models.Websocket;
 
-namespace App.System.Services;
+namespace App.System.Managers;
 
 public class MessageDispatcher
 {

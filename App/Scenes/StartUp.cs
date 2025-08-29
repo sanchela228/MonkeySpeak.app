@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Numerics;
+using App.System.Modules;
 using App.System.Services;
 using Engine;
 using Engine.Helpers;
@@ -96,7 +98,12 @@ public class StartUp: Scene
             Text = "Retry",
             IsActive = false
         };
-        
+         
+        retryLink.OnClick += async (sender) => 
+        {
+            string authUrl = Context.Instance.Network.GenerateAuthorizationUrl();
+            Process.Start( new ProcessStartInfo(authUrl) { UseShellExecute = true } );
+        };
         
         
         AddNode(retryLink);
@@ -134,14 +141,15 @@ public class StartUp: Scene
         //     test3.IsActive = false;
         // }
         //
-        // if (Context.Instance.Authorization.State == Authorization.AuthState.Success)
-        // {
-        //     retryLink.IsActive = false;
-        //     _drawErrorText = false;
-        //     
-        //     test2.IsActive = true;
-        //     test3.IsActive = true;
-        // }
+        if (Context.Instance.Network.State == Network.NetworkState.Connected)
+        {
+            retryLink.IsActive = true;
+            //     retryLink.IsActive = false;
+            //     _drawErrorText = false;
+            //     
+            //     test2.IsActive = true;
+            //     test3.IsActive = true;
+        }
 
         // var network = Context.Instance.Network;
         // Console.WriteLine(network.State);
