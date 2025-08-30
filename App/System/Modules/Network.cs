@@ -34,12 +34,12 @@ public class Network(INetworkConfig config) : IDisposable
             if (_state != value)
             {
                 _state = value;
-                StateChanged?.Invoke(this, value);
+                OnStateChanged?.Invoke(this, value);
             }
         }
     }
     
-    public event EventHandler<NetworkState> StateChanged;
+    public event EventHandler<NetworkState> OnStateChanged;
     
     public ICallService CallService
     {
@@ -95,7 +95,7 @@ public class Network(INetworkConfig config) : IDisposable
             }
             
             State = NetworkState.Reconnecting;
-            await Task.Delay(1000);
+            await Task.Delay(500);
             retries++;
                 
             ping = await PingServer();

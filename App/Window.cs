@@ -17,7 +17,6 @@ public class Window : IDisposable
         Raylib.SetConfigFlags(ConfigFlags.UndecoratedWindow | ConfigFlags.Msaa4xHint);
         Raylib.InitWindow(800, 600, "MonkeySpeak");
         
-        Context.Instance.Network.ConnectServer();
         Header = new Header();
     }
     
@@ -41,21 +40,27 @@ public class Window : IDisposable
         while (!Raylib.WindowShouldClose())
         {
             float deltaTime = Raylib.GetFrameTime();
+
+            try
+            {
+                Header.Update(deltaTime);
+                Engine.Managers.Scenes.Instance.Update(deltaTime);
+                Graphics.MainBackground.Instance.Update(deltaTime);
             
-            Header.Update(deltaTime);
-            Engine.Managers.Scenes.Instance.Update(deltaTime);
-            Graphics.MainBackground.Instance.Update(deltaTime);
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground( new Color(20, 20, 20, 255));
+                Graphics.MainBackground.Instance.Draw();
             
-            Raylib.BeginDrawing();
-            Raylib.ClearBackground( new Color(20, 20, 20, 255));
-            Graphics.MainBackground.Instance.Draw();
+                Header.Draw();
+                Engine.Managers.Scenes.Instance.Draw();
             
-            Header.Draw();
-            Engine.Managers.Scenes.Instance.Draw();
             
-            // Raylib.DrawFPS(10, 10);
-            
-            Raylib.EndDrawing();
+                Raylib.EndDrawing();
+            }
+            catch (Exception e)
+            {
+                break;
+            }
         }
     }
 

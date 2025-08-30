@@ -6,7 +6,7 @@ using Raylib_cs;
 
 namespace App.Base;
 
-public class Header
+public class Header : IDisposable
 {
     private bool _isDragging = false;
     private Vector2 _mouseStartPos = Vector2.Zero;
@@ -65,8 +65,11 @@ public class Header
             }
             else if (closeBtnPosLocal)
             {
+                Engine.Managers.Scenes.Instance.Dispose();
+                Dispose();
                 
                 Raylib.CloseWindow();
+                return;
             }
         }
             
@@ -97,5 +100,10 @@ public class Header
         
         Raylib.DrawCircle(76, 28, 3.5f, Context.Instance.Network.GetStateColor());
         
+    }
+
+    public void Dispose()
+    {
+        Raylib.UnloadTexture(_textureMainPic);
     }
 }

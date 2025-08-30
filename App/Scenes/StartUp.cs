@@ -22,9 +22,12 @@ public class StartUp: Scene
     private Vector2 centerScreen;
     
     protected Interface.Loader Loader = new( new Vector2(){X = 370, Y = 420} );
-
+    public Network Network;
+    
     public StartUp()
     {
+
+        Network = Context.Instance.Network;
         
         _textureMainPic = Resources.Instance.Texture("Images\\LogoMain90.png");
         _mainFontStartup = new FontFamily()
@@ -41,31 +44,31 @@ public class StartUp: Scene
             color.A = (byte)(progress * 255);
 
             Texture.DrawEx(_textureMainPic,
-                new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 - 100), color: color);
+                new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 100) - progress * 16), color: color);
             Text.DrawPro(
                 _mainFontStartup,
                 "Create your p2p voice chat right now!",
-                new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 - 20),
+                new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 20) - progress * 16),
                 color: color
             );
 
             Text.DrawWrapped(
                 _mainFontStartup,
                 "Communication with no limits",
-                new Vector2(Raylib.GetRenderWidth() / 2 - 120, Raylib.GetRenderHeight() / 2 + 10),
+                new Vector2(Raylib.GetRenderWidth() / 2 - 120, (Raylib.GetRenderHeight() / 2 + 10) - progress * 16),
                 240,
                 TextAlignment.Center,
                 color: color
             );
 
-        }, duration: 1f, mirror: false, removable: false, repeat: false);
+        }, onComplete: () => Network.ConnectServer(), duration: 1f, mirror: false, removable: false, repeat: false);
 
 
 
         
         test2 = new Classic(_mainFontStartup)
         {
-            Position = new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 + 120),
+            Position = new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 + 100),
             Padding = new Vector2(70, 18),
             Text = "Create a room",
             IsActive = false
@@ -73,7 +76,7 @@ public class StartUp: Scene
         
         test3 = new Classic(_mainFontStartup)
         {
-            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 180),
+            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 160),
             Padding = new Vector2(130, 18),
             Text = "Connect",
             IsActive = false
@@ -94,25 +97,72 @@ public class StartUp: Scene
         
         retryLink = new Link(fontFamilyRetry)
         {
-            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 150),
+            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 145),
             Text = "Retry",
             IsActive = false
         };
          
-        retryLink.OnClick += async (sender) => 
+        retryLink.OnClick += async (sender) => Network.ConnectServer();
+        
+        authLink = new Link(fontFamilyRetry)
+        {
+            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 235),
+            Text = "Authorization in server",
+            IsActive = false,
+        };
+        
+        
+        authLink.OnClick += async (sender) => 
         {
             string authUrl = Context.Instance.Network.GenerateAuthorizationUrl();
             Process.Start( new ProcessStartInfo(authUrl) { UseShellExecute = true } );
         };
         
         
+        AddNode(authLink);
         AddNode(retryLink);
+        _load = true;
+        
+        Network.OnStateChanged += (net, networkState) =>
+        {
+            if (networkState == Network.NetworkState.Connecting || networkState == Network.NetworkState.Reconnecting)
+            {
+                _load = true;
+                retryLink.IsActive = false;
+                authLink.IsActive = false;
+                _drawErrorText = false;
+                test2.IsActive = false;
+                test3.IsActive = false;
+            }
+            
+            if (networkState == Network.NetworkState.Error || networkState == Network.NetworkState.Disconnected)
+            {
+                _load = false;
+                retryLink.IsActive = true;
+                _drawErrorText = true;
+            
+                authLink.IsActive = false;
+                test2.IsActive = false;
+                test3.IsActive = false;
+            }
+        
+            if (networkState == Network.NetworkState.Connected)
+            {
+                _load = false;
+                retryLink.IsActive = false;
+                _drawErrorText = false;
+                authLink.IsActive = true;
+            
+                test2.IsActive = true;
+                test3.IsActive = true;
+            }
+        };
     }
-
 
     public Button test2;
     public Button test3;
     public Link retryLink;
+    public Link authLink;
     private bool _drawErrorText = false;
     private bool _load;
 
@@ -120,39 +170,6 @@ public class StartUp: Scene
     {
         Loader.Update(deltaTime);
         Animator.Update(deltaTime);
-
-        // if (Context.Instance.Authorization.State == Authorization.AuthState.Pending)
-        // {
-        //     _load = true;
-        //     retryLink.IsActive = false;
-        //     _drawErrorText = false;
-        //     
-        //     test2.IsActive = false;
-        //     test3.IsActive = false;
-        // }
-        // else _load = false;
-        //
-        // if (Context.Instance.Authorization.State == Authorization.AuthState.Error)
-        // {
-        //     retryLink.IsActive = true;
-        //     _drawErrorText = true;
-        //     
-        //     test2.IsActive = false;
-        //     test3.IsActive = false;
-        // }
-        //
-        if (Context.Instance.Network.State == Network.NetworkState.Connected)
-        {
-            retryLink.IsActive = true;
-            //     retryLink.IsActive = false;
-            //     _drawErrorText = false;
-            //     
-            //     test2.IsActive = true;
-            //     test3.IsActive = true;
-        }
-
-        // var network = Context.Instance.Network;
-        // Console.WriteLine(network.State);
     }
 
     protected override void Draw()
@@ -165,7 +182,7 @@ public class StartUp: Scene
         {
             Text.DrawPro(
                 _mainFontStartup, 
-                "SERVER ERROR", 
+                "Connection server error", 
                 new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 120),
                 color: Color.Red
             );

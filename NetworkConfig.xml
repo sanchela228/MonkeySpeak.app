@@ -6,5 +6,5 @@
     <STUNServer>stun:stun.l.google.com:19302</STUNServer>
     <TURNServer></TURNServer>
     <ConnectionTimeout>30</ConnectionTimeout>
-    <MaxRetries>5</MaxRetries>
+    <MaxRetries>1</MaxRetries>
 </NetworkConfig>
