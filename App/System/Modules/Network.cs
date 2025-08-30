@@ -129,11 +129,13 @@ public class Network(INetworkConfig config) : IDisposable
     {
         var url = GetUrl("/auth");
         
+        var secureStorage = Context.Instance.SecureStorage;
+        
         string codeVerifier = PkceHelper.GenerateCodeVerifier();
-        SecureStorage.Save("temp_code_verifier", codeVerifier);
+        secureStorage.Save("temp_code_verifier", codeVerifier);
         
         string codeChallenge = PkceHelper.GenerateCodeChallenge(codeVerifier);
-        string publicKey = SecureStorage.Load("device_public_key");
+        string publicKey = secureStorage.Load("device_public_key");
         
         string websocketSession = "test";
         url += $"?client_id=desktop_app_monkeyspeak&" +

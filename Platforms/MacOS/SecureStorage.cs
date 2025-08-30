@@ -3,8 +3,10 @@ using System.Text;
 using App;
 using Platforms.Interfaces;
 
-namespace Platforms.Windows;
+namespace Platforms.MacOS;
 
+
+// TODO: CREATE REAL CLASS IS TEST NOW
 public class SecureStorage : ISecureStorage
 {
     private static readonly byte[] s_entropy = Encoding.UTF8.GetBytes(
@@ -39,7 +41,7 @@ public class SecureStorage : ISecureStorage
         string filePath = _directoryPath + $"{key}.secure";
         if (File.Exists(filePath)) File.Delete(filePath);
     }
-    
-    public Platforms ServicePlatform() => Platforms.Windows;
+
+    public Platforms ServicePlatform() => Platforms.MacOS;
     public bool IsCritical() => true;
 }

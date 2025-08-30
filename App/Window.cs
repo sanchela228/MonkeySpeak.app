@@ -1,9 +1,6 @@
-using System.Collections.Concurrent;
-using System.Numerics;
 using App.Base;
 using App.System.Services;
 using Engine;
-using Engine.Managers;
 using Raylib_cs;
 
 namespace App;
@@ -40,7 +37,7 @@ public class Window : IDisposable
         while (!Raylib.WindowShouldClose())
         {
             float deltaTime = Raylib.GetFrameTime();
-
+            
             try
             {
                 Header.Update(deltaTime);

@@ -2,6 +2,8 @@ using System.Xml.Serialization;
 using App.Configurations.Interfaces;
 using App.Configurations.Realisation;
 using App.System.Services;
+using Platforms;
+using Platforms.Interfaces;
 using Platforms.Windows;
 using Language = App.Configurations.Interfaces.Language;
 
@@ -23,7 +25,7 @@ public class Context
     public const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
 
     public Guid CurrentSessionToken { get; } = Guid.NewGuid();
-
+    public Platforms.Platforms CurrentPlatform { get; private set; } = Platforms.Platforms.Windows;
 
     public IAppConfig AppConfig { get; private set; }
     public IContextData ContextData { get; private set; }
@@ -33,6 +35,7 @@ public class Context
     {
         Logger.Write(Logger.Type.Info, "------- Starting SetUp context application ---------");
         
+       
         if (!DataDirectoryInitialized())
             InitializeDataDirectory();
         
@@ -44,15 +47,17 @@ public class Context
         
         ContextData = context;
         
+   
+        
         App.System.Services.Language.Load(ContextData.LanguageSelected);
         
-        var fileNetworkconfigXml = "NetworkConfig.xml";
-        var fileAppConfigXml = "AppConfig.xml";
+        const string fileNetworkConfigXml = "NetworkConfig.xml";
+        const string fileAppConfigXml = "AppConfig.xml";
         
         try
         {
             var serializer = new XmlSerializer(typeof(NetworkConfig));
-            using var reader = new StreamReader(fileNetworkconfigXml);
+            using var reader = new StreamReader(fileNetworkConfigXml);
             var configInet = (NetworkConfig) serializer.Deserialize(reader);
             
             serializer = new XmlSerializer(typeof(AppConfig));
@@ -71,6 +76,9 @@ public class Context
     public bool DataDirectoryInitialized() => Directory.Exists(DataDirectory);
 
     private string _devicePrivateKey;
+    
+    
+    public ISecureStorage SecureStorage { get; private set; }
     public void InitializeDataDirectory()
     {
         try
@@ -87,6 +95,14 @@ public class Context
             
             context.SaveContext();
             ContextData = context;
+            
+            PlatformServiceFactory.Register( new List<ISecureStorage>
+            {
+                new Platforms.Windows.SecureStorage(),
+                new Platforms.MacOS.SecureStorage()
+            });
+            
+            SecureStorage = PlatformServiceFactory.GetService<ISecureStorage>(CurrentPlatform);
             
             // TODO: ADD ANY PLATFORM ENTRY METHOD
             _devicePrivateKey = SecureStorage.Load("device_private_key");
