@@ -13,4 +13,6 @@ public interface INetworkConfig
     int MaxRetries { get; set; }
     
     ICallService CallService { get; set; }
+
+    string DomainUrl();
 }

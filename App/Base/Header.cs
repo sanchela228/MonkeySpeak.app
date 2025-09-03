@@ -88,7 +88,7 @@ public class Header : IDisposable
     
     public void Draw()
     {
-        Text.DrawPro(_fontFamily, "MonkeySpeak", new Vector2(Raylib.GetRenderWidth() / 2, 24));
+        Text.DrawPro(_fontFamily, "Monkey222Speak", new Vector2(Raylib.GetRenderWidth() / 2, 24));
         
         Color yellowColor = _isNear ? Color.Yellow : new Color(70, 70, 70);
         Color redColor = _isNear ? Color.Red : new Color(70, 70, 70);

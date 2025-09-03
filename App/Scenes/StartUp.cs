@@ -97,7 +97,7 @@ public class StartUp: Scene
         
         retryLink = new Link(fontFamilyRetry)
         {
-            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 145),
+            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 165),
             Text = "Retry",
             IsActive = false
         };

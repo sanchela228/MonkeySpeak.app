@@ -17,4 +17,14 @@ public class NetworkConfig : INetworkConfig
     
     [XmlIgnore]
     public ICallService CallService { get; set; } = new P2P();
+    
+    public string DomainUrl()
+    {
+        string url = "";
+        
+        url += this.UseSSL ? "https://" : "http://";
+        url += this.Domain + ":" + this.Port;
+        
+        return url; 
+    }
 }

@@ -1,14 +1,7 @@
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
 using App.Configurations.Interfaces;
 using App.System.Managers;
-using App.System.Services.CallServices;
 using App.System.Utils;
-using Platforms.Windows;
 using Raylib_cs;
 
 namespace App.System.Modules;
@@ -26,6 +19,8 @@ public class Network(INetworkConfig config) : IDisposable
     }
     public INetworkConfig Config { get; set; } = config;
     private NetworkState _state = NetworkState.Disconnected;
+    
+    private HttpClient _httpClient = new HttpClient();
     public NetworkState State 
     { 
         get => _state;
@@ -55,6 +50,7 @@ public class Network(INetworkConfig config) : IDisposable
     
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cancellationTokenSource;
+    public Updater.DownloadUpdateState downloadUpdateState;
     
     private async Task CheckConnectionAsync()
     {
@@ -76,10 +72,17 @@ public class Network(INetworkConfig config) : IDisposable
                 {
                     Console.WriteLine("Пытаюсь подключиться...");
                     var client = new WebSocketClient(Config);
+                    var updater = new Updater(Config);
                     var messageDispatcher = new MessageDispatcher();
                     
                     client.OnMessageReceived += message => messageDispatcher.Configure(message);
-                    client.OnConnected += () => State = NetworkState.Connected;
+                    client.OnConnected += async () =>
+                    {
+                        if ( await updater.CheckUpdate() )
+                            await updater.StartProcessUpdate(downloadUpdateState);
+                        
+                        State = NetworkState.Connected;
+                    };
                     client.OnDisconnected += () => State = NetworkState.Disconnected;
                     client.OnReconnecting += () => State = NetworkState.Reconnecting;
                     
@@ -95,7 +98,7 @@ public class Network(INetworkConfig config) : IDisposable
             }
             
             State = NetworkState.Reconnecting;
-            await Task.Delay(500);
+            await Task.Delay(1);
             retries++;
                 
             ping = await PingServer();
@@ -106,11 +109,8 @@ public class Network(INetworkConfig config) : IDisposable
     {
         try
         {
-            using var httpClient = new HttpClient();
-            {
-                var response = await httpClient.GetAsync(MainUrl());
-                return response.IsSuccessStatusCode;
-            }
+            var response = await _httpClient.GetAsync(MainUrl());
+            return response.IsSuccessStatusCode;
         }
         catch
         {
@@ -119,11 +119,7 @@ public class Network(INetworkConfig config) : IDisposable
         }
     }
 
-    public async Task<HttpResponseMessage> Get(string relativeUrl)
-    {
-        using var httpClient = new HttpClient();
-        return await httpClient.GetAsync( GetUrl(relativeUrl) );
-    }
+    public async Task<HttpResponseMessage> Get(string relativeUrl) => await _httpClient.GetAsync(GetUrl(relativeUrl));
     
     public string GenerateAuthorizationUrl()
     {

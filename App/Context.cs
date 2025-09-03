@@ -21,6 +21,11 @@ public class Context
         "MonkeySpeak\\Logs"
     );
     
+    public readonly string DownloadDataDirectory = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "MonkeySpeak\\Downloads"
+    );
+    
     public const string NameDataFile = "AppData.xml";
     public const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
 
