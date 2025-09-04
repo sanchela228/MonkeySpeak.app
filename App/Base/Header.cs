@@ -13,6 +13,7 @@ public class Header : IDisposable
     private Vector2 _windowStartPos = Vector2.Zero;
 
     private FontFamily _fontFamily;
+    private FontFamily _fontFamilyVersion;
     private bool _isNear = false;
     private const int HeaderHeight = 60;
     private const float ButtonRadius = 10f;
@@ -29,7 +30,7 @@ public class Header : IDisposable
         Platforms.Windows.Mouse.GetCursorPos(out var globalMousePos);
         
         Font font = Resources.Instance.FontEx("Midami-Normal.ttf", 26);
-            
+        
         _fontFamily = new()
         {
             Size = 26,
@@ -37,6 +38,15 @@ public class Header : IDisposable
             Rotation = 0,
             Spacing = 1f,
             Color = Color.White
+        };
+        
+        _fontFamilyVersion = new()
+        {
+            Size = 20,
+            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 20),
+            Rotation = 0,
+            Spacing = 1f,
+            Color = new Color(255, 255, 255, 80)
         };
         
         Vector2 mousePos = new Vector2(globalMousePos.X, globalMousePos.Y);
@@ -88,7 +98,7 @@ public class Header : IDisposable
     
     public void Draw()
     {
-        Text.DrawPro(_fontFamily, "Monkey222Speak", new Vector2(Raylib.GetRenderWidth() / 2, 24));
+        Text.DrawPro(_fontFamily, "MonkeySpeak", new Vector2(Raylib.GetRenderWidth() / 2, 24));
         
         Color yellowColor = _isNear ? Color.Yellow : new Color(70, 70, 70);
         Color redColor = _isNear ? Color.Red : new Color(70, 70, 70);
@@ -100,6 +110,11 @@ public class Header : IDisposable
         
         Raylib.DrawCircle(76, 28, 3.5f, Context.Instance.Network.GetStateColor());
         
+        Text.DrawPro(
+            _fontFamilyVersion, 
+            $"{Context.Instance.AppConfig.VersionName}:{Context.Instance.AppConfig.Version}", 
+            new Vector2(Raylib.GetScreenWidth() - 70, Raylib.GetScreenHeight() - 30)
+        );
     }
 
     public void Dispose()

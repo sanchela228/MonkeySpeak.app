@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using App.Configurations.Interfaces;
 using App.System.Managers;
+using App.System.Services;
 using App.System.Utils;
 using Raylib_cs;
 
@@ -50,7 +51,7 @@ public class Network(INetworkConfig config) : IDisposable
     
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cancellationTokenSource;
-    public Updater.DownloadUpdateState downloadUpdateState;
+    public Updater.DownloadUpdateState DownloadUpdateState;
     
     private async Task CheckConnectionAsync()
     {
@@ -70,7 +71,8 @@ public class Network(INetworkConfig config) : IDisposable
             {
                 try
                 {
-                    Console.WriteLine("Пытаюсь подключиться...");
+                    Logger.Write(Logger.Type.Info, "WebSocket connection...");   
+                    
                     var client = new WebSocketClient(Config);
                     var updater = new Updater(Config);
                     var messageDispatcher = new MessageDispatcher();
@@ -79,7 +81,7 @@ public class Network(INetworkConfig config) : IDisposable
                     client.OnConnected += async () =>
                     {
                         if ( await updater.CheckUpdate() )
-                            await updater.StartProcessUpdate(downloadUpdateState);
+                            await updater.StartProcessUpdate();
                         
                         State = NetworkState.Connected;
                     };
@@ -91,7 +93,7 @@ public class Network(INetworkConfig config) : IDisposable
                 catch (Exception ex)
                 {
                     State = NetworkState.Error;
-                    Console.WriteLine($"Ошибка подключения: {ex.Message}");
+                    Logger.Write(Logger.Type.Error, "WebSocket connection error", ex);   
                 }
                 
                 break;

@@ -27,9 +27,9 @@ public class Updater(INetworkConfig networkConfig)
         return true;
     }
 
-    public async Task StartProcessUpdate(DownloadUpdateState updaterState)
+    public async Task StartProcessUpdate()
     {
-        updaterState = new DownloadUpdateState()
+        Context.Instance.Network.DownloadUpdateState = new DownloadUpdateState()
         {
             IsDownloading = true,
             StatusMessage = "Downloading update"
@@ -54,18 +54,19 @@ public class Updater(INetworkConfig networkConfig)
         var downloadPath = NetworkConfig.DomainUrl() + "/" + GetActualDownloadUrl();
         var updateFolderPath = Path.Combine(downloadsPath, "ActualUpdate");
         
-        await DownloadFileFromServer(downloadPath, actualUpdateZipPath, updaterState);
+        await DownloadFileFromServer(downloadPath, actualUpdateZipPath, Context.Instance.Network.DownloadUpdateState);
         
         // TODO: ADD BACKUP AND UNPACK THEM IF UPDATE FAILED
         ExtractFile(actualUpdateZipPath, updateFolderPath);
+        DeleteFile(actualUpdateZipPath);
         
         if (HasError) RestoreFromBackup();
         else
         {
             ApplyUpdate(updateFolderPath, AppDomain.CurrentDomain.BaseDirectory);
             
-            updaterState.IsDownloading = false;
-            updaterState.StatusMessage = "Update applied";
+            Context.Instance.Network.DownloadUpdateState.IsDownloading = false;
+            Context.Instance.Network.DownloadUpdateState.StatusMessage = "Update applied";
         }
     }
 
@@ -96,7 +97,7 @@ public class Updater(INetworkConfig networkConfig)
                         updaterState.DownloadedBytes += bytesRead;
                     
                         Console.WriteLine($"Load file: {updaterState.DownloadedBytes / updaterState.TotalBytes} - {updaterState.Progress}");
-                        await Task.Delay(50);
+                        await Task.Delay(380);
                     }
                 }
             }
@@ -122,6 +123,19 @@ public class Updater(INetworkConfig networkConfig)
         {
             HasError = true;
             Logger.Write(Logger.Type.Error, $"Extraction failed: {path}", ex);
+        }
+    }
+
+    private void DeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch (Exception ex)
+        {
+            Logger.Write(Logger.Type.Error, "Can't delete file", ex);
+            throw;
         }
     }
 
@@ -200,7 +214,7 @@ public class Updater(INetworkConfig networkConfig)
         public bool IsDownloading;
         public long TotalBytes;
         public long DownloadedBytes;
-        public float Progress => TotalBytes > 0 ? (float) DownloadedBytes / TotalBytes : 0;
         public string StatusMessage;
+        public float Progress => TotalBytes > 0 ? (float) DownloadedBytes / TotalBytes : 0;
     }
 }

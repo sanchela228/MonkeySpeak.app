@@ -157,19 +157,45 @@ public class StartUp: Scene
                 test3.IsActive = true;
             }
         };
+
+        loaderBarProgression = new LoaderBarProgression()
+        {
+            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 130),
+            Size = new Vector2(270, 12)
+        };
+        
+        AddNode(loaderBarProgression);
     }
 
+    public LoaderBarProgression loaderBarProgression;
     public Button test2;
     public Button test3;
     public Link retryLink;
     public Link authLink;
-    private bool _drawErrorText = false;
+    private bool _drawErrorText;
     private bool _load;
+    private bool _showLoadingUpdate;
 
     protected override void Update(float deltaTime)
     {
         Loader.Update(deltaTime);
         Animator.Update(deltaTime);
+
+        loaderBarProgression.IsActive = false;
+
+        if (Network.State == Network.NetworkState.Connecting && Network.DownloadUpdateState is not null)
+        {
+            _showLoadingUpdate = Network.DownloadUpdateState.IsDownloading;
+
+            if (_showLoadingUpdate)
+            {
+                loaderBarProgression.Total = Network.DownloadUpdateState.TotalBytes;
+                loaderBarProgression.Current = Network.DownloadUpdateState.DownloadedBytes;
+                loaderBarProgression.IsActive = true;
+
+                _load = false;
+            }
+        }
     }
 
     protected override void Draw()
@@ -177,6 +203,16 @@ public class StartUp: Scene
         Animator.Draw();
         
         if (_load) Loader.Draw();
+
+        if (_showLoadingUpdate)
+        {
+            Text.DrawPro(
+                _mainFontStartup, 
+                $"{Network.DownloadUpdateState.StatusMessage} {Math.Round(Network.DownloadUpdateState.Progress * 100, 2)}%", 
+                new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 165),
+                color: Color.White
+            );
+        }
         
         if (_drawErrorText)
         {
@@ -193,5 +229,4 @@ public class StartUp: Scene
     {
         // throw new NotImplementedException();
     }
-    
 }
