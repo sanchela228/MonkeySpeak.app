@@ -52,7 +52,13 @@ public class Context
         
         ContextData = context;
         
-   
+        PlatformServiceFactory.Register( new List<ISecureStorage>
+        {
+            new Platforms.Windows.SecureStorage(),
+            new Platforms.MacOS.SecureStorage()
+        });
+            
+        SecureStorage = PlatformServiceFactory.GetService<ISecureStorage>(CurrentPlatform);
         
         App.System.Services.Language.Load(ContextData.LanguageSelected);
         
@@ -100,14 +106,6 @@ public class Context
             
             context.SaveContext();
             ContextData = context;
-            
-            PlatformServiceFactory.Register( new List<ISecureStorage>
-            {
-                new Platforms.Windows.SecureStorage(),
-                new Platforms.MacOS.SecureStorage()
-            });
-            
-            SecureStorage = PlatformServiceFactory.GetService<ISecureStorage>(CurrentPlatform);
             
             // TODO: ADD ANY PLATFORM ENTRY METHOD
             _devicePrivateKey = SecureStorage.Load("device_private_key");
