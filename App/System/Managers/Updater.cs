@@ -95,9 +95,6 @@ public class Updater(INetworkConfig networkConfig)
                     {
                         await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
                         updaterState.DownloadedBytes += bytesRead;
-                    
-                        Console.WriteLine($"Load file: {updaterState.DownloadedBytes / updaterState.TotalBytes} - {updaterState.Progress}");
-                        await Task.Delay(380);
                     }
                 }
             }
