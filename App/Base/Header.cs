@@ -75,18 +75,13 @@ public class Header : IDisposable
             }
             else if (closeBtnPosLocal)
             {
-                Engine.Managers.Scenes.Instance.Dispose();
-                Dispose();
-                
-                Raylib.CloseWindow();
+                Environment.Exit(0);
                 return;
             }
         }
             
         if (Raylib.IsMouseButtonReleased(MouseButton.Left))
-        {
             _isDragging = false;
-        }
             
         if (_isDragging)
         {

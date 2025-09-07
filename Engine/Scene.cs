@@ -17,6 +17,12 @@ public abstract class Scene
             _nodes.Sort((node1, node2) => node1.Order.CompareTo(node2.Order));
     }
     
+    public void AddNodes(IEnumerable<Node> nodes)
+    {
+        foreach (var node in nodes)
+            AddNode(node);
+    }
+    
     public void RemoveNode(Node node)
     {
         _nodes.Remove(node);

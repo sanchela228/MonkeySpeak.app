@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
+using App.Scenes.NoAuthCall;
 using App.System.Modules;
-using App.System.Services;
 using Engine;
 using Engine.Helpers;
 using Engine.Managers;
@@ -63,8 +63,6 @@ public class StartUp: Scene
 
         }, onComplete: () => Network.ConnectServer(), duration: 1f, mirror: false, removable: false, repeat: false);
 
-
-
         
         test2 = new Classic(_mainFontStartup)
         {
@@ -82,7 +80,13 @@ public class StartUp: Scene
             IsActive = false
         };
         
+        test2.OnClick += (sender) => {
+            Engine.Managers.Scenes.Instance.PushScene( new Creator() );
+        };
         
+        test3.OnClick += (sender) => {
+            Engine.Managers.Scenes.Instance.PushScene( new Invited() );
+        };
         
         AddNode(test2);
         AddNode(test3);

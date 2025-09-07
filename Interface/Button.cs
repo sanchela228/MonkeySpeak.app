@@ -160,7 +160,9 @@ public class Button : Node
             {
                 OnClick?.Invoke(this);
             }
+            
             OnRelease?.Invoke(this);
+            Raylib.SetMouseCursor(MouseCursor.Default);
         }
         
         UpdateState();
