@@ -1,0 +1,121 @@
+using System.Numerics;
+using System.Text;
+using Engine;
+using Engine.Helpers;
+using Engine.Managers;
+using Interface;
+using Interface.Buttons;
+using Interface.Inputs;
+using Raylib_cs;
+using PointRendering = Engine.PointRendering;
+
+namespace App.Scenes.NoAuthCall;
+
+public class Invited : Scene
+{
+    private FontFamily _mainFontBack;
+    private Button buttonBack;
+    private List<DemoInputInvited> _linkInputs;
+    
+    public Invited()
+    {
+        _mainFontBack = new FontFamily()
+        {
+            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
+            Size = 24,
+            Spacing = 1,
+            Color = Color.White
+        };
+        
+        buttonBack = new Classic(_mainFontBack)
+        {
+            Position = new Vector2(Raylib.GetScreenWidth()/ 2, Raylib.GetScreenHeight() / 2 + 170),
+            Padding = new Vector2(30, 18),
+            Text = "Back" 
+        };
+        
+        buttonBack.OnClick += (sender) => {
+            Engine.Managers.Scenes.Instance.PopScene();
+        };
+        
+        AddNode(buttonBack);
+        
+        var listInputs = new List<DemoInputInvited>
+        {
+            new(){PointRendering = PointRendering.LeftTop},
+            new(){PointRendering = PointRendering.LeftTop},
+            new(){PointRendering = PointRendering.LeftTop},
+            new(){PointRendering = PointRendering.LeftTop},
+            new(){PointRendering = PointRendering.LeftTop},
+            new(){PointRendering = PointRendering.LeftTop}
+        };
+
+        _linkInputs = listInputs;
+        
+        // TODO: FIX PlaceInLine for POINTRENDERING CENTER
+        Graphics.Render.PlaceInLine(
+            listInputs, 
+            new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2 - 90),
+            22
+        );
+
+        AddNodes(listInputs);
+    }
+    
+    protected override void Update(float deltaTime)
+    {
+        // throw new NotImplementedException();
+        HandleTextInput();
+        
+    }
+
+    protected override void Draw()
+    {
+        Text.DrawWrapped(
+            _mainFontBack, 
+            "Enter the code to connect to the room", 
+            new Vector2(Raylib.GetScreenWidth() / 2 - 125, Raylib.GetScreenHeight() / 2),
+            250,
+            color: Color.White,
+            alignment: TextAlignment.Center
+        );
+    }
+    
+    // TODO: CREATE INPUTHANDLER AND COMMANDS IN ENGINE
+    private StringBuilder _inputText = new();
+    private int maxInputLength = 6;
+    private async void HandleTextInput()
+    {
+        int key = Raylib.GetCharPressed();
+        while (key > 0)
+        {
+            if (key is >= 32 and <= 125 && _inputText.Length < maxInputLength)
+            {
+                _inputText.Append((char)key);
+                _linkInputs.ForEach(x => x.IsFailed = false);
+
+                _linkInputs[_inputText.Length - 1].Symbol = (char) key;
+            }
+            
+            if ( _inputText.Length == maxInputLength )
+            {
+                bool q = await Context.Instance.Network.ConnectToNoAuthCallSession(_inputText.ToString().ToLower());
+                if (!q) _linkInputs.ForEach(x => x.IsFailed = true);
+            }
+            
+            key = Raylib.GetCharPressed();
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
+        {
+            _inputText.Remove(_inputText.Length - 1, 1);
+            _linkInputs.ForEach(x => x.IsFailed = false);
+            _linkInputs[_inputText.Length].Symbol = null;
+        }
+    }
+    
+    protected override void Dispose()
+    {
+        // throw new NotImplementedException();
+    }
+}

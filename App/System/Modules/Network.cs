@@ -19,6 +19,8 @@ public class Network(INetworkConfig config) : IDisposable
         Error
     }
     public INetworkConfig Config { get; set; } = config;
+    private WebSocketClient WebSocketClient { get; set; }
+    
     private NetworkState _state = NetworkState.Disconnected;
     
     private HttpClient _httpClient = new HttpClient();
@@ -52,6 +54,12 @@ public class Network(INetworkConfig config) : IDisposable
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cancellationTokenSource;
     public Updater.DownloadUpdateState DownloadUpdateState;
+
+    public async Task<bool> ConnectToNoAuthCallSession(string code)
+    {
+        Task.Delay(500);
+        return false;
+    }
     
     private async Task CheckConnectionAsync()
     {
@@ -73,22 +81,22 @@ public class Network(INetworkConfig config) : IDisposable
                 {
                     Logger.Write(Logger.Type.Info, "WebSocket connection...");   
                     
-                    var client = new WebSocketClient(Config);
+                    WebSocketClient = new WebSocketClient(Config);
                     var updater = new Updater(Config);
                     var messageDispatcher = new MessageDispatcher();
                     
-                    client.OnMessageReceived += message => messageDispatcher.Configure(message);
-                    client.OnConnected += async () =>
+                    WebSocketClient.OnMessageReceived += message => messageDispatcher.Configure(message);
+                    WebSocketClient.OnConnected += async () =>
                     {
                         if ( await updater.CheckUpdate() )
                             await updater.StartProcessUpdate();
                         
                         State = NetworkState.Connected;
                     };
-                    client.OnDisconnected += () => State = NetworkState.Disconnected;
-                    client.OnReconnecting += () => State = NetworkState.Reconnecting;
+                    WebSocketClient.OnDisconnected += () => State = NetworkState.Disconnected;
+                    WebSocketClient.OnReconnecting += () => State = NetworkState.Reconnecting;
                     
-                    await client.ConnectAsync();
+                    await WebSocketClient.ConnectAsync();
                 }
                 catch (Exception ex)
                 {

@@ -31,8 +31,6 @@ public class Window : IDisposable
         Platforms.Windows.Window.SetWindowRoundedCorners();
         
         Raylib.SetTargetFPS(Raylib.GetMonitorRefreshRate(Raylib.GetCurrentMonitor()));
-
-       
         
         while (!Raylib.WindowShouldClose())
         {
@@ -50,8 +48,7 @@ public class Window : IDisposable
             
                 Header.Draw();
                 Engine.Managers.Scenes.Instance.Draw();
-            
-            
+                
                 Raylib.EndDrawing();
             }
             catch (Exception e)
