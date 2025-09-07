@@ -12,8 +12,9 @@ uniform int colorCount;
 
 out vec4 FragColor;
 
+uniform float seed;
 float noise(vec2 p) {
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 13758.5453);
+    return fract(sin(dot(p, vec2(12.9898 + seed, 78.233 + seed))) * 13758.5453 + seed);
 }
 
 float interpolatedNoise(vec2 p) {

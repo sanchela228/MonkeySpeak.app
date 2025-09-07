@@ -2,6 +2,7 @@ using System.Numerics;
 using Engine;
 using Engine.Helpers;
 using Engine.Managers;
+using Graphics;
 using Raylib_cs;
 
 namespace App.Base;
@@ -23,6 +24,11 @@ public class Header : IDisposable
     public Header()
     {
         _textureMainPic = Resources.Instance.Texture("Images\\Browse.png");
+
+        Engine.Managers.Scenes.Instance.OnScenePushed += () =>
+        {
+            MainBackground.Instance.AnimateSpeedChange(3f, 0.7f);
+        };
     }
     
     public void Update(float deltaTime)

@@ -94,19 +94,16 @@ public class MainBackground
                 _speed = _animStartSpeed;
                 _isAnimating = false;
             }
-            
-            Console.WriteLine(_speed);
-
-            Raylib.SetShaderValue(_shader, _speedLoc, _speed, ShaderUniformDataType.Float);
         }
-
         
-        _shaderTime  += deltaTime * _speed;
+        _shaderTime += deltaTime * _speed;
 
         var resolution = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
 
         Raylib.SetShaderValue(_shader, _timeLoc, _shaderTime, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _resolutionLoc, new float[] { resolution.X, resolution.Y }, ShaderUniformDataType.Vec2);
+        
+        Raylib.SetShaderValue(_shader, _speedLoc, 0.2f, ShaderUniformDataType.Float);
     }
     
     private float Lerp(float a, float b, float t)
@@ -122,7 +119,8 @@ public class MainBackground
         _animHoldTime = holdTime;
         _animTime = 0f;
         _isAnimating = true;
-        Raylib.SetShaderValue(_shader, _speedLoc, _speed, ShaderUniformDataType.Float);
+        
+        // Raylib.SetShaderValue(_shader, _speedLoc, _speed, ShaderUniformDataType.Float);
     }
 
     public void Draw()
@@ -148,7 +146,11 @@ public class MainBackground
             colorsData[i * 3 + 2] = _colors[i].Z;
         }
         
-        Raylib.SetShaderValue(_shader, _speedLoc, _speed, ShaderUniformDataType.Float);
+        var seedLoc = Raylib.GetShaderLocation(_shader, "seed");
+        float randomSeed = (float)new Random().NextDouble() * 10000f; 
+        Raylib.SetShaderValue(_shader, seedLoc, randomSeed, ShaderUniformDataType.Float);
+        
+        Raylib.SetShaderValue(_shader, _speedLoc, 0.2f, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, scaleLoc, 0.4f, ShaderUniformDataType.Float);
         
         Raylib.SetShaderValueV(_shader, colorsLoc, colorsData, ShaderUniformDataType.Vec3, _colors.Length);
