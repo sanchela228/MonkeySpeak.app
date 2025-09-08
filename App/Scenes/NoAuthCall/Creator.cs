@@ -1,4 +1,6 @@
+using System.Net;
 using System.Numerics;
+using App.System.Utils;
 using Engine;
 using Engine.Helpers;
 using Engine.Managers;
@@ -13,6 +15,8 @@ public class Creator : Scene
     private FontFamily _mainFont;
     private FontFamily _mainFontBack;
     private Button buttonBack;
+    
+    private string _code;
 
     public Creator()
     {
@@ -44,6 +48,12 @@ public class Creator : Scene
         };
         
         AddNode(buttonBack);
+        
+        Context.Instance.CallFacade.CreateSession();
+        Context.Instance.CallFacade.Service.OnSessionCreated += (code) =>
+        {
+            _code = code;
+        };
     }
     
     protected override void Update(float deltaTime)
@@ -55,7 +65,7 @@ public class Creator : Scene
     {
         Text.DrawPro(
             _mainFont, 
-            "S0S1TE", 
+            _code, 
             new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2 - 60),
             color: Color.Red
         );

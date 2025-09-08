@@ -19,7 +19,7 @@ public class Network(INetworkConfig config) : IDisposable
         Error
     }
     public INetworkConfig Config { get; set; } = config;
-    private WebSocketClient WebSocketClient { get; set; }
+    public WebSocketClient WebSocketClient { get; private set; }
     
     private NetworkState _state = NetworkState.Disconnected;
     
@@ -83,9 +83,8 @@ public class Network(INetworkConfig config) : IDisposable
                     
                     WebSocketClient = new WebSocketClient(Config);
                     var updater = new Updater(Config);
-                    var messageDispatcher = new MessageDispatcher();
                     
-                    WebSocketClient.OnMessageReceived += message => messageDispatcher.Configure(message);
+                    WebSocketClient.OnMessageReceived += message => WebSocketClient.MessageDispatcher.Configure(message);
                     WebSocketClient.OnConnected += async () =>
                     {
                         if ( await updater.CheckUpdate() )

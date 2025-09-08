@@ -2,6 +2,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using App.Configurations.Interfaces;
+using App.System.Managers;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages;
 using App.System.Services;
@@ -14,6 +15,8 @@ public class WebSocketClient(INetworkConfig conf)
     private CancellationTokenSource _cts;
     private Uri _uri;
     private INetworkConfig _config = conf;
+
+    public MessageDispatcher MessageDispatcher { get; private set; } = new MessageDispatcher();
 
     public event Action<App.System.Models.Websocket.Context> OnMessageReceived;
     public event Action OnConnected;

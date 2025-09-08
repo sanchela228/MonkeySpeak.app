@@ -1,6 +1,7 @@
 using System.Xml.Serialization;
 using App.Configurations.Interfaces;
 using App.Configurations.Realisation;
+using App.System;
 using App.System.Services;
 using Platforms;
 using Platforms.Interfaces;
@@ -35,6 +36,8 @@ public class Context
     public IAppConfig AppConfig { get; private set; }
     public IContextData ContextData { get; private set; }
     public System.Modules.Network Network { get; private set; }
+
+    public CallFacade CallFacade { get; private set; }
 
     public void SetUp()
     {
@@ -76,6 +79,7 @@ public class Context
             AppConfig = (AppConfig) serializer.Deserialize(readerAppConfig);
             
             Network = new System.Modules.Network(configInet);
+            CallFacade = new CallFacade(configInet);
         }
         catch (Exception ex)
         {

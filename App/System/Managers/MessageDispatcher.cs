@@ -26,6 +26,11 @@ public class MessageDispatcher
         {
             Console.WriteLine($"Получен Ping: {msg.Value}");
         });
+        
+        On<Models.Websocket.Messages.ReturnedAuthToken>(msg =>
+        {
+            Console.WriteLine($"Получен ReturnedAuthToken: {msg.Value}");
+        });
                         
         Dispatch(context);
     }
