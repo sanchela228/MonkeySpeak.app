@@ -7,7 +7,6 @@ namespace App.System.Services.CallServices;
 
 public class P2P : ICallService
 {
-    public Network Network { get; private set; } = Context.Instance.Network;
     public async void Connect()
     {
         IPEndPoint ip = await GoogleSTUNServer.GetPublicIPAddress();
@@ -17,14 +16,16 @@ public class P2P : ICallService
     public event Action<string> OnSessionCreated;
     public async void CreateSession()
     {
-        Network.WebSocketClient.MessageDispatcher.On<SessionCreated>(msg =>
+        Context.Instance.Network.WebSocketClient.MessageDispatcher.On<SessionCreated>(msg =>
         {
             OnSessionCreated?.Invoke(msg.Value);
         });
-        
-        Network.WebSocketClient.SendAsync(new CreateSession()
+
+        var message = new CreateSession()
         {
             Value = "test",
-        });
+        };
+        
+        Context.Instance.Network.WebSocketClient.SendAsync(message);
     }
 }
