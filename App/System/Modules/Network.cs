@@ -57,6 +57,7 @@ public class Network(INetworkConfig config) : IDisposable
 
     public async Task<bool> ConnectToNoAuthCallSession(string code)
     {
+        
         Task.Delay(500);
         return false;
     }

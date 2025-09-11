@@ -25,19 +25,23 @@ public class GoogleSTUNServer
             byte[] requestPacket = CreateStunBindingRequest(transactionId);
 
             await udpClient.SendAsync(requestPacket, requestPacket.Length, stunEndPoint);
-
-            UdpReceiveResult serverResponse = await udpClient.ReceiveAsync();
+            
+            var receiveTask = udpClient.ReceiveAsync();
+            var completed = await Task.WhenAny(receiveTask, Task.Delay(udpClient.Client.ReceiveTimeout));
+            if (completed != receiveTask)
+                throw new SocketException((int)SocketError.TimedOut);
+            UdpReceiveResult serverResponse = receiveTask.Result;
             byte[] responsePacket = serverResponse.Buffer;
             
             result = ParseStunResponse(responsePacket, transactionId);
         }
         catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
         {
-            
+            Console.WriteLine("[STUN] Socket timeout: " + ex.Message);
         }
         catch (Exception ex)
         {
-            
+            Console.WriteLine("[STUN] Error: " + ex.Message);
         }
         finally
         {
@@ -47,7 +51,52 @@ public class GoogleSTUNServer
         return result;
     }
     
-      private static byte[] CreateStunBindingRequest(byte[] transactionId)
+    public static async Task<IPEndPoint> GetPublicIPAddress(int localPort, string stunServer = "stun.l.google.com", int stunPort = 19302)
+    {
+        UdpClient udpClient = null;
+        IPEndPoint result = null;
+        
+        try
+        {
+            udpClient = new UdpClient(localPort);
+            udpClient.Client.ReceiveTimeout = 5000;
+
+            IPHostEntry hostEntry = await Dns.GetHostEntryAsync(stunServer);
+            IPAddress stunServerIp = hostEntry.AddressList[0];
+            IPEndPoint stunEndPoint = new IPEndPoint(stunServerIp, stunPort);
+
+            byte[] transactionId = new byte[12];
+            new Random().NextBytes(transactionId);
+
+            byte[] requestPacket = CreateStunBindingRequest(transactionId);
+
+            await udpClient.SendAsync(requestPacket, requestPacket.Length, stunEndPoint);
+            var receiveTask = udpClient.ReceiveAsync();
+            var completed = await Task.WhenAny(receiveTask, Task.Delay(udpClient.Client.ReceiveTimeout));
+            if (completed != receiveTask)
+                throw new SocketException((int)SocketError.TimedOut);
+            UdpReceiveResult serverResponse = receiveTask.Result;
+            byte[] responsePacket = serverResponse.Buffer;
+            
+            result = ParseStunResponse(responsePacket, transactionId);
+        }
+        catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
+        {
+            Console.WriteLine("[STUN] Socket timeout: " + ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[STUN] Error: " + ex.Message);
+        }
+        finally
+        {
+            udpClient?.Close();
+        }
+
+        return result;
+    }
+    
+    private static byte[] CreateStunBindingRequest(byte[] transactionId)
     {
         byte[] packet = new byte[20];
 

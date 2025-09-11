@@ -18,7 +18,7 @@ public class Context
     public static Context Create(IMessage message) => new()
     {
         Type = GetRelativeTypeName(message.GetType()),
-        Message = JsonSerializer.SerializeToElement(message)
+        Message = JsonSerializer.SerializeToElement(message, message.GetType())
     };
     
     public IMessage ToMessage()

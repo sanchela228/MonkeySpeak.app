@@ -84,7 +84,7 @@ public class Invited : Scene
     // TODO: CREATE INPUTHANDLER AND COMMANDS IN ENGINE
     private StringBuilder _inputText = new();
     private int maxInputLength = 6;
-    private async void HandleTextInput()
+    private async Task HandleTextInput()
     {
         int key = Raylib.GetCharPressed();
         while (key > 0)
@@ -99,8 +99,13 @@ public class Invited : Scene
             
             if ( _inputText.Length == maxInputLength )
             {
-                bool q = await Context.Instance.Network.ConnectToNoAuthCallSession(_inputText.ToString().ToLower());
-                if (!q) _linkInputs.ForEach(x => x.IsFailed = true);
+                Context.Instance.CallFacade.Service.OnSessionCreated += (code) =>
+                {
+                    Console.WriteLine("OnSessionCreated");
+                };
+                
+                await Context.Instance.CallFacade.ConnectToSession( _inputText.ToString().ToLower() );
+                
             }
             
             key = Raylib.GetCharPressed();

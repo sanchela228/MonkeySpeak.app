@@ -60,7 +60,7 @@ public class Creator : Scene
     {
         // throw new NotImplementedException();
     }
-
+    
     protected override void Draw()
     {
         Text.DrawPro(
