@@ -66,12 +66,15 @@ public class Creator : Scene
     
     protected override void Draw()
     {
-        Text.DrawPro(
-            _mainFont, 
-            _code, 
-            new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2 - 60),
-            color: Color.Red
-        );
+        if (!string.IsNullOrWhiteSpace(_code))
+        {
+            Text.DrawPro(
+                _mainFont, 
+                _code.ToUpper(), 
+                new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2 - 60),
+                color: Color.Red
+            );
+        }
         
         Text.DrawPro(
             _mainFontBack, 
