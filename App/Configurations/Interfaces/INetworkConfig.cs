@@ -11,8 +11,6 @@ public interface INetworkConfig
     string TURNServer { get; set; }
     int ConnectionTimeout { get; set; }
     int MaxRetries { get; set; }
-    
-    ICallService CallService { get; set; }
 
     string DomainUrl();
 }

@@ -58,6 +58,8 @@ public class GoogleSTUNServer
         
         try
         {
+            Console.WriteLine("[STUN] Socket UPD request start");
+            
             udpClient = new UdpClient(localPort);
             udpClient.Client.ReceiveTimeout = 5000;
 
@@ -71,10 +73,13 @@ public class GoogleSTUNServer
             byte[] requestPacket = CreateStunBindingRequest(transactionId);
 
             await udpClient.SendAsync(requestPacket, requestPacket.Length, stunEndPoint);
+            
             var receiveTask = udpClient.ReceiveAsync();
             var completed = await Task.WhenAny(receiveTask, Task.Delay(udpClient.Client.ReceiveTimeout));
+            
             if (completed != receiveTask)
                 throw new SocketException((int)SocketError.TimedOut);
+            
             UdpReceiveResult serverResponse = receiveTask.Result;
             byte[] responsePacket = serverResponse.Buffer;
             
@@ -92,6 +97,8 @@ public class GoogleSTUNServer
         {
             udpClient?.Close();
         }
+        
+        Console.WriteLine("[STUN] RESULT: " + result);
 
         return result;
     }

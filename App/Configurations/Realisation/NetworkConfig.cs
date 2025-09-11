@@ -1,7 +1,6 @@
 using System.Xml.Serialization;
 using App.Configurations.Interfaces;
 using App.System;
-using App.System.Services.CallServices;
 
 namespace App.Configurations.Realisation;
 
@@ -14,9 +13,6 @@ public class NetworkConfig : INetworkConfig
     public string TURNServer { get; set; }
     public int ConnectionTimeout { get; set; }
     public int MaxRetries { get; set; }
-    
-    [XmlIgnore]
-    public ICallService CallService { get; set; } = new P2P();
     
     public string DomainUrl()
     {

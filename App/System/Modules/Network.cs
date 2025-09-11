@@ -38,13 +38,8 @@ public class Network(INetworkConfig config) : IDisposable
     }
     
     public event EventHandler<NetworkState> OnStateChanged;
-    
-    public ICallService CallService
-    {
-        get => Config.CallService;
-        protected set => Config.CallService = value;
-    }
-    
+
+    public event Action OnServerConnected; 
     public async Task ConnectServer()
     {   
         State = NetworkState.Connecting;
@@ -92,6 +87,7 @@ public class Network(INetworkConfig config) : IDisposable
                             await updater.StartProcessUpdate();
                         
                         State = NetworkState.Connected;
+                        OnServerConnected?.Invoke();
                     };
                     WebSocketClient.OnDisconnected += () => State = NetworkState.Disconnected;
                     WebSocketClient.OnReconnecting += () => State = NetworkState.Reconnecting;

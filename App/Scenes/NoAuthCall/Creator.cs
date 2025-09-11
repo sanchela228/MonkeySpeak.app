@@ -1,5 +1,6 @@
 using System.Net;
 using System.Numerics;
+using App.System.Calls.Application.Facade;
 using App.System.Utils;
 using Engine;
 using Engine.Helpers;
@@ -49,11 +50,13 @@ public class Creator : Scene
         
         AddNode(buttonBack);
         
-        Context.Instance.CallFacade.CreateSession();
-        Context.Instance.CallFacade.Service.OnSessionCreated += (code) =>
+        Context.Instance.CallFacade.OnSessionCreated += code =>
         {
+            Console.WriteLine($"[CallFacade] Session code: {code}");
             _code = code;
         };
+        
+        Context.Instance.CallFacade.CreateSessionAsync();
     }
     
     protected override void Update(float deltaTime)

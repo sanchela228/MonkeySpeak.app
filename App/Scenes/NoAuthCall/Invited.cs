@@ -16,6 +16,8 @@ public class Invited : Scene
     private FontFamily _mainFontBack;
     private Button buttonBack;
     private List<DemoInputInvited> _linkInputs;
+
+    private bool _sendRequestAuth;
     
     public Invited()
     {
@@ -60,6 +62,11 @@ public class Invited : Scene
         );
 
         AddNodes(listInputs);
+        
+        Context.Instance.CallFacade.OnSessionStateChanged += (session, state) =>
+        {
+            Console.WriteLine($"[CallFacade] {session.CallId} -> {state}");
+        };
     }
     
     protected override void Update(float deltaTime)
@@ -97,15 +104,10 @@ public class Invited : Scene
                 _linkInputs[_inputText.Length - 1].Symbol = (char) key;
             }
             
-            if ( _inputText.Length == maxInputLength )
+            if ( _inputText.Length == maxInputLength && !_sendRequestAuth )
             {
-                Context.Instance.CallFacade.Service.OnSessionCreated += (code) =>
-                {
-                    Console.WriteLine("OnSessionCreated");
-                };
-                
-                await Context.Instance.CallFacade.ConnectToSession( _inputText.ToString().ToLower() );
-                
+                _sendRequestAuth = true;
+                await Context.Instance.CallFacade.ConnectToSessionAsync( _inputText.ToString().ToLower() );
             }
             
             key = Raylib.GetCharPressed();
@@ -116,6 +118,8 @@ public class Invited : Scene
             _inputText.Remove(_inputText.Length - 1, 1);
             _linkInputs.ForEach(x => x.IsFailed = false);
             _linkInputs[_inputText.Length].Symbol = null;
+
+            _sendRequestAuth = false;
         }
     }
     

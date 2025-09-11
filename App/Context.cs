@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using App.Configurations.Interfaces;
 using App.Configurations.Realisation;
-using App.System;
+using App.System.Calls.Application.Facade;
 using App.System.Services;
 using Platforms;
 using Platforms.Interfaces;
@@ -79,7 +79,12 @@ public class Context
             AppConfig = (AppConfig) serializer.Deserialize(readerAppConfig);
             
             Network = new System.Modules.Network(configInet);
-            CallFacade = new CallFacade(configInet);
+
+            // DEMO TEST
+            Network.OnServerConnected += () =>
+            {
+                CallFacade = new CallFacade(Network.Config, Network.WebSocketClient);
+            };
         }
         catch (Exception ex)
         {
