@@ -11,4 +11,10 @@ public class GoogleStunClient : IStunClient
     {
         return await GoogleSTUNServer.GetPublicIPAddress(localPort);
     }
+
+    public async Task<IPEndPoint?> GetPublicEndPointAsync(int localPort, int timeoutMs, CancellationToken cancellationToken)
+    {
+        // timeoutMs сейчас контролируется внутри GoogleSTUNServer через ReceiveTimeout на сокете
+        return await GoogleSTUNServer.GetPublicIPAddress(localPort, cancellationToken: cancellationToken);
+    }
 }

@@ -1,10 +1,15 @@
 using System.Net;
+using System.Threading;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using App.Configurations.Interfaces;
 using App.System.Calls.Application;
 using App.System.Calls.Domain;
 using App.System.Calls.Infrastructure;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages.NoAuthCall;
+using App.System.Utils;
 
 namespace App.System.Calls.Application.Adapters.CallManagers;
 
@@ -38,18 +43,29 @@ public class P2PCallManager : ICallManager
 
     public async Task<CallSession> CreateSessionAsync()
     {
+        return await CreateSessionAsync(CancellationToken.None);
+    }
+
+    public async Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken)
+    {
         var session = new CallSession();
         Transition(session, CallState.Negotiating);
-        
-        var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs);
-        session.SetLocal(_localPort, publicEp, null);
-        Console.WriteLine($"[P2P] PUBLIC IP CREATE: {publicEp}");
 
+        var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
+        var localLanEp = GetLocalLanEndpoint(_localPort);
+        session.SetLocal(_localPort, publicEp, localLanEp);
+        Console.WriteLine($"[P2P] PUBLIC IP CREATE: {publicEp}; LOCAL LAN: {localLanEp}");
+
+        
+#if DEBUG
+        publicEp = localLanEp;
+#endif
+        
         EnsureSignalingSubscription();
         await _signaling.SendAsync(new CreateSession
         {
             Value = string.Empty,
-            IpEndPoint = publicEp?.ToString() ?? string.Empty
+            IpEndPoint = (publicEp ?? localLanEp)?.ToString() ?? string.Empty
         });
 
         _activeSession = session;
@@ -58,19 +74,29 @@ public class P2PCallManager : ICallManager
 
     public async Task<CallSession> ConnectToSessionAsync(string code)
     {
+        return await ConnectToSessionAsync(code, CancellationToken.None);
+    }
+
+    public async Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken)
+    {
         var session = new CallSession();
         Transition(session, CallState.Negotiating);
         
-        var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs);
-        session.SetLocal(_localPort, publicEp, null);
-        Console.WriteLine($"[P2P] PUBLIC IP CONNECT: {publicEp}");
+        var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
+        var localLanEp = GetLocalLanEndpoint(_localPort);
+        session.SetLocal(_localPort, publicEp, localLanEp);
+        Console.WriteLine($"[P2P] PUBLIC IP CONNECT: {publicEp}; LOCAL LAN: {localLanEp}");
 
+#if DEBUG
+        publicEp = localLanEp;
+#endif
+        
         EnsureSignalingSubscription();
         await _signaling.SendAsync(new ConnectToSession
         {
             Code = code,
             Value = code,
-            IpEndPoint = publicEp?.ToString() ?? string.Empty
+            IpEndPoint = (publicEp ?? localLanEp)?.ToString() ?? string.Empty
         });
 
         _activeSession = session;
@@ -156,5 +182,30 @@ public class P2PCallManager : ICallManager
             return true;
         }
         catch { return false; }
+    }
+
+    private static IPEndPoint? GetLocalLanEndpoint(int port)
+    {
+        try
+        {
+            var interfaces = NetworkInterface.GetAllNetworkInterfaces()
+                .Where(ni => ni.OperationalStatus == OperationalStatus.Up &&
+                             ni.NetworkInterfaceType != NetworkInterfaceType.Loopback);
+
+            foreach (var ni in interfaces)
+            {
+                var ipProps = ni.GetIPProperties();
+                var addr = ipProps.UnicastAddresses
+                    .FirstOrDefault(a => a.Address.AddressFamily == AddressFamily.InterNetwork);
+                if (addr != null)
+                {
+                    return new IPEndPoint(addr.Address, port);
+                }
+            }
+        }
+        catch
+        {
+        }
+        return null;
     }
 }

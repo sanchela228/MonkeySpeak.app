@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Linq;
 
 namespace App.System.Utils;
 
@@ -51,7 +53,7 @@ public class GoogleSTUNServer
         return result;
     }
     
-    public static async Task<IPEndPoint> GetPublicIPAddress(int localPort, string stunServer = "stun.l.google.com", int stunPort = 19302)
+    public static async Task<IPEndPoint> GetPublicIPAddress(int localPort, string stunServer = "stun.l.google.com", int stunPort = 19302, CancellationToken cancellationToken = default)
     {
         UdpClient udpClient = null;
         IPEndPoint result = null;
@@ -74,58 +76,42 @@ public class GoogleSTUNServer
 
             foreach (var srv in servers)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                
                 try
                 {
                     IPHostEntry hostEntry = await Dns.GetHostEntryAsync(srv.host);
+                    var stunServerIp = hostEntry.AddressList.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork)
+                                       ?? hostEntry.AddressList.First();
+                    IPEndPoint stunEndPoint = new IPEndPoint(stunServerIp, srv.port);
 
-                    var addresses = hostEntry.AddressList;
-                    for (int i = 0; i < addresses.Length; i++)
+                    byte[] transactionId = new byte[12];
+                    new Random().NextBytes(transactionId);
+
+                    byte[] requestPacket = CreateStunBindingRequest(transactionId);
+
+                    await udpClient.SendAsync(requestPacket, requestPacket.Length, stunEndPoint);
+
+                    var receiveTask = udpClient.ReceiveAsync();
+                    var completed = await Task.WhenAny(receiveTask, Task.Delay(udpClient.Client.ReceiveTimeout, cancellationToken));
+                    if (completed != receiveTask)
                     {
-                        var addr = addresses[i];
-                        if (addr.AddressFamily != AddressFamily.InterNetwork) continue;
-
-                        var stunEndPoint = new IPEndPoint(addr, srv.port);
-                        Console.WriteLine($"[STUN] Try {srv.host} ({addr}) : {srv.port}");
-
-                        for (int attempt = 1; attempt <= 2; attempt++)
-                        {
-                            try
-                            {
-                                byte[] transactionId = new byte[12];
-                                new Random().NextBytes(transactionId);
-                                byte[] requestPacket = CreateStunBindingRequest(transactionId);
-
-                                await udpClient.SendAsync(requestPacket, requestPacket.Length, stunEndPoint);
-
-                                var receiveTask = udpClient.ReceiveAsync();
-                                var completed = await Task.WhenAny(receiveTask, Task.Delay(udpClient.Client.ReceiveTimeout));
-                                if (completed != receiveTask)
-                                {
-                                    Console.WriteLine($"[STUN] Timeout on {stunEndPoint} (attempt {attempt})");
-                                    continue;
-                                }
-
-                                UdpReceiveResult serverResponse = receiveTask.Result;
-                                byte[] responsePacket = serverResponse.Buffer;
-                                result = ParseStunResponse(responsePacket, transactionId);
-                                Console.WriteLine($"[STUN] Success via {stunEndPoint}: {result}");
-                                i = addresses.Length;
-                                goto EndResolve;
-                            }
-                            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
-                            {
-                                Console.WriteLine($"[STUN] Timeout (attempt {attempt}) on {stunEndPoint}: {ex.Message}");
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"[STUN] Error on {stunEndPoint}: {ex.Message}");
-                            }
-                        }
+                        Console.WriteLine($"[STUN] Timeout from {srv.host}:{srv.port}");
+                        continue;
+                    }
+                    UdpReceiveResult serverResponse = receiveTask.Result;
+                    byte[] responsePacket = serverResponse.Buffer;
+            
+                    result = ParseStunResponse(responsePacket, transactionId);
+                    if (result != null)
+                    {
+                        Console.WriteLine($"[STUN] Success from {srv.host}:{srv.port} => {result}");
+                        return result;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[STUN] DNS resolve error for {srv.host}: {ex.Message}");
+                    Console.WriteLine($"[STUN] Error for {srv.host}:{srv.port} - {ex.Message}");
                 }
             }
 

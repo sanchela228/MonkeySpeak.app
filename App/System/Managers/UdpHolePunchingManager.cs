@@ -58,7 +58,7 @@ public class UdpHolePunchingManager
                 
                 await _udpClient.SendAsync(pingPacket, pingPacket.Length, _remoteEndPoint);
                 
-                await Task.Delay(50, cancellationToken);
+                await Task.Delay(1000, cancellationToken);
             }
             catch (Exception ex)
             {

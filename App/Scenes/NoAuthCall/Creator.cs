@@ -1,5 +1,6 @@
 using System.Net;
 using System.Numerics;
+using System.Threading;
 using App.System.Calls.Application.Facade;
 using App.System.Utils;
 using Engine;
@@ -16,11 +17,14 @@ public class Creator : Scene
     private FontFamily _mainFont;
     private FontFamily _mainFontBack;
     private Button buttonBack;
+    private CancellationTokenSource _cancellationTokenSource;
     
     private string _code;
 
     public Creator()
     {
+        _cancellationTokenSource = new CancellationTokenSource();
+        
         _mainFont = new FontFamily()
         {
             Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 62),
@@ -45,6 +49,8 @@ public class Creator : Scene
         };
 
         buttonBack.OnClick += (sender) => {
+            // Cancel any ongoing STUN requests
+            _cancellationTokenSource?.Cancel();
             Engine.Managers.Scenes.Instance.PopScene();
         };
         
@@ -56,7 +62,8 @@ public class Creator : Scene
             _code = code;
         };
         
-        Context.Instance.CallFacade.CreateSessionAsync();
+        // Pass the cancellation token to the session creation
+        Context.Instance.CallFacade.CreateSessionAsync(_cancellationTokenSource.Token);
     }
     
     protected override void Update(float deltaTime)
@@ -86,6 +93,9 @@ public class Creator : Scene
 
     protected override void Dispose()
     {
-        
+        // Clean up the cancellation token source
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource?.Dispose();
+        _cancellationTokenSource = null;
     }
 }

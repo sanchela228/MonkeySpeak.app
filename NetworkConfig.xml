@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfig>
-    <Domain>localhost</Domain>
+    <Domain>89.108.113.183</Domain>
     <UseSSL>false</UseSSL>
-    <Port>5062</Port>
+    <Port>80</Port>
     <STUNServer>stun:stun.l.google.com:19302</STUNServer>
     <TURNServer></TURNServer>
     <ConnectionTimeout>30</ConnectionTimeout>

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 using App.Configurations.Interfaces;
 using App.System.Calls.Application.Adapters.CallManagers;
 using App.System.Calls.Domain;
@@ -37,6 +38,8 @@ public class CallFacade
     public event Action<string>? OnSessionCreated;
 
     public Task<CallSession> CreateSessionAsync() => _engine.CreateSessionAsync();
+    public Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken) => _engine.CreateSessionAsync(cancellationToken);
     public Task<CallSession> ConnectToSessionAsync(string code) => _engine.ConnectToSessionAsync(code);
+    public Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken) => _engine.ConnectToSessionAsync(code, cancellationToken);
     public Task HangupAsync(CallSession session) => _engine.HangupAsync(session);
 }
