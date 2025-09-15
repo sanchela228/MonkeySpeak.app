@@ -18,6 +18,7 @@ public class Creator : Scene
     private FontFamily _mainFontBack;
     private Button buttonBack;
     private CancellationTokenSource _cancellationTokenSource;
+    private Action<string>? _onSessionCreatedHandler;
     
     private string _code;
 
@@ -49,20 +50,19 @@ public class Creator : Scene
         };
 
         buttonBack.OnClick += (sender) => {
-            // Cancel any ongoing STUN requests
             _cancellationTokenSource?.Cancel();
             Engine.Managers.Scenes.Instance.PopScene();
         };
         
         AddNode(buttonBack);
         
-        Context.Instance.CallFacade.OnSessionCreated += code =>
+        _onSessionCreatedHandler = code =>
         {
             Console.WriteLine($"[CallFacade] Session code: {code}");
             _code = code;
         };
         
-        // Pass the cancellation token to the session creation
+        Context.Instance.CallFacade.OnSessionCreated += _onSessionCreatedHandler;
         Context.Instance.CallFacade.CreateSessionAsync(_cancellationTokenSource.Token);
     }
     
@@ -93,9 +93,16 @@ public class Creator : Scene
 
     protected override void Dispose()
     {
-        // Clean up the cancellation token source
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
         _cancellationTokenSource = null;
+
+        if (_onSessionCreatedHandler != null)
+        {
+            Context.Instance.CallFacade.OnSessionCreated -= _onSessionCreatedHandler;
+            _onSessionCreatedHandler = null;
+        }
+        
+        Context.Instance.CallFacade.Clear();
     }
 }

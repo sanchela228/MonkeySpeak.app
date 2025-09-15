@@ -17,6 +17,7 @@ public class CallFacade
     private readonly WebSocketClient _wsClient;
 
     private readonly ICallManager _engine;
+    private Action<CallSession, CallState>? _engineStateHandler;
 
     public CallFacade(INetworkConfig netConfig, WebSocketClient wsClient)
     {
@@ -29,7 +30,8 @@ public class CallFacade
 
         _engine = new P2PCallManager(signaling, stun, puncher, _netConfig);
 
-        _engine.OnSessionStateChanged += (session, state) => OnSessionStateChanged?.Invoke(session, state);
+        _engineStateHandler = (session, state) => OnSessionStateChanged?.Invoke(session, state);
+        _engine.OnSessionStateChanged += _engineStateHandler;
 
         _wsClient.MessageDispatcher.On<SessionCreated>(msg => OnSessionCreated?.Invoke(msg.Value));
     }
@@ -42,4 +44,13 @@ public class CallFacade
     public Task<CallSession> ConnectToSessionAsync(string code) => _engine.ConnectToSessionAsync(code);
     public Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken) => _engine.ConnectToSessionAsync(code, cancellationToken);
     public Task HangupAsync(CallSession session) => _engine.HangupAsync(session);
+
+    public void Clear()
+    {
+        if (_engineStateHandler != null)
+        {
+            try { _engine.OnSessionStateChanged -= _engineStateHandler; } catch { }
+            _engineStateHandler = null;
+        }
+    }
 }

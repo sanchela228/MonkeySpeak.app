@@ -114,8 +114,6 @@ public class GoogleSTUNServer
                     Console.WriteLine($"[STUN] Error for {srv.host}:{srv.port} - {ex.Message}");
                 }
             }
-
-            EndResolve: ;
         }
         catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
         {

@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Text;
+using App.System.Calls.Domain;
 using Engine;
 using Engine.Helpers;
 using Engine.Managers;
@@ -17,6 +18,7 @@ public class Invited : Scene
     private Button buttonBack;
     private List<DemoInputInvited> _linkInputs;
 
+    private Action<CallSession, CallState>? _onSessionStateChanged;
     private bool _sendRequestAuth;
     
     public Invited()
@@ -63,10 +65,12 @@ public class Invited : Scene
 
         AddNodes(listInputs);
         
-        Context.Instance.CallFacade.OnSessionStateChanged += (session, state) =>
+        _onSessionStateChanged = (session, state) =>
         {
             Console.WriteLine($"[CallFacade] {session.CallId} -> {state}");
         };
+        
+        Context.Instance.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
     }
     
     protected override void Update(float deltaTime)
@@ -125,6 +129,6 @@ public class Invited : Scene
     
     protected override void Dispose()
     {
-        // throw new NotImplementedException();
+        Context.Instance.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
     }
 }

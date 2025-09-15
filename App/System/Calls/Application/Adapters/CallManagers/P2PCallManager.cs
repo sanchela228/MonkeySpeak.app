@@ -52,24 +52,30 @@ public class P2PCallManager : ICallManager
         Transition(session, CallState.Negotiating);
 
         var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
-        var localLanEp = GetLocalLanEndpoint(_localPort);
-        session.SetLocal(_localPort, publicEp, localLanEp);
-        Console.WriteLine($"[P2P] PUBLIC IP CREATE: {publicEp}; LOCAL LAN: {localLanEp}");
-
         
 #if DEBUG
         publicEp = localLanEp;
 #endif
         
-        EnsureSignalingSubscription();
-        await _signaling.SendAsync(new CreateSession
+        if (publicEp is not null)
         {
-            Value = string.Empty,
-            IpEndPoint = (publicEp ?? localLanEp)?.ToString() ?? string.Empty
-        });
-
-        _activeSession = session;
-        return session;
+            var localLanEp = GetLocalLanEndpoint(_localPort);
+            session.SetLocal(_localPort, publicEp, localLanEp);
+            Console.WriteLine($"[P2P] PUBLIC IP CREATE: {publicEp}; LOCAL LAN: {localLanEp}");
+        
+            EnsureSignalingSubscription();
+            await _signaling.SendAsync(new CreateSession
+            {
+                Value = string.Empty,
+                IpEndPoint = (publicEp ?? localLanEp)?.ToString() ?? string.Empty
+            });
+            
+            _activeSession = session;
+            return session;
+        }
+        
+        Transition(session, CallState.Idle);
+        return null;
     }
 
     public async Task<CallSession> ConnectToSessionAsync(string code)
@@ -83,24 +89,31 @@ public class P2PCallManager : ICallManager
         Transition(session, CallState.Negotiating);
         
         var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
-        var localLanEp = GetLocalLanEndpoint(_localPort);
-        session.SetLocal(_localPort, publicEp, localLanEp);
-        Console.WriteLine($"[P2P] PUBLIC IP CONNECT: {publicEp}; LOCAL LAN: {localLanEp}");
-
+        
 #if DEBUG
         publicEp = localLanEp;
 #endif
-        
-        EnsureSignalingSubscription();
-        await _signaling.SendAsync(new ConnectToSession
-        {
-            Code = code,
-            Value = code,
-            IpEndPoint = (publicEp ?? localLanEp)?.ToString() ?? string.Empty
-        });
 
-        _activeSession = session;
-        return session;
+        if (publicEp is not null)
+        {
+            var localLanEp = GetLocalLanEndpoint(_localPort);
+            session.SetLocal(_localPort, publicEp, localLanEp);
+            Console.WriteLine($"[P2P] PUBLIC IP CONNECT: {publicEp}; LOCAL LAN: {localLanEp}");
+            
+            EnsureSignalingSubscription();
+            await _signaling.SendAsync(new ConnectToSession
+            {
+                Code = code,
+                Value = code,
+                IpEndPoint = (publicEp ?? localLanEp)?.ToString() ?? string.Empty
+            });
+            
+            _activeSession = session;
+            return session;
+        }
+
+        Transition(session, CallState.Idle);
+        return null;
     }
 
     public async Task HangupAsync(CallSession session)
