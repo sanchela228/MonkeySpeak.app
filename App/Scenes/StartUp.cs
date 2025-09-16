@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using App.Scenes.NoAuthCall;
 using App.System.Modules;
+using App.System.Services;
 using Engine;
 using Engine.Helpers;
 using Engine.Managers;
@@ -47,14 +48,14 @@ public class StartUp: Scene
                 new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 100) - progress * 16), color: color);
             Text.DrawPro(
                 _mainFontStartup,
-                "Create your p2p voice chat right now!",
+                Language.Get("Create your p2p voice chat right now!"),
                 new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 20) - progress * 16),
                 color: color
             );
 
             Text.DrawWrapped(
                 _mainFontStartup,
-                "Communication with no limits",
+                Language.Get("A conversation with no limits"),
                 new Vector2(Raylib.GetRenderWidth() / 2 - 120, (Raylib.GetRenderHeight() / 2 + 10) - progress * 16),
                 240,
                 TextAlignment.Center,
@@ -68,7 +69,7 @@ public class StartUp: Scene
         {
             Position = new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 + 100),
             Padding = new Vector2(70, 18),
-            Text = "Create a room",
+            Text = Language.Get("Create a room"),
             IsActive = false
         };
         
@@ -76,7 +77,7 @@ public class StartUp: Scene
         {
             Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 160),
             Padding = new Vector2(130, 18),
-            Text = "Connect",
+            Text = Language.Get("Connect"),
             IsActive = false
         };
         
@@ -102,7 +103,7 @@ public class StartUp: Scene
         retryLink = new Link(fontFamilyRetry)
         {
             Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 165),
-            Text = "Retry",
+            Text = Language.Get("Retry"),
             IsActive = false
         };
          
@@ -111,7 +112,7 @@ public class StartUp: Scene
         authLink = new Link(fontFamilyRetry)
         {
             Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 235),
-            Text = "Authorization in server",
+            Text = Language.Get("Authorization in server"),
             IsActive = false,
         };
         
@@ -222,7 +223,7 @@ public class StartUp: Scene
         {
             Text.DrawPro(
                 _mainFontStartup, 
-                "Connection server error", 
+                Language.Get("Connection server error"), 
                 new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 120),
                 color: Color.Red
             );

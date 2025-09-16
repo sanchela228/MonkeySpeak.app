@@ -9,7 +9,8 @@ public static class Language
     private static Dictionary<string, string> _dictionary = new();
     private static bool _loaded;
 
-    public static string Get(string code) => _loaded ? _dictionary[code] : "";
+    public static string Get(string code) => _loaded ? _dictionary.GetValueOrDefault(code, code) : code;
+    
     public static async Task Load(App.Configurations.Interfaces.Language language)
     {
         if (_dictionary.Count > 0)

@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Text;
 using App.System.Calls.Domain;
+using App.System.Services;
 using Engine;
 using Engine.Helpers;
 using Engine.Managers;
@@ -35,7 +36,7 @@ public class Invited : Scene
         {
             Position = new Vector2(Raylib.GetScreenWidth()/ 2, Raylib.GetScreenHeight() / 2 + 170),
             Padding = new Vector2(30, 18),
-            Text = "Back" 
+            Text = Language.Get("Back")
         };
         
         buttonBack.OnClick += (sender) => {
@@ -84,7 +85,7 @@ public class Invited : Scene
     {
         Text.DrawWrapped(
             _mainFontBack, 
-            "Enter the code to connect to the room", 
+            Language.Get("Enter the code to connect to the room"), 
             new Vector2(Raylib.GetScreenWidth() / 2 - 125, Raylib.GetScreenHeight() / 2),
             250,
             color: Color.White,

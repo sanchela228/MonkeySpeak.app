@@ -82,7 +82,7 @@ public class UdpHolePunchingManager
                 if (!_isConnected && result.RemoteEndPoint.Equals(_remoteEndPoint))
                 {
                     _isConnected = true;
-                    Console.WriteLine("✅ Hole punching successful! Connection established.");
+                    Console.WriteLine("Hole punching successful! Connection established.");
                 }
 
                 OnDataReceived?.Invoke(data);

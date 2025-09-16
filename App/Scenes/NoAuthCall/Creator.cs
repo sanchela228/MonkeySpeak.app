@@ -2,6 +2,7 @@ using System.Net;
 using System.Numerics;
 using System.Threading;
 using App.System.Calls.Application.Facade;
+using App.System.Services;
 using App.System.Utils;
 using Engine;
 using Engine.Helpers;
@@ -46,7 +47,7 @@ public class Creator : Scene
         {
             Position = new Vector2(Raylib.GetScreenWidth()/ 2, Raylib.GetScreenHeight() / 2 + 170),
             Padding = new Vector2(30, 18),
-            Text = "Back" 
+            Text = Language.Get("Back")
         };
 
         buttonBack.OnClick += (sender) => {
@@ -85,7 +86,7 @@ public class Creator : Scene
         
         Text.DrawPro(
             _mainFontBack, 
-            "Send this code to your interlocutor", 
+            Language.Get("Send this code to your interlocutor"), 
             new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2),
             color: Color.White
         );

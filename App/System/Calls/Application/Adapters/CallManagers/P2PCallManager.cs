@@ -50,7 +50,8 @@ public class P2PCallManager : ICallManager
     {
         var session = new CallSession();
         Transition(session, CallState.Negotiating);
-
+        
+        var localLanEp = GetLocalLanEndpoint(_localPort);
         var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
         
 #if DEBUG
@@ -59,7 +60,6 @@ public class P2PCallManager : ICallManager
         
         if (publicEp is not null)
         {
-            var localLanEp = GetLocalLanEndpoint(_localPort);
             session.SetLocal(_localPort, publicEp, localLanEp);
             Console.WriteLine($"[P2P] PUBLIC IP CREATE: {publicEp}; LOCAL LAN: {localLanEp}");
         
@@ -88,6 +88,7 @@ public class P2PCallManager : ICallManager
         var session = new CallSession();
         Transition(session, CallState.Negotiating);
         
+        var localLanEp = GetLocalLanEndpoint(_localPort);
         var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
         
 #if DEBUG
@@ -96,7 +97,6 @@ public class P2PCallManager : ICallManager
 
         if (publicEp is not null)
         {
-            var localLanEp = GetLocalLanEndpoint(_localPort);
             session.SetLocal(_localPort, publicEp, localLanEp);
             Console.WriteLine($"[P2P] PUBLIC IP CONNECT: {publicEp}; LOCAL LAN: {localLanEp}");
             
