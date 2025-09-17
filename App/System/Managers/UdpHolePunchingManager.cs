@@ -10,37 +10,66 @@ public class UdpHolePunchingManager
     private IPEndPoint _remoteEndPoint;
     private bool _isConnected = false;
     private CancellationTokenSource _cancellationTokenSource;
+    private bool _ownsClient = false;
 
     public event Action<byte[]> OnDataReceived;
-    
+    public event Action<IPEndPoint, IPEndPoint> OnConnected;
+
     public void StartHolePunching(IPEndPoint remoteEndPoint, int localPort = 0)
     {
-        _remoteEndPoint = remoteEndPoint;
-        _cancellationTokenSource = new CancellationTokenSource();
-        
+        _ownsClient = true;
+        UdpClient client = null;
         try
         {
-            _udpClient = new UdpClient(localPort);
-            _udpClient.Client.ReceiveTimeout = 1000;
-            try
+            client = new UdpClient(localPort);
+            ConfigureClient(client);
+            StartWithClient(client, remoteEndPoint, new CancellationTokenSource());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error starting UDP client: {ex.Message}");
+            if (_ownsClient)
             {
-                const int SIO_UDP_CONNRESET = -1744830452; // 0x9800000C
-                _udpClient.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0 }, null);
+                client?.Close();
+                _ownsClient = false;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[UDP] Unable to disable ICMP reset: {ex.Message}");
-            }
-            
+        }
+    }
+
+    public void StartWithClient(UdpClient client, IPEndPoint remoteEndPoint, CancellationTokenSource cts)
+    {
+        _ownsClient = false;
+        _udpClient = client;
+        _remoteEndPoint = remoteEndPoint;
+        _cancellationTokenSource = cts ?? new CancellationTokenSource();
+
+        try
+        {
+            ConfigureClient(_udpClient);
+
             Console.WriteLine($"UDP client started on port {((IPEndPoint)_udpClient.Client.LocalEndPoint).Port}");
             Console.WriteLine($"Target endpoint: {remoteEndPoint}");
-
+            
             Task.Run(() => HolePunchingTask(_cancellationTokenSource.Token));
             Task.Run(() => ReceiveTask(_cancellationTokenSource.Token));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error starting UDP client: {ex.Message}");
+            Console.WriteLine($"Error starting UDP with existing client: {ex.Message}");
+        }
+    }
+
+    private void ConfigureClient(UdpClient client)
+    {
+        client.Client.ReceiveTimeout = 1000;
+        try
+        {
+            const int SIO_UDP_CONNRESET = -1744830452; // 0x9800000C
+            client.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0 }, null);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[UDP] Unable to disable ICMP reset: {ex.Message}");
         }
     }
 
@@ -83,6 +112,9 @@ public class UdpHolePunchingManager
                 {
                     _isConnected = true;
                     Console.WriteLine("Hole punching successful! Connection established.");
+                    
+                    var local = (IPEndPoint)_udpClient.Client.LocalEndPoint;
+                    OnConnected?.Invoke(local, _remoteEndPoint);
                 }
 
                 OnDataReceived?.Invoke(data);
@@ -121,7 +153,13 @@ public class UdpHolePunchingManager
     public void Stop()
     {
         _cancellationTokenSource?.Cancel();
-        _udpClient?.Close();
+        
+        if (_ownsClient)
+        {
+            _udpClient?.Close();
+            _ownsClient = false;
+        }
+        
         Console.WriteLine("UDP client stopped");
     }
 }

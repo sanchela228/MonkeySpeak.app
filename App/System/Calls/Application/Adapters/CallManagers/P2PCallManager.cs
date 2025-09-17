@@ -2,6 +2,7 @@ using System.Net;
 using System.Threading;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Net;
 using System.Net.Sockets;
 using App.Configurations.Interfaces;
 using App.System.Calls.Application;
@@ -23,6 +24,7 @@ public class P2PCallManager : ICallManager
     private CallSession? _activeSession;
     private bool _connectedRaised;
     private int _localPort;
+    private UdpClient _udpClient;
 
     public P2PCallManager(ISignalingClient signaling, IStunClient stun, IHolePuncher puncher, CallConfig config)
     {
@@ -119,6 +121,8 @@ public class P2PCallManager : ICallManager
     public async Task HangupAsync(CallSession session)
     {
         Transition(session, CallState.Closed);
+        try { _udpClient?.Close(); } catch { }
+        _udpClient = null;
         await Task.CompletedTask;
     }
 
@@ -144,6 +148,16 @@ public class P2PCallManager : ICallManager
         _signalingSubscribed = true;
         _signaling.OnMessage += HandleSignalingMessage;
         _puncher.OnData += HandlePuncherData;
+        _puncher.OnConnected += HandleOnConnected;
+    }
+
+    private void HandleOnConnected(IPEndPoint localIP, IPEndPoint remoteIP)
+    {
+        Transition(_activeSession, CallState.Connected);
+        _signaling.SendAsync(new SuccessConnectedSession());
+        
+        
+        // HANDLE CONNECT
     }
 
     private async void HandleSignalingMessage(Models.Websocket.Context ctx)
@@ -160,9 +174,13 @@ public class P2PCallManager : ICallManager
 
                     _activeSession.SetPeerEndpoints(remote, null);
                     Transition(_activeSession, CallState.HolePunching);
-
+                    
+                    if (_udpClient == null)
+                    {
+                        _udpClient = new UdpClient(_activeSession.LocalUdpPort);
+                    }
                     var cts = new CancellationTokenSource();
-                    await _puncher.StartAsync(remote, _activeSession.LocalUdpPort, cts.Token);
+                    await _puncher.StartWithClientAsync(_udpClient, remote, cts.Token);
                     break;
             }
         }

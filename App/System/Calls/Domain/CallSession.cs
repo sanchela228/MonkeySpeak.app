@@ -12,17 +12,18 @@ public class CallSession
 
     public IPEndPoint? PublicEndPoint { get; private set; }
     public IPEndPoint? LocalEndPoint { get; private set; }
+
+    // TODO: CREATE PEER CLASS
+    public List<string> Peers = [];
+    
+    
+    // TODO: REMOVE THIS
     public IPEndPoint? PeerPublicEndPoint { get; private set; }
     public IPEndPoint? PeerLocalEndPoint { get; private set; }
 
     public CallSession(Guid? callId = null)
     {
         CallId = callId ?? Guid.NewGuid();
-    }
-
-    public void SetPeer(string peerId)
-    {
-        PeerId = peerId;
     }
 
     public void SetLocal(int localUdpPort, IPEndPoint? publicEp, IPEndPoint? localEp)
