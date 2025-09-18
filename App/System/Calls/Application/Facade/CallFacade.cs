@@ -34,10 +34,13 @@ public class CallFacade
         _engine.OnSessionStateChanged += _engineStateHandler;
 
         _wsClient.MessageDispatcher.On<SessionCreated>(msg => OnSessionCreated?.Invoke(msg.Value));
+        
+        _engine.OnConnected += () => OnConnected?.Invoke();
     }
 
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
+    public event Action OnConnected;
 
     public Task<CallSession> CreateSessionAsync() => _engine.CreateSessionAsync();
     public Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken) => _engine.CreateSessionAsync(cancellationToken);

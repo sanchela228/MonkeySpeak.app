@@ -20,6 +20,7 @@ public class Invited : Scene
     private List<DemoInputInvited> _linkInputs;
 
     private Action<CallSession, CallState>? _onSessionStateChanged;
+    private Action? _onConnected;
     private bool _sendRequestAuth;
     
     public Invited()
@@ -66,6 +67,13 @@ public class Invited : Scene
 
         AddNodes(listInputs);
         
+        _onConnected = () =>
+        {
+            Console.WriteLine($"[CallFacade] Connected");
+            Engine.Managers.Scenes.Instance.PushScene(new Room());
+        };
+        
+        Context.Instance.CallFacade.OnConnected += _onConnected;
         _onSessionStateChanged = (session, state) =>
         {
             Console.WriteLine($"[CallFacade] {session.CallId} -> {state}");
@@ -131,5 +139,9 @@ public class Invited : Scene
     protected override void Dispose()
     {
         Context.Instance.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
+        Context.Instance.CallFacade.OnConnected += _onConnected;
+
+        _onSessionStateChanged = null;
+        _onConnected = null;
     }
 }

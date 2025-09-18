@@ -42,6 +42,7 @@ public class P2PCallManager : ICallManager
     }
 
     public event Action<CallSession, CallState>? OnSessionStateChanged;
+    public event Action OnConnected;
 
     public async Task<CallSession> CreateSessionAsync()
     {
@@ -156,7 +157,7 @@ public class P2PCallManager : ICallManager
         Transition(_activeSession, CallState.Connected);
         _signaling.SendAsync(new SuccessConnectedSession());
         
-        
+        OnConnected?.Invoke();
         // HANDLE CONNECT
     }
 

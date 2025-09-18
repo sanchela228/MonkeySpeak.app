@@ -12,4 +12,5 @@ public interface ICallManager
     Task HangupAsync(CallSession session);
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
+    public event Action OnConnected;
 }

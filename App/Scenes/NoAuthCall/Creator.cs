@@ -20,6 +20,7 @@ public class Creator : Scene
     private Button buttonBack;
     private CancellationTokenSource _cancellationTokenSource;
     private Action<string>? _onSessionCreatedHandler;
+    private Action? _onConnected;
     
     private string _code;
 
@@ -63,6 +64,13 @@ public class Creator : Scene
             _code = code;
         };
         
+        _onConnected = () =>
+        {
+            Console.WriteLine($"[CallFacade] Connected");
+            Engine.Managers.Scenes.Instance.PushScene(new Room());
+        };
+        
+        Context.Instance.CallFacade.OnConnected += _onConnected;
         Context.Instance.CallFacade.OnSessionCreated += _onSessionCreatedHandler;
         Context.Instance.CallFacade.CreateSessionAsync(_cancellationTokenSource.Token);
     }
@@ -102,6 +110,12 @@ public class Creator : Scene
         {
             Context.Instance.CallFacade.OnSessionCreated -= _onSessionCreatedHandler;
             _onSessionCreatedHandler = null;
+        }
+
+        if (_onConnected != null)
+        {
+            Context.Instance.CallFacade.OnConnected += _onConnected;
+            _onConnected = null;
         }
         
         Context.Instance.CallFacade.Clear();
