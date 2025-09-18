@@ -84,9 +84,7 @@ public class Invited : Scene
     
     protected override void Update(float deltaTime)
     {
-        // throw new NotImplementedException();
         HandleTextInput();
-        
     }
 
     protected override void Draw()
@@ -101,7 +99,6 @@ public class Invited : Scene
         );
     }
     
-    // TODO: CREATE INPUTHANDLER AND COMMANDS IN ENGINE
     private StringBuilder _inputText = new();
     private int maxInputLength = 6;
     private async Task HandleTextInput()
@@ -126,7 +123,7 @@ public class Invited : Scene
             key = Raylib.GetCharPressed();
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
+        if (Input.IsPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
         {
             _inputText.Remove(_inputText.Length - 1, 1);
             _linkInputs.ForEach(x => x.IsFailed = false);
@@ -134,12 +131,18 @@ public class Invited : Scene
 
             _sendRequestAuth = false;
         }
+
+        if (Input.IsPressed(KeyboardKey.Enter) && _inputText.Length == maxInputLength && !_sendRequestAuth)
+        {
+            _sendRequestAuth = true;
+            await Context.Instance.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
+        }
     }
     
     protected override void Dispose()
     {
         Context.Instance.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
-        Context.Instance.CallFacade.OnConnected += _onConnected;
+        Context.Instance.CallFacade.OnConnected -= _onConnected;
 
         _onSessionStateChanged = null;
         _onConnected = null;

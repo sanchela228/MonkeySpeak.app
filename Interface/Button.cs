@@ -16,12 +16,6 @@ public enum ButtonState
 
 public class Button : Node
 {
-    public event Action<Button> OnClick;
-    public event Action<Button> OnHoverEnter;
-    public event Action<Button> OnHoverExit;
-    public event Action<Button> OnPress;
-    public event Action<Button> OnRelease;
-    
     protected event Action<Button> OnDraw;
 
     #region Properties
@@ -45,7 +39,7 @@ public class Button : Node
     {
         get
         {
-            var localBounds = Bounds;
+            var localBounds = base.Bounds;
             localBounds.X -= Padding.X / 2;
             localBounds.Width += Padding.X;
         
@@ -66,14 +60,14 @@ public class Button : Node
         }
     }
 
+    public override Rectangle Bounds => GetLocalBounds;
+
     public ButtonState State { get; private set; } = ButtonState.Normal;
     public bool IsEnabled { get; set; } = true;
     
     public bool EnableHoverAnimation { get; set; } = true;
     public float HoverAnimationSpeed { get; set; } = 5f;
     
-    private bool _isHovered = false;
-    private bool _isPressed = false;
     #endregion
 
     public Button(FontFamily font, string text = "")
@@ -130,40 +124,6 @@ public class Button : Node
     private void HandleInput()
     {
         if (!IsEnabled) return;
-        
-        var mousePos = Raylib.GetMousePosition();
-        var wasHovered = _isHovered;
-
-        _isHovered = Raylib.CheckCollisionPointRec(mousePos, GetLocalBounds);
-        
-        if (_isHovered && !wasHovered)
-        {
-            Raylib.SetMouseCursor(MouseCursor.PointingHand);
-            OnHoverEnter?.Invoke(this);
-        }
-        else if (!_isHovered && wasHovered)
-        {
-            Raylib.SetMouseCursor(MouseCursor.Default);
-            OnHoverExit?.Invoke(this);
-        }
-        
-        if (_isHovered && Raylib.IsMouseButtonPressed(MouseButton.Left))
-        {
-            _isPressed = true;
-            OnPress?.Invoke(this);
-        }
-        
-        if (_isPressed && Raylib.IsMouseButtonReleased(MouseButton.Left))
-        {
-            _isPressed = false;
-            if (_isHovered)
-            {
-                OnClick?.Invoke(this);
-            }
-            
-            OnRelease?.Invoke(this);
-            Raylib.SetMouseCursor(MouseCursor.Default);
-        }
         
         UpdateState();
     }
@@ -224,7 +184,7 @@ public class Button : Node
             Engine.Helpers.Text.DrawPro(
                 FontFamily, 
                 Text , 
-                new Vector2(Bounds.X, Bounds.Y), 
+                new Vector2(base.Bounds.X, base.Bounds.Y), 
                 null, 
                 0f, 
                 textColor, 
@@ -238,12 +198,6 @@ public class Button : Node
     
     public override void Dispose()
     {
-        OnClick = null;
-        OnHoverEnter = null;
-        OnHoverExit = null;
-        OnPress = null;
-        OnRelease = null;
-        OnDraw = null;
     }
 }
 

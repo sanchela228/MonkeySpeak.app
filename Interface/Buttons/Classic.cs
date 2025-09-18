@@ -16,5 +16,15 @@ public class Classic : Button
         Padding = new Vector2(20, 18);
         HoverBackgroundColor = new Color( 40, 40, 40);
         HoverCornerColor = new Color(40, 40, 40);
+
+        OnHoverEnter += (node) =>
+        {
+            Raylib.SetMouseCursor(MouseCursor.PointingHand);
+        };
+
+        OnHoverExit += (node) =>
+        {
+            Raylib.SetMouseCursor(MouseCursor.Default);
+        };
     }
 }

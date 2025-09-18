@@ -1,6 +1,7 @@
 using App.Base;
 using App.System.Services;
 using Engine;
+using Engine.Managers;
 using Raylib_cs;
 
 namespace App;
@@ -39,6 +40,7 @@ public class Window : IDisposable
             try
             {
                 Header.Update(deltaTime);
+                Input.Update(deltaTime);
                 Engine.Managers.Scenes.Instance.Update(deltaTime);
                 Graphics.MainBackground.Instance.Update(deltaTime);
             

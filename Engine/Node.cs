@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Linq;
+using Engine.Managers;
 using Raylib_cs;
 
 using SceneManager = Engine.Managers.Scenes;
@@ -36,6 +37,8 @@ public abstract class Node : IDisposable
     
     public void RootUpdate(float deltaTime)
     {
+        HandleInput();
+        
         if (IsActive) Update(deltaTime);
 
         if (_childrens is not null && _childrens.Any())
@@ -222,7 +225,7 @@ public abstract class Node : IDisposable
     private Vector2 _size;
     private Vector2 _scale = Vector2.One;
     private Rectangle _bounds => new Rectangle(Position.X, Position.Y, Size.X, Size.Y);
-    public Rectangle Bounds
+    public virtual Rectangle Bounds
     {
         get
         {
@@ -332,4 +335,55 @@ public abstract class Node : IDisposable
     {
         return _childrens.Count(child => child.IsActive);
     }
+
+    #region HoverAndClicks
+    
+    public event Action<Node> OnClick;
+    public event Action<Node> OnHoverEnter;
+    public event Action<Node> OnHoverExit;
+    public event Action<Node> OnPress;
+    public event Action<Node> OnRelease;
+    
+    protected bool _isHovered = false;
+    protected bool _isPressed = false;
+    private void HandleInput()
+    {
+        
+        var mousePos = Raylib.GetMousePosition();
+        var wasHovered = _isHovered;
+
+        _isHovered = Raylib.CheckCollisionPointRec(mousePos, Bounds);
+        
+        if (_isHovered && !wasHovered)
+        {
+            OnHoverEnter?.Invoke(this);
+        }
+        else if (!_isHovered && wasHovered)
+        {
+            OnHoverExit?.Invoke(this);
+        }
+        
+        if (_isHovered && Raylib.IsMouseButtonPressed(MouseButton.Left))
+        {
+            _isPressed = true;
+            OnPress?.Invoke(this);
+        }
+        
+        if (_isPressed && Raylib.IsMouseButtonReleased(MouseButton.Left))
+        {
+            _isPressed = false;
+            if (_isHovered)
+            {
+                OnClick?.Invoke(this);
+            }
+            
+            OnRelease?.Invoke(this);
+        }
+    }
+
+    public virtual bool OverlapsHover() => false;
+    
+    
+    #endregion
+
 }
