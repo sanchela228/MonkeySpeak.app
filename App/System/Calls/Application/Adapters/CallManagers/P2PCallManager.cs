@@ -147,6 +147,7 @@ public class P2PCallManager : ICallManager
     {
         if (_signalingSubscribed) return;
         _signalingSubscribed = true;
+        
         _signaling.OnMessage += HandleSignalingMessage;
         _puncher.OnData += HandlePuncherData;
         _puncher.OnConnected += HandleOnConnected;
