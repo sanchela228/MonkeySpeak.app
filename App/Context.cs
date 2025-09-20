@@ -28,6 +28,7 @@ public class Context
     );
     
     public const string NameDataFile = "AppData.xml";
+    public const string NameCommunicationSettingsFile = "CommunicationSettings.xml";
     public const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
 
     public Guid CurrentSessionToken { get; } = Guid.NewGuid();
@@ -35,6 +36,7 @@ public class Context
 
     public IAppConfig AppConfig { get; private set; }
     public IContextData ContextData { get; private set; }
+    public ICommunicationSettings CommunicationSettings { get; private set; }
     public System.Modules.Network Network { get; private set; }
 
     public CallFacade CallFacade { get; private set; }
@@ -79,6 +81,7 @@ public class Context
             AppConfig = (AppConfig) serializer.Deserialize(readerAppConfig);
             
             Network = new System.Modules.Network(configInet);
+            CommunicationSettings = new CommunicationSettings();
 
             // DEMO TEST
             Network.OnServerConnected += () =>
