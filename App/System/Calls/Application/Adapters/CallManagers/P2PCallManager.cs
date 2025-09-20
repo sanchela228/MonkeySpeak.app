@@ -55,10 +55,12 @@ public class P2PCallManager : ICallManager
         Transition(session, CallState.Negotiating);
         
         var localLanEp = GetLocalLanEndpoint(_localPort);
-        var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
+        IPEndPoint publicEp = null;
         
 #if DEBUG
         publicEp = localLanEp;
+#else
+        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
 #endif
         
         if (publicEp is not null)
@@ -92,10 +94,12 @@ public class P2PCallManager : ICallManager
         Transition(session, CallState.Negotiating);
         
         var localLanEp = GetLocalLanEndpoint(_localPort);
-        var publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
+        IPEndPoint publicEp = null;
         
 #if DEBUG
         publicEp = localLanEp;
+#else
+        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
 #endif
 
         if (publicEp is not null)
@@ -160,6 +164,34 @@ public class P2PCallManager : ICallManager
         
         OnConnected?.Invoke();
         // HANDLE CONNECT
+
+        Task.Run( StartServer );
+    }
+    
+    public event Action<byte[]> TestOnReciveAudioBytes;
+    
+    public async void TestSendAudioBytes(byte[] encodedBytes, int length)
+    {
+        await _udpClient.SendAsync(encodedBytes, length, _activeSession.Interlocutors[0].RemoteIp);
+    }
+    
+    async void StartServer()
+    {
+        while (true)
+        {
+            try
+            {
+                UdpReceiveResult result = await _udpClient.ReceiveAsync();
+                byte[] data = result.Buffer;
+                
+    
+                TestOnReciveAudioBytes?.Invoke(data);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
     }
 
     private async void HandleSignalingMessage(Models.Websocket.Context ctx)
@@ -174,7 +206,8 @@ public class P2PCallManager : ICallManager
                     if (string.IsNullOrWhiteSpace(hp.IpEndPoint)) return;
                     if (!TryParseIpEndPoint(hp.IpEndPoint, out var remote)) return;
 
-                    _activeSession.SetPeerEndpoints(remote, null);
+                    
+                    _activeSession.SetInterlocutor(new Interlocutor(remote, CallState.HolePunching));
                     Transition(_activeSession, CallState.HolePunching);
                     
                     if (_udpClient == null)

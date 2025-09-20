@@ -67,8 +67,9 @@ public class Invited : Scene
 
         AddNodes(listInputs);
         
-        _onConnected = () =>
+        _onConnected = async () =>
         {
+            await Task.Delay(5000);
             Console.WriteLine($"[CallFacade] Connected");
             Engine.Managers.Scenes.Instance.PushScene(new Room());
         };
@@ -76,7 +77,7 @@ public class Invited : Scene
         Context.Instance.CallFacade.OnConnected += _onConnected;
         _onSessionStateChanged = (session, state) =>
         {
-            Console.WriteLine($"[CallFacade] {session.CallId} -> {state}");
+            Console.WriteLine($"[CallFacade] Active session change state -> {state}");
         };
         
         Context.Instance.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
@@ -123,7 +124,12 @@ public class Invited : Scene
             key = Raylib.GetCharPressed();
         }
 
-        if (Input.IsPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
+        if (Input.IsPressed(KeyboardKey.Backspace))
+        {
+            // NOT WORK
+            Console.WriteLine("WDQWDQDW");
+        }
+        if (Raylib.IsKeyPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
         {
             _inputText.Remove(_inputText.Length - 1, 1);
             _linkInputs.ForEach(x => x.IsFailed = false);

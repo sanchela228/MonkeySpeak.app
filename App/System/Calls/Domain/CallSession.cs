@@ -4,7 +4,6 @@ namespace App.System.Calls.Domain;
 
 public class CallSession
 {
-    public Guid CallId { get; }
     public string? PeerId { get; private set; }
 
     public CallState State { get; private set; } = CallState.Idle;
@@ -13,19 +12,8 @@ public class CallSession
     public IPEndPoint? PublicEndPoint { get; private set; }
     public IPEndPoint? LocalEndPoint { get; private set; }
 
-    // TODO: CREATE PEER CLASS
-    public List<string> Peers = [];
+    public List<Interlocutor> Interlocutors = [];
     
-    
-    // TODO: REMOVE THIS
-    public IPEndPoint? PeerPublicEndPoint { get; private set; }
-    public IPEndPoint? PeerLocalEndPoint { get; private set; }
-
-    public CallSession(Guid? callId = null)
-    {
-        CallId = callId ?? Guid.NewGuid();
-    }
-
     public void SetLocal(int localUdpPort, IPEndPoint? publicEp, IPEndPoint? localEp)
     {
         LocalUdpPort = localUdpPort;
@@ -33,10 +21,9 @@ public class CallSession
         LocalEndPoint = localEp;
     }
 
-    public void SetPeerEndpoints(IPEndPoint? peerPublic, IPEndPoint? peerLocal)
+    public void SetInterlocutor(Interlocutor interlocutor)
     {
-        PeerPublicEndPoint = peerPublic;
-        PeerLocalEndPoint = peerLocal;
+        Interlocutors.Add(interlocutor);
     }
 
     public void TransitionTo(CallState newState)

@@ -64,8 +64,9 @@ public class Creator : Scene
             _code = code;
         };
         
-        _onConnected = () =>
+        _onConnected = async () =>
         {
+            await Task.Delay(5000);
             Console.WriteLine($"[CallFacade] Connected");
             Engine.Managers.Scenes.Instance.PushScene(new Room());
         };

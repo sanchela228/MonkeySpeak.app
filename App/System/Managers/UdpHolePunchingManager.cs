@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using App.System.Services;
 
 namespace App.System.Managers;
 
@@ -27,7 +28,8 @@ public class UdpHolePunchingManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error starting UDP client: {ex.Message}");
+            Logger.Write(Logger.Type.Error, $"Error starting UDP client: {ex.Message}", ex);
+            
             if (_ownsClient)
             {
                 client?.Close();
@@ -47,15 +49,15 @@ public class UdpHolePunchingManager
         {
             ConfigureClient(_udpClient);
 
-            Console.WriteLine($"UDP client started on port {((IPEndPoint)_udpClient.Client.LocalEndPoint).Port}");
-            Console.WriteLine($"Target endpoint: {remoteEndPoint}");
+            Logger.Write(Logger.Type.Info, $"[UDP] Client started on port {((IPEndPoint)_udpClient.Client.LocalEndPoint).Port}");
+            Logger.Write(Logger.Type.Info, $"[UDP] Target endpoint: {remoteEndPoint}");
             
             Task.Run(() => HolePunchingTask(_cancellationTokenSource.Token));
             Task.Run(() => ReceiveTask(_cancellationTokenSource.Token));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error starting UDP with existing client: {ex.Message}");
+            Logger.Write(Logger.Type.Error, $"[UDP] Error starting UDP with existing client: {ex.Message}", ex);
         }
     }
 
@@ -69,7 +71,7 @@ public class UdpHolePunchingManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[UDP] Unable to disable ICMP reset: {ex.Message}");
+            Logger.Write(Logger.Type.Error, $"[UDP] Unable to disable ICMP reset: {ex.Message}", ex);
         }
     }
 
@@ -83,15 +85,14 @@ public class UdpHolePunchingManager
             try
             {
                 attempt++;
-                Console.WriteLine($"Hole punching attempt #{attempt} to {_remoteEndPoint}");
+                Logger.Write(Logger.Type.Info, $"[UDP] Hole punching attempt #{attempt} to {_remoteEndPoint}");
                 
                 await _udpClient.SendAsync(pingPacket, pingPacket.Length, _remoteEndPoint);
-                
                 await Task.Delay(1000, cancellationToken);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in hole punching: {ex.Message}");
+                Logger.Write(Logger.Type.Error, $"[UDP] Error in hole punching: {ex.Message}", ex);
                 await Task.Delay(1000, cancellationToken);
             }
         }
@@ -106,12 +107,13 @@ public class UdpHolePunchingManager
                 UdpReceiveResult result = await _udpClient.ReceiveAsync();
                 byte[] data = result.Buffer;
                 
-                Console.WriteLine($"Received {data.Length} bytes from {result.RemoteEndPoint}");
+                Console.WriteLine();
+                Logger.Write(Logger.Type.Info, $"[UDP] Received {data.Length} bytes from {result.RemoteEndPoint}");
 
                 if (!_isConnected && result.RemoteEndPoint.Equals(_remoteEndPoint))
                 {
                     _isConnected = true;
-                    Console.WriteLine("Hole punching successful! Connection established.");
+                    Logger.Write(Logger.Type.Info, "[UDP] Hole punching successful! Connection established.");
                     
                     var local = (IPEndPoint)_udpClient.Client.LocalEndPoint;
                     OnConnected?.Invoke(local, _remoteEndPoint);
@@ -131,14 +133,19 @@ public class UdpHolePunchingManager
             }
             catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionReset)
             {
-                Console.WriteLine("[UDP] ConnectionReset received (ICMP Port Unreachable). Continuing...");
+                Logger.Write(Logger.Type.Warning, $"[UDP] ConnectionReset received (ICMP Port Unreachable). Continuing...");
                 continue;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error receiving data: {ex.Message}");
+                Logger.Write(Logger.Type.Error, $"Error receiving data: {ex.Message}", ex);
                 await Task.Delay(1000, cancellationToken);
             }
+        }
+
+        if (_isConnected)
+        {
+         
         }
     }
 
@@ -154,11 +161,11 @@ public class UdpHolePunchingManager
     {
         _cancellationTokenSource?.Cancel();
         
-        if (_ownsClient)
-        {
-            _udpClient?.Close();
-            _ownsClient = false;
-        }
+        // if (_ownsClient)
+        // {
+        //     _udpClient?.Close();
+        //     _ownsClient = false;
+        // }
         
         Console.WriteLine("UDP client stopped");
     }

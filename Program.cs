@@ -4,4 +4,4 @@ using App.Scenes;
 Context.Instance.SetUp();
 
 using var window = new App.Window();
-window.Run( new Room() );
+window.Run( new StartUp() );

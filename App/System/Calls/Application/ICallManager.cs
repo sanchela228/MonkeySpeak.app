@@ -11,6 +11,11 @@ public interface ICallManager
     Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken);
     Task HangupAsync(CallSession session);
     
+    
+    // TESTING
+    void TestSendAudioBytes(byte[] encodedBytes, int length);
+    public event Action<byte[]> TestOnReciveAudioBytes;
+    
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
 }

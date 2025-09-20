@@ -38,6 +38,15 @@ public class CallFacade
         _engine.OnConnected += () => OnConnected?.Invoke();
     }
 
+    public void TestSendAudioBytes(byte[] data, int length)
+    {
+        _engine.TestSendAudioBytes(data, length);
+    }
+    
+    public event Action<byte[]> TestOnReciveAudioBytes;
+    
+    
+
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
     public event Action OnConnected;
