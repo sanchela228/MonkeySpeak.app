@@ -44,9 +44,11 @@ public class CallFacade
     }
     
     public event Action<byte[]> TestOnReciveAudioBytes;
-    
-    
 
+
+
+
+    public Task StartAudioProcess() => _engine.StartAudioProcess();
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
     public event Action OnConnected;

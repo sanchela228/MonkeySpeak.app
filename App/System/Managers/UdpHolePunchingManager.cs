@@ -16,28 +16,6 @@ public class UdpHolePunchingManager
     public event Action<byte[]> OnDataReceived;
     public event Action<IPEndPoint, IPEndPoint> OnConnected;
 
-    public void StartHolePunching(IPEndPoint remoteEndPoint, int localPort = 0)
-    {
-        _ownsClient = true;
-        UdpClient client = null;
-        try
-        {
-            client = new UdpClient(localPort);
-            ConfigureClient(client);
-            StartWithClient(client, remoteEndPoint, new CancellationTokenSource());
-        }
-        catch (Exception ex)
-        {
-            Logger.Write(Logger.Type.Error, $"Error starting UDP client: {ex.Message}", ex);
-            
-            if (_ownsClient)
-            {
-                client?.Close();
-                _ownsClient = false;
-            }
-        }
-    }
-
     public void StartWithClient(UdpClient client, IPEndPoint remoteEndPoint, CancellationTokenSource cts)
     {
         _ownsClient = false;
@@ -67,7 +45,7 @@ public class UdpHolePunchingManager
         try
         {
             const int SIO_UDP_CONNRESET = -1744830452; // 0x9800000C
-            client.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0 }, null);
+            client.Client.IOControl((IOControlCode) SIO_UDP_CONNRESET, new byte[] { 0 }, null);
         }
         catch (Exception ex)
         {
