@@ -14,6 +14,7 @@ public static class Logger
 
     public static void Write(Type type, string message)
     {
+        return;
 #if !DEBUG
         var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
         var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;
@@ -58,6 +59,7 @@ public static class Logger
     
     public static void Write(Type type, string message, Exception exc)
     {
+        return;
 #if !DEBUG
         var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
         var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;

@@ -69,7 +69,7 @@ public class Invited : Scene
         
         _onConnected = async () =>
         {
-            await Task.Delay(1000);
+            await Task.Delay(5000);
             Console.WriteLine($"[CallFacade] Connected");
             Engine.Managers.Scenes.Instance.PushScene(new Room());
         };

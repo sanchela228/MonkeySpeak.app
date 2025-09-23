@@ -25,7 +25,7 @@ public class CallFacade
         _wsClient = wsClient;
 
         ISignalingClient signaling = new WebsocketSignalingClient(_wsClient);
-        IStunClient stun = new GoogleStunClient();
+        IStunClient stun = new MainServerStunClient();
         IHolePuncher puncher = new UdpHolePuncher();
 
         _engine = new P2PCallManager(signaling, stun, puncher, _netConfig);

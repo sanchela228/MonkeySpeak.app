@@ -12,6 +12,7 @@ using App.System.Calls.Infrastructure;
 using App.System.Calls.Media;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages.NoAuthCall;
+using App.System.Services;
 using App.System.Utils;
 using Concentus.Enums;
 using Concentus.Structs;
@@ -35,10 +36,6 @@ public class P2PCallManager : ICallManager
     private int _localPort;
     private UdpClient _udpHolePunchClient;
     private UdpClient _udpAudioClient;
-    
-    
-    
-    
 
     public P2PCallManager(ISignalingClient signaling, IStunClient stun, IHolePuncher puncher, CallConfig config)
     {
@@ -74,7 +71,7 @@ public class P2PCallManager : ICallManager
 #if DEBUG
         publicEp = localLanEp;
 #else
-        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
+        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken, Context.Instance.Network.Config.Domain);
 #endif
         
         if (publicEp is not null)
@@ -113,7 +110,7 @@ public class P2PCallManager : ICallManager
 #if DEBUG
         publicEp = localLanEp;
 #else
-        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken);
+        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken, Context.Instance.Network.Config.Domain);
 #endif
 
         if (publicEp is not null)
@@ -149,9 +146,12 @@ public class P2PCallManager : ICallManager
     {
         var test = _localPort + 1;
         _udpAudioClient = new UdpClient(test);
+        // Logger.Write(Logger.Type.Info, $"StartAudioProcess UDP PORT: {test}");
         Console.WriteLine($"StartAudioProcess UDP PORT: {test}");
         
         var newRemote = new IPEndPoint(_activeSession.Interlocutors[0].RemoteIp.Address, _activeSession.Interlocutors[0].RemoteIp.Port + 1);
+        // Logger.Write(Logger.Type.Info, $"StartAudioProcess UDP REMOTE newRemote: {test}");
+        Console.WriteLine($"StartAudioProcess UDP REMOTE newRemote: {test}");
         var audio = new AudioTranslator(_udpAudioClient, newRemote, new CancellationTokenSource());
         
         using var engine = new MiniAudioEngine();
