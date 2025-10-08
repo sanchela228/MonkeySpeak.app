@@ -11,7 +11,9 @@ public interface ICallManager
     Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken);
     Task HangupAsync(CallSession session);
 
-    Task StartAudioProcess();
+    void SetMicrophoneStatus(bool status);
+
+    void StartAudioProcess();
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;

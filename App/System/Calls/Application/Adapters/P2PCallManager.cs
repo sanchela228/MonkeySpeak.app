@@ -56,11 +56,19 @@ public class P2PCallManager : ICallManager
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
 
+
+    private bool _microphoneEnabled = true;
+
+    public void SetMicrophoneStatus(bool status)
+    {
+        _microphoneEnabled = status;
+        audioTranslator.ToggleCaptureAudio(_microphoneEnabled);
+    }
+    
     public async Task<CallSession> CreateSessionAsync()
     {
         return await CreateSessionAsync(CancellationToken.None);
     }
-
     public async Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken)
     {
         var session = new CallSession();
@@ -95,12 +103,10 @@ public class P2PCallManager : ICallManager
         Transition(session, CallState.Idle);
         return null;
     }
-
     public async Task<CallSession> ConnectToSessionAsync(string code)
     {
         return await ConnectToSessionAsync(code, CancellationToken.None);
     }
-
     public async Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken)
     {
         var session = new CallSession();
@@ -136,7 +142,6 @@ public class P2PCallManager : ICallManager
         Transition(session, CallState.Idle);
         return null;
     }
-
     public async Task HangupAsync(CallSession session)
     {
         Transition(session, CallState.Closed);
@@ -146,14 +151,19 @@ public class P2PCallManager : ICallManager
     }
 
     private AudioTranslator audioTranslator;
-
-    public async Task StartAudioProcess()
+    public void StartAudioProcess()
     {
-        var newRemote = new IPEndPoint(_activeSession.Interlocutors[0].RemoteIp.Address, _activeSession.Interlocutors[0].RemoteIp.Port + 1);
-        // Logger.Write(Logger.Type.Info, $"StartAudioProcess UDP REMOTE newRemote: {test}");
-        Console.WriteLine($"StartAudioProcess UDP REMOTE newRemote: {_activeSession.Interlocutors[0].RemoteIp.Port + 1}");
+        try
+        {
+            var newRemote = new IPEndPoint(_activeSession.Interlocutors[0].RemoteIp.Address, _activeSession.Interlocutors[0].RemoteIp.Port + 1);
+            Console.WriteLine($"StartAudioProcess UDP REMOTE newRemote: {_activeSession.Interlocutors[0].RemoteIp.Port + 1}");
         
-        audioTranslator = new AudioTranslator(_udpAudioClient, newRemote, new CancellationTokenSource());
+            audioTranslator = new AudioTranslator(_udpAudioClient, newRemote, new CancellationTokenSource());
+        }
+        catch (Exception ex)
+        {
+            Logger.Write(Logger.Type.Error, $"[StartAudioProcess] Error: {ex.Message}", ex);
+        }
     }
 
     private static int SelectLocalUdpPort()

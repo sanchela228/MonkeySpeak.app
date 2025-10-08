@@ -38,7 +38,25 @@ public class CallFacade
         _engine.OnConnected += () => OnConnected?.Invoke();
     }
 
-    public Task StartAudioProcess() => _engine.StartAudioProcess();
+    private bool _microphoneEnabled = true;
+    public bool MicrophoneEnabled
+    {
+        get { return _microphoneEnabled; }
+        set
+        {
+            _microphoneEnabled = value;
+            SetMicrophoneStatus(_microphoneEnabled);
+        }
+    }
+
+    private void SetMicrophoneStatus(bool status)
+    {
+        _engine.SetMicrophoneStatus(status);
+        
+        // TODO: ADD SIGNALING EVENT FOR MUTE AND UNMUTE
+    }
+
+    public void StartAudioProcess() => _engine.StartAudioProcess();
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
     public event Action OnConnected;
