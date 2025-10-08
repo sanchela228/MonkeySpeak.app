@@ -85,7 +85,6 @@ public class UdpHolePunchingManager
                 UdpReceiveResult result = await _udpClient.ReceiveAsync();
                 byte[] data = result.Buffer;
                 
-                Console.WriteLine();
                 Logger.Write(Logger.Type.Info, $"[UDP] Received {data.Length} bytes from {result.RemoteEndPoint}");
 
                 if (!_isConnected && result.RemoteEndPoint.Equals(_remoteEndPoint))

@@ -18,6 +18,8 @@ public class Updater(INetworkConfig networkConfig)
     {
         _manifest = await GetUpdateInfoFromStreamAsync(NetworkConfig.DomainUrl() + "/" + ManifestFileName);
         
+        Logger.Write($"[Updater] CheckUpdate: {_manifest}");
+        
         if (_manifest is null)
             return false;
 
@@ -47,7 +49,7 @@ public class Updater(INetworkConfig networkConfig)
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine($"Cannot create directory: {ex.Message}");
+                Logger.Write($"Cannot create directory: {ex.Message}", Logger.Type.Error);
             }
         }
 

@@ -1,4 +1,5 @@
 using App.System.Models.Websocket;
+using App.System.Services;
 
 namespace App.System.Managers;
 
@@ -24,12 +25,12 @@ public class MessageDispatcher
     {
         On<Models.Websocket.Messages.Ping>(msg =>
         {
-            Console.WriteLine($"Получен Ping: {msg.Value}");
+            Logger.Write($"[MessageDispatcher] ping {msg.Value}");
         });
         
         On<Models.Websocket.Messages.ReturnedAuthToken>(msg =>
         {
-            Console.WriteLine($"Получен ReturnedAuthToken: {msg.Value}");
+            Logger.Write($"[MessageDispatcher] ReturnedAuthToken: {msg.Value}");
         });
                         
         Dispatch(context);

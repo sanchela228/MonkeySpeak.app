@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using App.System.Calls.Infrastructure;
+using App.System.Services;
 using App.System.Utils;
 
 namespace App.System.Calls.Infrastructure.Adapters;
@@ -18,6 +19,8 @@ public class DemoStunClientWithHttp : IStunClient
 
     public async Task<IPEndPoint?> GetPublicEndPointAsync(int localPort, int timeoutMs, CancellationToken cancellationToken, string domain = null)
     {
+        Logger.Write("[STUN:DemoStunClientWithHttp] GetPublicEndPointAsync_method - Start");
+        
         try
         {
             _httpClient.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
@@ -25,6 +28,8 @@ public class DemoStunClientWithHttp : IStunClient
             int portFromConfig = Context.Instance.Network.Config.Port;
             var response = await _httpClient.GetStringAsync($"http://{domain}:{portFromConfig}/get-public-endpoint");
             response = response.Trim();
+            
+            Logger.Write($"[STUN:DemoStunClientWithHttp] origin response - {response}");
             
             if (response.StartsWith("["))
             {
@@ -69,7 +74,7 @@ public class DemoStunClientWithHttp : IStunClient
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"HTTP STUN error: {ex.Message}");
+            Logger.Write($"[STUN:DemoStunClientWithHttp] error: {ex.Message}", Logger.Type.Error);
             return null;
         }
     }

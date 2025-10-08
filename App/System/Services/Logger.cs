@@ -12,9 +12,15 @@ public static class Logger
     private static Guid LastSessionKeyTouch;
 
 
-    public static void Write(Type type, string message)
+
+    public async static void Write(string message, Type type = Type.Info)
     {
-        return;
+        Write(type, message);
+    }
+    
+    public async static void Write(Type type, string message)
+    {
+        
 #if !DEBUG
         var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
         var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;
@@ -57,9 +63,8 @@ public static class Logger
 #endif   
     }
     
-    public static void Write(Type type, string message, Exception exc)
+    public async static void Write(Type type, string message, Exception exc)
     {
-        return;
 #if !DEBUG
         var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
         var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;
@@ -102,7 +107,7 @@ public static class Logger
 #endif   
     }
 
-    static void CreateOrClearLogFile(string filePath)
+    static async void CreateOrClearLogFile(string filePath)
     {
         try
         {

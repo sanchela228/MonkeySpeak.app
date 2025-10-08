@@ -77,9 +77,10 @@ public class P2PCallManager : ICallManager
         
         if (publicEp is not null)
         {
+            Logger.Write($"[P2P] PUBLIC IP CONNECT: {publicEp}; LOCAL LAN: {localLanEp}");
+            
             session.SetLocal(_localPort, publicEp, localLanEp);
-            Console.WriteLine($"[P2P] PUBLIC IP CREATE: {publicEp}; LOCAL LAN: {localLanEp}");
-        
+            
             EnsureSignalingSubscription();
             await _signaling.SendAsync(new CreateSession
             {
@@ -116,8 +117,9 @@ public class P2PCallManager : ICallManager
 
         if (publicEp is not null)
         {
+            Logger.Write($"[P2P] PUBLIC IP CONNECT: {publicEp}; LOCAL LAN: {localLanEp}");
+            
             session.SetLocal(_localPort, publicEp, localLanEp);
-            Console.WriteLine($"[P2P] PUBLIC IP CONNECT: {publicEp}; LOCAL LAN: {localLanEp}");
             
             EnsureSignalingSubscription();
             await _signaling.SendAsync(new ConnectToSession
@@ -166,6 +168,8 @@ public class P2PCallManager : ICallManager
 
     private void Transition(CallSession session, CallState state)
     {
+        Logger.Write($"[P2P] TransitionTo: {state}");
+        
         session.TransitionTo(state);
         OnSessionStateChanged?.Invoke(session, state);
     }
