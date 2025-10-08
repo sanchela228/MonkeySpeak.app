@@ -20,7 +20,7 @@ public class MainServerStunClient : IStunClient
         {
             try
             {
-                udp.Connect(domain, 3478);
+                udp.Connect(domain, 587);
 
                 byte[] data = Encoding.UTF8.GetBytes("ping");
                 await udp.SendAsync(data, data.Length);

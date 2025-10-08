@@ -13,11 +13,6 @@ public interface ICallManager
 
     Task StartAudioProcess();
     
-    
-    // TESTING
-    void TestSendAudioBytes(byte[] encodedBytes, int length);
-    public event Action<byte[]> TestOnReciveAudioBytes;
-    
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
 }

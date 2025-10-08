@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using App.Configurations.Interfaces;
-using App.System.Calls.Application.Adapters.CallManagers;
+using App.System.Calls.Application.Adapters;
 using App.System.Calls.Domain;
 using App.System.Calls.Infrastructure;
 using App.System.Calls.Infrastructure.Adapters;
@@ -37,16 +37,6 @@ public class CallFacade
         
         _engine.OnConnected += () => OnConnected?.Invoke();
     }
-
-    public void TestSendAudioBytes(byte[] data, int length)
-    {
-        _engine.TestSendAudioBytes(data, length);
-    }
-    
-    public event Action<byte[]> TestOnReciveAudioBytes;
-
-
-
 
     public Task StartAudioProcess() => _engine.StartAudioProcess();
     public event Action<CallSession, CallState>? OnSessionStateChanged;
