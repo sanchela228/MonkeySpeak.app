@@ -2,15 +2,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using App.System.Calls.Media;
 using App.System.Utils;
-using Concentus.Enums;
-using Concentus.Structs;
 using Engine;
-using Raylib_cs;
-using SoundFlow.Backends.MiniAudio;
-using SoundFlow.Components;
-using SoundFlow.Enums;
-using SoundFlow.Providers;
-using SoundFlow.Structs;
+
 
 namespace App.Scenes;
 
@@ -23,7 +16,7 @@ public class Room : Scene
     
 
     
-    protected override unsafe void Update(float dt)
+    protected override void Update(float dt)
     {
         
     }

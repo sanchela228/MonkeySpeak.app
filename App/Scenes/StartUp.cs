@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using App.Scenes.NoAuthCall;
+using App.System.Managers;
 using App.System.Modules;
 using App.System.Services;
 using Engine;
@@ -27,7 +28,6 @@ public class StartUp: Scene
     
     public StartUp()
     {
-
         Network = Context.Instance.Network;
         
         _textureMainPic = Resources.Instance.Texture("Images\\LogoMain90.png");
@@ -149,6 +149,8 @@ public class StartUp: Scene
                 authLink.IsActive = false;
                 test2.IsActive = false;
                 test3.IsActive = false;
+                
+                Notificator.AddNotification("Lost connection", "[Connectivity]");
             }
         
             if (networkState == Network.NetworkState.Connected)
@@ -160,6 +162,8 @@ public class StartUp: Scene
             
                 test2.IsActive = true;
                 test3.IsActive = true;
+                
+                Notificator.AddNotification("Connected to server", "[Connectivity]");
             }
         };
 

@@ -14,6 +14,7 @@ public class Resources
     private static readonly Dictionary<Type, Func<string, object>> Loaders = new()
     {
         { typeof(Texture2D), path => Raylib.LoadTexture(path) },
+        { typeof(Sound), path => Raylib.LoadSound(path) },
         { typeof(Font), path => Raylib.LoadFont(path) },
         { typeof(Shader), path => Raylib.LoadShader(null, path) },
         { typeof(string), path => File.ReadAllText(path)}
@@ -24,6 +25,7 @@ public class Resources
         return typeof(T) switch
         {
             Type t when t == typeof(Texture2D) => "Textures",
+            Type t when t == typeof(Sound) => "Sounds",
             Type t when t == typeof(Font) => "Fonts",
             Type t when t == typeof(Shader) => "Shaders",
             _ => ""
@@ -77,6 +79,7 @@ public class Resources
     public Texture2D Texture(string relativePath) => Get<Texture2D>(relativePath);
     public Font Font(string relativePath) => Get<Font>(relativePath);
     public Shader Shader(string relativePath) => Get<Shader>(relativePath);
+    public Sound Sound(string relativePath) => Get<Sound>(relativePath);
     
     public Font FontEx(string relativePath, int fontSize, int[]? fontChars = null, int charCount = 0)
     {
@@ -102,6 +105,8 @@ public class Resources
                 Raylib.UnloadFont(font);
             else if (resource is Shader shader)
                 Raylib.UnloadShader(shader);
+            else if (resource is Sound sound)
+                Raylib.UnloadSound(sound);
 
             _resources.Remove(fullPath);
         }

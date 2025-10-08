@@ -1,4 +1,5 @@
 using App.Base;
+using App.System.Managers;
 using App.System.Services;
 using Engine;
 using Engine.Managers;
@@ -33,6 +34,18 @@ public class Window : IDisposable
         
         Raylib.SetTargetFPS(Raylib.GetMonitorRefreshRate(Raylib.GetCurrentMonitor()));
         
+        Raylib.InitAudioDevice();
+        if (!Raylib.IsAudioDeviceReady())
+        {
+            Console.WriteLine("Аудиоустройство не инициализировано!");
+            return;
+        }
+        else
+        {
+            Console.WriteLine("Аудиоустройство готово!");
+        }
+        
+        
         while (!Raylib.WindowShouldClose())
         {
             float deltaTime = Raylib.GetFrameTime();
@@ -41,6 +54,7 @@ public class Window : IDisposable
             {
                 Header.Update(deltaTime);
                 Input.Update(deltaTime);
+                Notificator.Update(deltaTime);
                 Engine.Managers.Scenes.Instance.Update(deltaTime);
                 Graphics.MainBackground.Instance.Update(deltaTime);
             
@@ -49,6 +63,7 @@ public class Window : IDisposable
                 Graphics.MainBackground.Instance.Draw();
             
                 Header.Draw();
+                Notificator.Draw();
                 Engine.Managers.Scenes.Instance.Draw();
                 
                 Raylib.EndDrawing();

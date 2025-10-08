@@ -185,6 +185,8 @@ public class P2PCallManager : ICallManager
         Transition(_activeSession, CallState.Connected);
         _signaling.SendAsync(new SuccessConnectedSession());
         
+        // Task.Run(() => { StartAudioProcess(); });
+        
         OnConnected?.Invoke();
     }
     
