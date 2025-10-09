@@ -66,7 +66,7 @@ public class UdpHolePunchingManager
                 Logger.Write(Logger.Type.Info, $"[UDP] Hole punching attempt #{attempt} to {_remoteEndPoint}");
                 
                 await _udpClient.SendAsync(pingPacket, pingPacket.Length, _remoteEndPoint);
-                await Task.Delay(1000, cancellationToken);
+                await Task.Delay(100, cancellationToken);
             }
             catch (Exception ex)
             {
