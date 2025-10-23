@@ -1,6 +1,9 @@
-using System.Net;
-using System.Net.Sockets;
+using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using App.System.Managers;
 using App.System.Services;
 using Concentus.Enums;
 using Concentus.Structs;
@@ -15,8 +18,7 @@ namespace App.System.Calls.Media;
 
 public class AudioTranslator : IDisposable
 {
-    private UdpClient _udpClient;
-    private IPEndPoint _remoteEndPoint;
+    private readonly UdpUnifiedManager _udpManager;
     private CancellationTokenSource _cancellationTokenSource;
 
     private AudioCaptureDevice captureDeviceWorker;
@@ -25,29 +27,19 @@ public class AudioTranslator : IDisposable
     private SoundPlayer player;
     private ProducerConsumerStream pcmStream;
     
-    public AudioTranslator(UdpClient client, IPEndPoint remoteEndPoint, CancellationTokenSource cts)
+    public AudioTranslator(UdpUnifiedManager udpManager, CancellationTokenSource cts)
     {
-        _udpClient = client;
-        _remoteEndPoint = remoteEndPoint;
+        _udpManager = udpManager ?? throw new ArgumentNullException(nameof(udpManager));
         _cancellationTokenSource = cts ?? new CancellationTokenSource();
-        
-        try
-        {
-            ConfigureClient(_udpClient);
-            Task.Run(() => ReceiveTask(_cancellationTokenSource.Token));
-            
-            _audioThread = new Thread(ConfigureAudioEngine);
-            _audioThread.IsBackground = true;
-            _audioThread.Start();
-            
-            Logger.Write(Logger.Type.Info, $"[AudioTranslator] Client started on {_udpClient.Client.LocalEndPoint}");
-            Logger.Write(Logger.Type.Info, $"[AudioTranslator] Target endpoint: {remoteEndPoint}");
-        }
-        catch (Exception ex)
-        {
-            Logger.Write(Logger.Type.Error, $"[AudioTranslator] Error starting UDP with existing client: {ex.Message}", ex);
-        }
+
+        _udpManager.OnAudioData += data => OnDataReceived?.Invoke(data);
+
+        _audioThread = new Thread(ConfigureAudioEngine);
+        _audioThread.IsBackground = true;
+        _audioThread.Start();
+        Logger.Write(Logger.Type.Info, "[AudioTranslator] initialized with UdpUnifiedManager");
     }
+    
     public event Action<byte[]> OnDataReceived;
     
     private volatile bool _isRunning = false;
@@ -60,30 +52,9 @@ public class AudioTranslator : IDisposable
     
     private Thread _audioThread;
     
-    private async Task ReceiveTask(CancellationToken cancellationToken)
+    private async Task SendAudioBytesAsync(byte[] data, int length)
     {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
-            {
-                UdpReceiveResult result = await _udpClient.ReceiveAsync();
-                byte[] data = result.Buffer;
-                
-                Console.WriteLine("[AudioTranslator] ReceiveTask", data);
-                
-                OnDataReceived?.Invoke(data);
-            }
-            catch (Exception ex)
-            {
-                Logger.Write(Logger.Type.Error, $"[AudioTranslator] Error receiving data: {ex.Message}", ex);
-                await Task.Delay(1000, cancellationToken);
-            }
-        }
-    }
-    public async void SendAudioBytes(byte[] data, int length)
-    {
-        Console.WriteLine("SendAudioBytes: " + _remoteEndPoint);
-        await _udpClient.SendAsync(data, length, _remoteEndPoint);
+        await _udpManager.SendAudioAsync(new ReadOnlyMemory<byte>(data, 0, length));
     }
     
     private void ConfigureAudioEngine()
@@ -150,7 +121,7 @@ public class AudioTranslator : IDisposable
                             continue;
                         }
 
-                        this.SendAudioBytes(opusPacket, encodedBytes);
+                        _ = SendAudioBytesAsync(opusPacket, encodedBytes);
                     }
                 }
             };
@@ -206,7 +177,7 @@ public class AudioTranslator : IDisposable
             Logger.Write(Logger.Type.Error, $"[AudioTranslator] Error stopping audio devices: {ex.Message}", ex);
         }
     }
-
+    
     public void Dispose()
     {
         _isRunning = false;
@@ -217,22 +188,7 @@ public class AudioTranslator : IDisposable
         _audioThread?.Join(1000);
         
         _cancellationTokenSource?.Dispose();
-        _udpClient?.Dispose();
         
         Logger.Write(Logger.Type.Info, "[AudioTranslator] Disposed");
-    }
-    
-    private void ConfigureClient(UdpClient client)
-    {
-        client.Client.ReceiveTimeout = 1000;
-        try
-        {
-            const int SIO_UDP_CONNRESET = -1744830452; // 0x9800000C
-            client.Client.IOControl((IOControlCode) SIO_UDP_CONNRESET, new byte[] { 0 }, null);
-        }
-        catch (Exception ex)
-        {
-            Logger.Write(Logger.Type.Error, $"[AudioTranslator] Unable to disable ICMP reset: {ex.Message}", ex);
-        }
     }
 }

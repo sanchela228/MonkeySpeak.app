@@ -26,9 +26,8 @@ public class CallFacade
 
         ISignalingClient signaling = new WebsocketSignalingClient(_wsClient);
         IStunClient stun = new MainServerStunClient();
-        IHolePuncher puncher = new UdpHolePuncher();
 
-        _engine = new P2PCallManager(signaling, stun, puncher, _netConfig);
+        _engine = new P2PCallManager(signaling, stun, _netConfig);
 
         _engineStateHandler = (session, state) => OnSessionStateChanged?.Invoke(session, state);
         _engine.OnSessionStateChanged += _engineStateHandler;

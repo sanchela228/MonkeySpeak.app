@@ -107,10 +107,6 @@ public class Header : IDisposable
         Raylib.DrawCircle(Raylib.GetRenderWidth() - 55, 25, 6.5f, yellowColor);
         Raylib.DrawCircle(Raylib.GetRenderWidth() - 30, 25, 6.5f, redColor);
         
-        Texture.DrawEx(_textureMainPic, new Vector2(70 , 22), color: new Color{R = 255, G = 255, B = 255, A = 115});
-        
-        Raylib.DrawCircle(76, 28, 3.5f, Context.Instance.Network.GetStateColor());
-        
         Text.DrawPro(
             _fontFamilyVersion, 
             $"{Context.Instance.AppConfig.VersionName}:{Context.Instance.AppConfig.Version}", 

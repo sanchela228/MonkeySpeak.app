@@ -13,6 +13,7 @@ using App.System.Calls.Media;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages.NoAuthCall;
 using App.System.Services;
+using App.System.Managers;
 using App.System.Utils;
 using Concentus.Enums;
 using Concentus.Structs;
@@ -28,43 +29,48 @@ public class P2PCallManager : ICallManager
 {
     private readonly ISignalingClient _signaling;
     private readonly IStunClient _stun;
-    private readonly IHolePuncher _puncher;
     private readonly CallConfig _config;
     private bool _signalingSubscribed;
     private CallSession? _activeSession;
     private bool _connectedRaised;
     private int _localPort;
-    private UdpClient _udpHolePunchClient;
-    private UdpClient _udpAudioClient;
+    private UdpUnifiedManager _udpManager;
+    private CancellationTokenSource _udpCts;
+    private bool _microphoneEnabled;
 
-    public P2PCallManager(ISignalingClient signaling, IStunClient stun, IHolePuncher puncher, CallConfig config)
+    public P2PCallManager(ISignalingClient signaling, IStunClient stun, CallConfig config)
     {
         _signaling = signaling;
         _stun = stun;
-        _puncher = puncher;
         _config = config;
         
         _localPort = SelectLocalUdpPort();
-        _udpAudioClient = new UdpClient(_localPort + 1);
     }
-
-    public P2PCallManager(ISignalingClient signaling, IStunClient stun, IHolePuncher puncher, INetworkConfig netConfig)
-        : this(signaling, stun, puncher, new CallConfig(netConfig))
-    {
-    }
-
-    public event Action<CallSession, CallState>? OnSessionStateChanged;
-    public event Action OnConnected;
-
-
-    private bool _microphoneEnabled = true;
-
+    
     public void SetMicrophoneStatus(bool status)
     {
         _microphoneEnabled = status;
         audioTranslator.ToggleCaptureAudio(_microphoneEnabled);
     }
     
+    private static int SelectLocalUdpPort()
+    {
+        var rnd = new Random();
+#if DEBUG
+        return 5000 + rnd.Next(1000);
+#else
+        return 40000 + rnd.Next(20000);
+#endif
+    }
+
+    public P2PCallManager(ISignalingClient signaling, IStunClient stun, INetworkConfig netConfig)
+        : this(signaling, stun, new CallConfig(netConfig))
+    {
+    }
+
+    public event Action<CallSession, CallState>? OnSessionStateChanged;
+    public event Action OnConnected;
+
     public async Task<CallSession> CreateSessionAsync()
     {
         return await CreateSessionAsync(CancellationToken.None);
@@ -145,8 +151,9 @@ public class P2PCallManager : ICallManager
     public async Task HangupAsync(CallSession session)
     {
         Transition(session, CallState.Closed);
-        try { _udpHolePunchClient?.Close(); } catch { }
-        _udpHolePunchClient = null;
+        try { _udpCts?.Cancel(); } catch { }
+        try { _udpManager?.Stop(); } catch { }
+        _udpManager = null;
         await Task.CompletedTask;
     }
 
@@ -155,25 +162,17 @@ public class P2PCallManager : ICallManager
     {
         try
         {
-            var newRemote = new IPEndPoint(_activeSession.Interlocutors[0].RemoteIp.Address, _activeSession.Interlocutors[0].RemoteIp.Port + 1);
-            Console.WriteLine($"StartAudioProcess UDP REMOTE newRemote: {_activeSession.Interlocutors[0].RemoteIp.Port + 1}");
-        
-            audioTranslator = new AudioTranslator(_udpAudioClient, newRemote, new CancellationTokenSource());
+            if (_udpManager == null)
+            {
+                Logger.Write(Logger.Type.Error, "[StartAudioProcess] UDP manager is not initialized");
+                return;
+            }
+            audioTranslator = new AudioTranslator(_udpManager, new CancellationTokenSource());
         }
         catch (Exception ex)
         {
             Logger.Write(Logger.Type.Error, $"[StartAudioProcess] Error: {ex.Message}", ex);
         }
-    }
-
-    private static int SelectLocalUdpPort()
-    {
-        var rnd = new Random();
-#if DEBUG
-        return 5000 + rnd.Next(1000);
-#else
-        return 40000 + rnd.Next(20000);
-#endif
     }
 
     private void Transition(CallSession session, CallState state)
@@ -190,8 +189,7 @@ public class P2PCallManager : ICallManager
         _signalingSubscribed = true;
         
         _signaling.OnMessage += HandleSignalingMessage;
-        _puncher.OnData += HandlePuncherData;
-        _puncher.OnConnected += HandleOnConnected;
+        // Unified manager events will be attached on start
     }
 
     private void HandleOnConnected(IPEndPoint localIP, IPEndPoint remoteIP)
@@ -220,12 +218,14 @@ public class P2PCallManager : ICallManager
                     _activeSession.SetInterlocutor(new Interlocutor(remote, CallState.HolePunching));
                     Transition(_activeSession, CallState.HolePunching);
                     
-                    if (_udpHolePunchClient == null)
+                    if (_udpManager == null)
                     {
-                        _udpHolePunchClient = new UdpClient(_activeSession.LocalUdpPort);
+                        _udpManager = new UdpUnifiedManager();
+                        _udpManager.OnHolePunchData += HandlePuncherData;
+                        _udpManager.OnConnected += HandleOnConnected;
+                        _udpCts = new CancellationTokenSource();
+                        _udpManager.StartWithClient(new UdpClient(_activeSession.LocalUdpPort), remote, _udpCts.Token);
                     }
-                    var cts = new CancellationTokenSource();
-                    await _puncher.StartWithClientAsync(_udpHolePunchClient, remote, cts.Token);
                     break;
             }
         }
