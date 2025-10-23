@@ -169,18 +169,6 @@ public class Network(INetworkConfig config) : IDisposable
         
         return url; 
     }
-    public Color GetStateColor()
-    {
-        return State switch
-        {
-            NetworkState.Connected => Color.Green,
-            NetworkState.Error => Color.Red,
-            NetworkState.Connecting => Color.Yellow,
-            NetworkState.Reconnecting => Color.Yellow,
-            NetworkState.Disconnected => Color.Gray,
-            _ => Color.Gray
-        };
-    }
     
     public void Dispose()
     {

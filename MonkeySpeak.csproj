@@ -20,6 +20,7 @@
       <PackageReference Include="FFmpeg.AutoGen" Version="7.1.1" />
       <PackageReference Include="Raylib-cs" Version="7.0.1" />
       <PackageReference Include="SoundFlow" Version="1.2.1" />
+      <PackageReference Include="Svg" Version="3.4.7" />
       <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.8" />
     </ItemGroup>
 
@@ -36,6 +37,9 @@
       <None Include=".docs\SoundFlow\sourcehtml_doc.txt" />
       <None Include=".docs\SoundFlow\SoundFlow_API.md" />
       <None Update="sticker.webm">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="test.svg">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>

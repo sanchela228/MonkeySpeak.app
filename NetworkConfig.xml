@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfig>
-    <Domain>89.108.113.183</Domain>
+    <Domain>83.166.245.167</Domain>
     <UseSSL>false</UseSSL>
     <Port>80</Port>
     <STUNServer>stun:stun.l.google.com:19302</STUNServer>
