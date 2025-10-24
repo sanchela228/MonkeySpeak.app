@@ -37,6 +37,9 @@ public class P2PCallManager : ICallManager
     private UdpUnifiedManager _udpManager;
     private CancellationTokenSource _udpCts;
     private bool _microphoneEnabled;
+    public event Action<bool>? OnRemoteMuteChanged;
+
+    public CallSession CurrentSession() => _activeSession;
 
     public P2PCallManager(ISignalingClient signaling, IStunClient stun, CallConfig config)
     {
@@ -51,6 +54,7 @@ public class P2PCallManager : ICallManager
     {
         _microphoneEnabled = status;
         audioTranslator.ToggleCaptureAudio(_microphoneEnabled);
+        TrySendMuteControl(_microphoneEnabled);
     }
     
     private static int SelectLocalUdpPort()
@@ -150,10 +154,48 @@ public class P2PCallManager : ICallManager
     }
     public async Task HangupAsync(CallSession session)
     {
+        // Move to Closed state first
         Transition(session, CallState.Closed);
+
+        // Stop audio processing thread/devices
+        try { audioTranslator?.Dispose(); } catch { }
+        audioTranslator = null;
+
+        // Stop UDP and cancel background tasks
         try { _udpCts?.Cancel(); } catch { }
         try { _udpManager?.Stop(); } catch { }
+
+        // Detach UDP events to avoid callbacks after hangup
+        try
+        {
+            if (_udpManager != null)
+            {
+                _udpManager.OnHolePunchData -= HandlePuncherData;
+                _udpManager.OnControlData -= HandleControlData;
+                _udpManager.OnConnected -= HandleOnConnected;
+            }
+        }
+        catch { }
+
         _udpManager = null;
+        try { _udpCts?.Dispose(); } catch { }
+        _udpCts = null;
+
+        // Unsubscribe signaling to avoid stale messages for a dead session
+        try
+        {
+            if (_signalingSubscribed)
+            {
+                _signaling.OnMessage -= HandleSignalingMessage;
+                _signalingSubscribed = false;
+            }
+        }
+        catch { }
+
+        // Reset state for a clean next session
+        _connectedRaised = false;
+        _activeSession = null;
+
         await Task.CompletedTask;
     }
 
@@ -189,7 +231,6 @@ public class P2PCallManager : ICallManager
         _signalingSubscribed = true;
         
         _signaling.OnMessage += HandleSignalingMessage;
-        // Unified manager events will be attached on start
     }
 
     private void HandleOnConnected(IPEndPoint localIP, IPEndPoint remoteIP)
@@ -199,6 +240,7 @@ public class P2PCallManager : ICallManager
         
         // Task.Run(() => { StartAudioProcess(); });
         
+        TrySendMuteControl(_microphoneEnabled);
         OnConnected?.Invoke();
     }
     
@@ -222,6 +264,7 @@ public class P2PCallManager : ICallManager
                     {
                         _udpManager = new UdpUnifiedManager();
                         _udpManager.OnHolePunchData += HandlePuncherData;
+                        _udpManager.OnControlData += HandleControlData;
                         _udpManager.OnConnected += HandleOnConnected;
                         _udpCts = new CancellationTokenSource();
                         _udpManager.StartWithClient(new UdpClient(_activeSession.LocalUdpPort), remote, _udpCts.Token);
@@ -232,6 +275,32 @@ public class P2PCallManager : ICallManager
         catch
         {
         }
+    }
+
+    private const byte ControlCodeMuteState = 0x01;
+    private void TrySendMuteControl(bool isEnabled)
+    {
+        try
+        {
+            if (_udpManager == null) return;
+            Span<byte> payload = stackalloc byte[2];
+            payload[0] = ControlCodeMuteState;
+            payload[1] = (byte)(isEnabled ? 1 : 0);
+            _ = _udpManager.SendControlAsync(payload.ToArray());
+        }
+        catch { }
+    }
+
+    private void HandleControlData(byte[] data)
+    {
+        try
+        {
+            if (data == null || data.Length < 2) return;
+            if (data[0] != ControlCodeMuteState) return;
+            bool remoteMicEnabled = data[1] == 1;
+            OnRemoteMuteChanged?.Invoke(!remoteMicEnabled);
+        }
+        catch { }
     }
 
     private void HandlePuncherData(byte[] data)

@@ -21,11 +21,16 @@ public class Room : Scene
     private CallFacade Facade;
     private readonly FontFamily _mainFontStartup;
 
-    public Button ButtonMute;
+    private Avatar _avatar = new Avatar(new Vector2(Raylib.GetScreenWidth() / 2, 260));
     
     public Room()
     {
         Facade = Context.Instance.CallFacade;
+
+        Facade.OnRemoteMuteChanged += (test) =>
+        {
+            _avatar.IsMuted = test;
+        };
         
         Task.Run(() => { Facade.StartAudioProcess(); });
         
@@ -37,29 +42,13 @@ public class Room : Scene
             Color = Color.White
         };
         
-        ButtonMute = new Classic(_mainFontStartup)
-        {
-            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 160),
-            Padding = new Vector2(130, 18),
-            Text = Language.Get("micro"),
-            IsActive = true,
-            HoverBackgroundColor = Facade.MicrophoneEnabled ? Color.Green : Color.Red,
-            
-        };
         
-        ButtonMute.OnClick += (sender) =>
-        {
-            Facade.MicrophoneEnabled = !Facade.MicrophoneEnabled;
-        };
+        var texTest0 = Resources.Texture("Images\\Icons\\MicrophoneDefault_White.png");
+        var texTest0_b = Resources.Texture("Images\\Icons\\MicrophoneDefault_Black.png");
+        var texTest1 = Resources.Texture("Images\\Icons\\MicrophoneMuted_White.png");
+        var texTest2 = Resources.Texture("Images\\Icons\\CallHangup_White.png");
         
-        AddNode(ButtonMute);
-        
-        var texTest0 = Resources.Texture("Images/Icons/MicrophoneDefault_White.png");
-        var texTest0_b = Resources.Texture("Images/Icons/MicrophoneDefault_Black.png");
-        var texTest1 = Resources.Texture("Images/Icons/MicrophoneMuted_White.png");
-        var texTest2 = Resources.Texture("Images/Icons/CallHangup_White.png");
-        
-        AddNode(new Avatar(new Vector2(Raylib.GetScreenWidth() / 2, 260)));
+        AddNode(_avatar);
         
         
         var microControl = new RoomControlIcon(texTest0_b, new Vector2(28, 28), texTest1)
@@ -68,19 +57,27 @@ public class Room : Scene
             IsActive = true
         };
         
-        microControl.OnRelease += (node) =>
+        var hangupControl = new RoomControlIcon(texTest2, new Vector2(28, 28), texTest1)
         {
-            Facade.MicrophoneEnabled = !Facade.MicrophoneEnabled;
+            BackgroundColor = new Color(220, 80, 80),
+        };
+        
+        hangupControl.OnRelease += (node) =>
+        {
+            Facade.Hangup();
+            Engine.Managers.Scenes.Instance.PushScene(new StartUp(false));
         };
         
         
         var testList = new List<RoomControlIcon>()
         {
-            new RoomControlIcon(texTest0, new Vector2(28, 28)),
-            new RoomControlIcon(texTest1, new Vector2(28, 28)),
-            new RoomControlIcon(texTest0, new Vector2(28, 28)),
             microControl,
-            new RoomControlIcon(texTest2, new Vector2(28, 28)){BackgroundColor = new Color(220, 80, 80)},
+            hangupControl,
+        };
+        
+        microControl.OnRelease += (node) =>
+        {
+            Facade.MicrophoneEnabled = !Facade.MicrophoneEnabled;
         };
         
         AddNodes(testList);

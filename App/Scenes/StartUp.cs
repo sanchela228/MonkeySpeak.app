@@ -26,7 +26,7 @@ public class StartUp: Scene
     protected Interface.Loader Loader = new( new Vector2(){X = 370, Y = 420} );
     public Network Network;
     
-    public StartUp()
+    public StartUp(bool firstLaunch = true)
     {
         Network = Context.Instance.Network;
         
@@ -39,6 +39,14 @@ public class StartUp: Scene
             Color = Color.White
         };
 
+        if (firstLaunch)
+        {
+            Resources.PreLoad<Texture2D>("Images\\Icons\\MicrophoneDefault_White.png");
+            Resources.PreLoad<Texture2D>("Images\\Icons\\MicrophoneDefault_Black.png");
+            Resources.PreLoad<Texture2D>("Images\\Icons\\MicrophoneMuted_White.png");
+            Resources.PreLoad<Texture2D>("Images\\Icons\\CallHangup_White.png");
+        }
+        
         Animator.Task((progress) =>
         {
             Color color = Color.White;
@@ -62,7 +70,10 @@ public class StartUp: Scene
                 color: color
             );
 
-        }, onComplete: () => Network.ConnectServer(), duration: 1f, mirror: false, removable: false, repeat: false);
+        }, onComplete: () =>
+        {
+            if (firstLaunch) Network.ConnectServer();
+        }, duration: 1f, mirror: false, removable: false, repeat: false);
 
         
         test2 = new Classic(_mainFontStartup)

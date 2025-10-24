@@ -35,6 +35,10 @@ public class CallFacade
         _wsClient.MessageDispatcher.On<SessionCreated>(msg => OnSessionCreated?.Invoke(msg.Value));
         
         _engine.OnConnected += () => OnConnected?.Invoke();
+        if (_engine is P2PCallManager p2p)
+        {
+            p2p.OnRemoteMuteChanged += (isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
+        }
     }
 
     private bool _microphoneEnabled = true;
@@ -48,6 +52,12 @@ public class CallFacade
         }
     }
 
+    public async void Hangup()
+    {
+        await HangupAsync(_engine.CurrentSession());
+        Clear();
+    }
+
     private void SetMicrophoneStatus(bool status)
     {
         _engine.SetMicrophoneStatus(status);
@@ -59,6 +69,7 @@ public class CallFacade
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
     public event Action OnConnected;
+    public event Action<bool>? OnRemoteMuteChanged;
 
     public Task<CallSession> CreateSessionAsync() => _engine.CreateSessionAsync();
     public Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken) => _engine.CreateSessionAsync(cancellationToken);

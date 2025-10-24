@@ -12,7 +12,6 @@ public class Avatar : Node
     public Avatar(Vector2 pos)
     {
         Position = pos;
-        InterlocutorMutedIcon = Resources.Texture("Images/Icons/MicrophoneMuted_White.png");
         Size = new Vector2(220, 220);
     }
     
