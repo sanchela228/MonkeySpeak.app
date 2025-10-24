@@ -30,10 +30,10 @@ public class StartUp: Scene
     {
         Network = Context.Instance.Network;
         
-        _textureMainPic = Resources.Instance.Texture("Images\\LogoMain90.png");
+        _textureMainPic = Resources.Texture("Images\\LogoMain90.png");
         _mainFontStartup = new FontFamily()
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
             Size = 24,
             Spacing = 1,
             Color = Color.White
@@ -94,7 +94,7 @@ public class StartUp: Scene
         
         var fontFamilyRetry = new FontFamily
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 22),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 22),
             Size = 22,
             Spacing = 0.05f,
             Color = Color.Gray

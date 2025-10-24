@@ -35,6 +35,12 @@ public class Button : Node
     public Color? TextColor { get; set; }
     public Color? DisabledTextColor { get; set; } = null;
 
+    public Texture2D? IconTexture { get; set; } = null;
+    public Vector2? IconSize { get; set; } = null;
+    public Rectangle? IconSourceRect { get; set; } = null;
+    public Color? IconTint { get; set; } = null;
+    public TextureFilter? IconFilter { get; set; } = TextureFilter.Bilinear;
+
     public Rectangle GetLocalBounds
     {
         get
@@ -45,21 +51,55 @@ public class Button : Node
         
             localBounds.Y -= Padding.Y / 2;
             localBounds.Height += Padding.Y;
-            
-            float textWidth = 0f;
-            if (!string.IsNullOrEmpty(Text))
-                textWidth = Raylib.MeasureTextEx(FontFamily.Font, Text, FontFamily.Size, FontFamily.Spacing).X;
-            
-            localBounds.X -= textWidth / 2;
-            localBounds.Width += textWidth;
-            localBounds.Height += FontFamily.Size + FontFamily.Spacing;
-            localBounds.Y -= FontFamily.Spacing / 2;
-            localBounds.Y -= FontFamily.Size / 2;
-            
+
+            // Content sizing: prefer icon if provided, otherwise text
+            if (IconTexture.HasValue)
+            {
+                var tex = IconTexture.Value;
+                float contentW;
+                float contentH;
+
+                if (IconSize.HasValue && (IconSize.Value.X > 0f && IconSize.Value.Y > 0f))
+                {
+                    contentW = IconSize.Value.X;
+                    contentH = IconSize.Value.Y;
+                }
+                else
+                {
+                    if (IconSourceRect.HasValue)
+                    {
+                        contentW = IconSourceRect.Value.Width;
+                        contentH = IconSourceRect.Value.Height;
+                    }
+                    else
+                    {
+                        contentW = tex.Width;
+                        contentH = tex.Height;
+                    }
+                }
+
+                localBounds.X -= contentW / 2f;
+                localBounds.Y -= contentH / 2f;
+                localBounds.Width += contentW;
+                localBounds.Height += contentH;
+            }
+            else
+            {
+                float textWidth = 0f;
+                if (!string.IsNullOrEmpty(Text))
+                    textWidth = Raylib.MeasureTextEx(FontFamily.Font, Text, FontFamily.Size, FontFamily.Spacing).X;
+                
+                localBounds.X -= textWidth / 2;
+                localBounds.Width += textWidth;
+                localBounds.Height += FontFamily.Size + FontFamily.Spacing;
+                localBounds.Y -= FontFamily.Spacing / 2;
+                localBounds.Y -= FontFamily.Size / 2;
+            }
+
             return localBounds;
         }
     }
-
+    
     public override Rectangle Bounds => GetLocalBounds;
 
     public ButtonState State { get; private set; } = ButtonState.Normal;
@@ -76,6 +116,13 @@ public class Button : Node
             Text = text;
 
         FontFamily = font;
+    }
+    
+    public Button(Texture2D tex, Vector2 size)
+    {
+        IconTexture = tex;
+        IconSize = size;
+        IconSourceRect = new Rectangle(0, 0, tex.Width, tex.Height);
     }
     
     private void UpdateState()
@@ -178,17 +225,47 @@ public class Button : Node
                 borderColor
             );
         }
-        
-        if (!string.IsNullOrEmpty(Text))
+
+        if (IconTexture.HasValue)
+        {
+            var tex = IconTexture.Value;
+
+            if (IconFilter.HasValue)
+            {
+                Raylib.SetTextureFilter(tex, IconFilter.Value);
+            }
+
+            var src = IconSourceRect ?? new Rectangle(0, 0, tex.Width, tex.Height);
+
+            float destW;
+            float destH;
+            if (IconSize.HasValue && (IconSize.Value.X > 0f && IconSize.Value.Y > 0f))
+            {
+                destW = IconSize.Value.X;
+                destH = IconSize.Value.Y;
+            }
+            else
+            {
+                destW = src.Width;
+                destH = src.Height;
+            }
+
+            var dest = new Rectangle(base.Bounds.X - destW / 2f, base.Bounds.Y - destH / 2f, destW, destH);
+            var origin = new Vector2(0, 0);
+            var tint = IconTint ?? Color.White;
+
+            Raylib.DrawTexturePro(tex, src, dest, origin, 0f, tint);
+        }
+        else if (!string.IsNullOrEmpty(Text))
         {
             Engine.Helpers.Text.DrawPro(
-                FontFamily, 
-                Text , 
-                new Vector2(base.Bounds.X, base.Bounds.Y), 
-                null, 
-                0f, 
-                textColor, 
-                FontFamily.Size, 
+                FontFamily,
+                Text,
+                new Vector2(base.Bounds.X, base.Bounds.Y),
+                null,
+                0f,
+                textColor,
+                FontFamily.Size,
                 FontFamily.Spacing
             );
         }
@@ -200,4 +277,3 @@ public class Button : Node
     {
     }
 }
-

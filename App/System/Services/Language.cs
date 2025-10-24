@@ -20,7 +20,7 @@ public static class Language
         
         try
         {
-            var path = Path.Combine(Resources.Instance.RootFolderPath, "Repositories\\Languages\\" + language + ".lang");
+            var path = Path.Combine(Resources.RootFolderPath, "Repositories\\Languages\\" + language + ".lang");
             foreach (var line in await File.ReadAllLinesAsync( path ) )
             {
                 var parts = line.Split('=', 2);

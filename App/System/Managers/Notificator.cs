@@ -16,7 +16,7 @@ public static class Notificator
     private static float _currentPauseTime = 0f;
     private static NotificationState _state = NotificationState.Idle;
     
-    private static Sound _sound = Resources.Instance.Sound("weak-soft-knock-on-wood.wav");
+    private static Sound _sound = Resources.Sound("weak-soft-knock-on-wood.wav");
     
     public static float DisplayDuration { get; set; } = 4.0f;
     public static float PauseBetweenNotifications { get; set; } = 0.7f;
@@ -114,14 +114,14 @@ public static class Notificator
 
         FontFamily fontFamilyTitle = new FontFamily()
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 20),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 20),
             Size = 20,
             Color = Color.White
         };
         
         FontFamily fontFamilyText = new FontFamily()
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 20),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 20),
             Size = 20,
             Color = Color.White
         };

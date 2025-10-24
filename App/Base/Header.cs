@@ -23,7 +23,7 @@ public class Header : IDisposable
     public Texture2D _textureMainPic;
     public Header()
     {
-        _textureMainPic = Resources.Instance.Texture("Images\\Browse.png");
+        _textureMainPic = Resources.Texture("Images\\Browse.png");
 
         Engine.Managers.Scenes.Instance.OnScenePushed += () =>
         {
@@ -35,7 +35,7 @@ public class Header : IDisposable
     {
         Platforms.Windows.Mouse.GetCursorPos(out var globalMousePos);
         
-        Font font = Resources.Instance.FontEx("Midami-Normal.ttf", 26);
+        Font font = Resources.FontEx("Midami-Normal.ttf", 26);
         
         _fontFamily = new()
         {
@@ -49,7 +49,7 @@ public class Header : IDisposable
         _fontFamilyVersion = new()
         {
             Size = 20,
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 20),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 20),
             Rotation = 0,
             Spacing = 1f,
             Color = new Color(255, 255, 255, 80)

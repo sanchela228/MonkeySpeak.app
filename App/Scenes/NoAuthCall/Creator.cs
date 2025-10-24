@@ -30,7 +30,7 @@ public class Creator : Scene
         
         _mainFont = new FontFamily()
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 62),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 62),
             Size = 62,
             Spacing = 1,
             Color = Color.White
@@ -38,7 +38,7 @@ public class Creator : Scene
         
         _mainFontBack = new FontFamily()
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
             Size = 24,
             Spacing = 1,
             Color = Color.White

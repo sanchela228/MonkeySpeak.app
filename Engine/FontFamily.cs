@@ -16,7 +16,7 @@ public struct FontFamily
 
     public void ChangeSize(int newSize)
     {
-        Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", newSize);
+        Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", newSize);
         Size = newSize;
     }
 }
