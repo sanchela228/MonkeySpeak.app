@@ -10,6 +10,7 @@ using App.System.Calls.Application;
 using App.System.Calls.Domain;
 using App.System.Calls.Infrastructure;
 using App.System.Calls.Media;
+using App.System.Calls.Application.Controls;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages.NoAuthCall;
 using App.System.Services;
@@ -38,6 +39,7 @@ public class P2PCallManager : ICallManager
     private CancellationTokenSource _udpCts;
     private bool _microphoneEnabled;
     public event Action<bool>? OnRemoteMuteChanged;
+    private readonly UdpControlService _controls = new UdpControlService();
 
     public CallSession CurrentSession() => _activeSession;
 
@@ -54,7 +56,7 @@ public class P2PCallManager : ICallManager
     {
         _microphoneEnabled = status;
         audioTranslator.ToggleCaptureAudio(_microphoneEnabled);
-        TrySendMuteControl(_microphoneEnabled);
+        _controls.Send(ControlCode.MuteState, (byte)(_microphoneEnabled ? 1 : 0));
     }
     
     private static int SelectLocalUdpPort()
@@ -171,11 +173,13 @@ public class P2PCallManager : ICallManager
             if (_udpManager != null)
             {
                 _udpManager.OnHolePunchData -= HandlePuncherData;
-                _udpManager.OnControlData -= HandleControlData;
                 _udpManager.OnConnected -= HandleOnConnected;
             }
         }
         catch { }
+
+        // Detach control service
+        try { _controls.Detach(); } catch { }
 
         _udpManager = null;
         try { _udpCts?.Dispose(); } catch { }
@@ -240,7 +244,8 @@ public class P2PCallManager : ICallManager
         
         // Task.Run(() => { StartAudioProcess(); });
         
-        TrySendMuteControl(_microphoneEnabled);
+        // Send our current mic state so remote UI syncs immediately
+        _controls.Send(ControlCode.MuteState, (byte)(_microphoneEnabled ? 1 : 0));
         OnConnected?.Invoke();
     }
     
@@ -264,10 +269,13 @@ public class P2PCallManager : ICallManager
                     {
                         _udpManager = new UdpUnifiedManager();
                         _udpManager.OnHolePunchData += HandlePuncherData;
-                        _udpManager.OnControlData += HandleControlData;
                         _udpManager.OnConnected += HandleOnConnected;
                         _udpCts = new CancellationTokenSource();
                         _udpManager.StartWithClient(new UdpClient(_activeSession.LocalUdpPort), remote, _udpCts.Token);
+
+                        // Attach control service
+                        _controls.Attach(_udpManager);
+                        _controls.OnRemoteMuteChanged += (isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
                     }
                     break;
             }
@@ -275,32 +283,6 @@ public class P2PCallManager : ICallManager
         catch
         {
         }
-    }
-
-    private const byte ControlCodeMuteState = 0x01;
-    private void TrySendMuteControl(bool isEnabled)
-    {
-        try
-        {
-            if (_udpManager == null) return;
-            Span<byte> payload = stackalloc byte[2];
-            payload[0] = ControlCodeMuteState;
-            payload[1] = (byte)(isEnabled ? 1 : 0);
-            _ = _udpManager.SendControlAsync(payload.ToArray());
-        }
-        catch { }
-    }
-
-    private void HandleControlData(byte[] data)
-    {
-        try
-        {
-            if (data == null || data.Length < 2) return;
-            if (data[0] != ControlCodeMuteState) return;
-            bool remoteMicEnabled = data[1] == 1;
-            OnRemoteMuteChanged?.Invoke(!remoteMicEnabled);
-        }
-        catch { }
     }
 
     private void HandlePuncherData(byte[] data)
