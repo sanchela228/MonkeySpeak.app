@@ -4,12 +4,12 @@ namespace Engine.Managers;
 
 public class Resources
 {
-    public string RootFolderPath {get; set;} = "Resources";
+    public static string RootFolderPath {get; set;} = "Resources";
     
     private static Resources _instance;
     public static Resources Instance => _instance ??= new Resources();
     
-    private readonly Dictionary<string, object> _resources = new();
+    private static readonly Dictionary<string, object> _resources = new();
     
     private static readonly Dictionary<Type, Func<string, object>> Loaders = new()
     {
@@ -32,7 +32,7 @@ public class Resources
         };
     }
     
-    public T Load<T>(string relativePath)
+    public static T Load<T>(string relativePath)
     {
         string fullPath = Path.Combine(RootFolderPath, GetSubfolder<T>(), relativePath);
 
@@ -45,9 +45,9 @@ public class Resources
         return resource;
     }
     
-    public void PreLoad<T>(string str) => Load<T>(str);
+    public static void PreLoad<T>(string str) => Load<T>(str);
 
-    public void PreLoadQuad<T, K>(IEnumerable<string> strs1, IEnumerable<string> strs2)
+    public static void PreLoadQuad<T, K>(IEnumerable<string> strs1, IEnumerable<string> strs2)
     {
         foreach (var str in strs1) 
             Load<T>(str);
@@ -56,13 +56,13 @@ public class Resources
             Load<K>(str);
     }
 
-    public void PreLoadTheSame<T>( IEnumerable<string> strings)
+    public static void PreLoadTheSame<T>( IEnumerable<string> strings)
     {
         foreach (var str in strings) 
             Load<T>(str);
     }
     
-    public T Get<T>(string relativePath)
+    public static T Get<T>(string relativePath)
     {
         string subfolder = GetSubfolder<T>();
         string fullPath = string.IsNullOrEmpty(subfolder) ? Path.Combine(RootFolderPath, relativePath) : Path.Combine(RootFolderPath, subfolder, relativePath);
@@ -76,12 +76,12 @@ public class Resources
         return Load<T>(relativePath);
     }
   
-    public Texture2D Texture(string relativePath) => Get<Texture2D>(relativePath);
-    public Font Font(string relativePath) => Get<Font>(relativePath);
-    public Shader Shader(string relativePath) => Get<Shader>(relativePath);
-    public Sound Sound(string relativePath) => Get<Sound>(relativePath);
+    public static Texture2D Texture(string relativePath) => Get<Texture2D>(relativePath);
+    public static Font Font(string relativePath) => Get<Font>(relativePath);
+    public static Shader Shader(string relativePath) => Get<Shader>(relativePath);
+    public static Sound Sound(string relativePath) => Get<Sound>(relativePath);
     
-    public Font FontEx(string relativePath, int fontSize, int[]? fontChars = null, int charCount = 0)
+    public static Font FontEx(string relativePath, int fontSize, int[]? fontChars = null, int charCount = 0)
     {
         string fullPath = Path.Combine(RootFolderPath, "Fonts", relativePath);
 
@@ -93,7 +93,7 @@ public class Resources
         return font;
     }
     
-    public void Unload<T>(string relativePath)
+    public static void Unload<T>(string relativePath)
     {
         string fullPath = Path.Combine(RootFolderPath, GetSubfolder<T>(), relativePath);
 
@@ -112,7 +112,7 @@ public class Resources
         }
     }
     
-    public bool Exists<T>(string relativePath)
+    public static bool Exists<T>(string relativePath)
     {
         string fullPath = Path.Combine(RootFolderPath, GetSubfolder<T>(), relativePath);
         return File.Exists(fullPath);

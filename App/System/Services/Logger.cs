@@ -18,6 +18,11 @@ public static class Logger
         Write(type, message);
     }
     
+    public async static void Error(string message)
+    {
+        Write(Type.Error, message);
+    }
+    
     public async static void Write(Type type, string message)
     {
         

@@ -53,7 +53,7 @@ public class MainBackground
     
     public void SetSettings()
     {
-        _shader = Resources.Instance.Shader("noise_background_shader.frag");
+        _shader = Resources.Shader("noise_background_shader.frag");
         _speedLoc = Raylib.GetShaderLocation(_shader, "speed");
 
         SetShader();
@@ -165,7 +165,7 @@ public class MainBackground
         _fullscreenRect = new Rectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
     }
 
-    public void UnloadShader() => Resources.Instance.Unload<Shader>("noise_background_shader.frag");
+    public void UnloadShader() => Resources.Unload<Shader>("noise_background_shader.frag");
     static MainBackground() => Instance = new();
     public static MainBackground Instance { get; private set; }
 }

@@ -10,6 +10,7 @@ using App.System.Calls.Application;
 using App.System.Calls.Domain;
 using App.System.Calls.Infrastructure;
 using App.System.Calls.Media;
+using App.System.Calls.Application.Controls;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages.NoAuthCall;
 using App.System.Services;
@@ -37,6 +38,11 @@ public class P2PCallManager : ICallManager
     private UdpUnifiedManager _udpManager;
     private CancellationTokenSource _udpCts;
     private bool _microphoneEnabled;
+    public event Action<bool>? OnRemoteMuteChanged;
+    private readonly UdpControlService _controls = new UdpControlService();
+    private bool _suppressHangupNotify;
+
+    public CallSession CurrentSession() => _activeSession;
 
     public P2PCallManager(ISignalingClient signaling, IStunClient stun, CallConfig config)
     {
@@ -51,6 +57,7 @@ public class P2PCallManager : ICallManager
     {
         _microphoneEnabled = status;
         audioTranslator.ToggleCaptureAudio(_microphoneEnabled);
+        _controls.Send(ControlCode.MuteState, (byte)(_microphoneEnabled ? 1 : 0));
     }
     
     private static int SelectLocalUdpPort()
@@ -151,9 +158,56 @@ public class P2PCallManager : ICallManager
     public async Task HangupAsync(CallSession session)
     {
         Transition(session, CallState.Closed);
-        try { _udpCts?.Cancel(); } catch { }
-        try { _udpManager?.Stop(); } catch { }
-        _udpManager = null;
+
+        try
+        {
+            if (!_suppressHangupNotify)
+                _controls?.SendHangup();
+            
+            audioTranslator?.Dispose();
+
+            _udpCts?.Cancel();
+            _udpManager?.Stop();
+
+            if (_udpManager != null)
+            {
+                _udpManager.OnHolePunchData -= HandlePuncherData;
+                _udpManager.OnConnected -= HandleOnConnected;
+            }
+
+            try
+            {
+                _controls.OnRemoteMuteChanged -= HandleRemoteMuteChanged;
+                _controls.OnRemoteHangup -= HandleRemoteHangup;
+            }
+            catch
+            {
+            }
+
+            _controls.Detach();
+            _udpCts?.Dispose();
+
+            if (_signalingSubscribed)
+            {
+                _signaling.OnMessage -= HandleSignalingMessage;
+                _signalingSubscribed = false;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"[P2P] Hangup: {ex}");
+        }
+        finally
+        {
+            _udpManager = null;
+            audioTranslator = null;
+            _udpCts = null;
+            _connectedRaised = false;
+            _activeSession = null;
+            _suppressHangupNotify = false;
+        }
+       
         await Task.CompletedTask;
     }
 
@@ -189,7 +243,6 @@ public class P2PCallManager : ICallManager
         _signalingSubscribed = true;
         
         _signaling.OnMessage += HandleSignalingMessage;
-        // Unified manager events will be attached on start
     }
 
     private void HandleOnConnected(IPEndPoint localIP, IPEndPoint remoteIP)
@@ -197,8 +250,7 @@ public class P2PCallManager : ICallManager
         Transition(_activeSession, CallState.Connected);
         _signaling.SendAsync(new SuccessConnectedSession());
         
-        // Task.Run(() => { StartAudioProcess(); });
-        
+        _controls.Send(ControlCode.MuteState, (byte)(_microphoneEnabled ? 1 : 0));
         OnConnected?.Invoke();
     }
     
@@ -225,6 +277,10 @@ public class P2PCallManager : ICallManager
                         _udpManager.OnConnected += HandleOnConnected;
                         _udpCts = new CancellationTokenSource();
                         _udpManager.StartWithClient(new UdpClient(_activeSession.LocalUdpPort), remote, _udpCts.Token);
+                        
+                        _controls.Attach(_udpManager);
+                        _controls.OnRemoteMuteChanged += HandleRemoteMuteChanged;
+                        _controls.OnRemoteHangup += HandleRemoteHangup;
                     }
                     break;
             }
@@ -242,6 +298,23 @@ public class P2PCallManager : ICallManager
         {
             _connectedRaised = true;
             Transition(_activeSession, CallState.Connected);
+        }
+    }
+
+    private void HandleRemoteMuteChanged(bool isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
+
+    private async void HandleRemoteHangup()
+    {
+        try
+        {
+            if (_activeSession == null) return;
+            _suppressHangupNotify = true;
+            await HangupAsync(_activeSession);
+        }
+        catch { }
+        finally
+        {
+            _suppressHangupNotify = false;
         }
     }
 

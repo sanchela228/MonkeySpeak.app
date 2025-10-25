@@ -28,7 +28,7 @@ public class Invited : Scene
     {
         _mainFontBack = new FontFamily()
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
             Size = 24,
             Spacing = 1,
             Color = Color.White

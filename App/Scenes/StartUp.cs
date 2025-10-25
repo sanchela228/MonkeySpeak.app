@@ -26,43 +26,29 @@ public class StartUp: Scene
     protected Interface.Loader Loader = new( new Vector2(){X = 370, Y = 420} );
     public Network Network;
     
-    public StartUp()
+    public StartUp(bool firstLaunch = true)
     {
         Network = Context.Instance.Network;
         
-        _textureMainPic = Resources.Instance.Texture("Images\\LogoMain90.png");
+        _textureMainPic = Resources.Texture("Images\\LogoMain90.png");
         _mainFontStartup = new FontFamily()
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
             Size = 24,
             Spacing = 1,
             Color = Color.White
         };
 
-        Animator.Task((progress) =>
+        if (firstLaunch)
         {
-            Color color = Color.White;
-            color.A = (byte)(progress * 255);
+            Resources.PreLoad<Texture2D>("Images\\Icons\\MicrophoneDefault_White.png");
+            Resources.PreLoad<Texture2D>("Images\\Icons\\MicrophoneDefault_Black.png");
+            Resources.PreLoad<Texture2D>("Images\\Icons\\MicrophoneMuted_White.png");
+            Resources.PreLoad<Texture2D>("Images\\Icons\\CallHangup_White.png");
+        }
 
-            Texture.DrawEx(_textureMainPic,
-                new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 100) - progress * 16), color: color);
-            Text.DrawPro(
-                _mainFontStartup,
-                Language.Get("Create your p2p voice chat right now!"),
-                new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 20) - progress * 16),
-                color: color
-            );
-
-            Text.DrawWrapped(
-                _mainFontStartup,
-                Language.Get("A conversation with no limits"),
-                new Vector2(Raylib.GetRenderWidth() / 2 - 120, (Raylib.GetRenderHeight() / 2 + 10) - progress * 16),
-                240,
-                TextAlignment.Center,
-                color: color
-            );
-
-        }, onComplete: () => Network.ConnectServer(), duration: 1f, mirror: false, removable: false, repeat: false);
+        if (firstLaunch) 
+            Network.ConnectServer();
 
         
         test2 = new Classic(_mainFontStartup)
@@ -94,7 +80,7 @@ public class StartUp: Scene
         
         var fontFamilyRetry = new FontFamily
         {
-            Font = Resources.Instance.FontEx("JetBrainsMonoNL-Regular.ttf", 22),
+            Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 22),
             Size = 22,
             Spacing = 0.05f,
             Color = Color.Gray
@@ -167,6 +153,7 @@ public class StartUp: Scene
             }
         };
 
+        
         loaderBarProgression = new LoaderBarProgression()
         {
             Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 130),
@@ -174,6 +161,17 @@ public class StartUp: Scene
         };
         
         AddNode(loaderBarProgression);
+
+        if (!firstLaunch)
+        {
+            _load = false;
+            retryLink.IsActive = false;
+            _drawErrorText = false;
+            authLink.IsActive = true;
+            
+            test2.IsActive = true;
+            test3.IsActive = true;
+        }
     }
 
     public LoaderBarProgression loaderBarProgression;
@@ -212,6 +210,24 @@ public class StartUp: Scene
         Animator.Draw();
         
         if (_load) Loader.Draw();
+        
+        Texture.DrawEx(_textureMainPic,
+            new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 110)), color: Color.White);
+        Text.DrawPro(
+            _mainFontStartup,
+            Language.Get("Create your p2p voice chat right now!"),
+            new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 30)),
+            color: Color.White
+        );
+
+        Text.DrawWrapped(
+            _mainFontStartup,
+            Language.Get("A conversation with no limits"),
+            new Vector2(Raylib.GetRenderWidth() / 2 - 120, (Raylib.GetRenderHeight() / 2)),
+            240,
+            TextAlignment.Center,
+            color: Color.White
+        );
 
         if (_showLoadingUpdate)
         {

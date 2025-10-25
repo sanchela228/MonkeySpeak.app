@@ -10,11 +10,12 @@ public interface ICallManager
     Task<CallSession> ConnectToSessionAsync(string code);
     Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken);
     Task HangupAsync(CallSession session);
-
+    public CallSession CurrentSession();
     void SetMicrophoneStatus(bool status);
 
     void StartAudioProcess();
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
+    public event Action<bool>? OnRemoteMuteChanged;
 }
