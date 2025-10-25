@@ -177,7 +177,7 @@ public class Updater(INetworkConfig networkConfig)
     
     public bool HasError;
 
-    private string GetActualDownloadUrl() => $"download/versions/{_manifest.Version}/win64/source/MonkeySpeak.zip";
+    private string GetActualDownloadUrl() => $"download/versions/{_manifest.Version}/win64/source/source_win64_{_manifest.Version}.zip";
     
     public async Task<Manifest> GetUpdateInfoFromStreamAsync(string xmlUrl)
     {
