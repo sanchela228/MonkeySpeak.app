@@ -21,7 +21,7 @@ public class Room : Scene
     private CallFacade Facade;
     private readonly FontFamily _mainFontStartup;
 
-    private Avatar _avatar = new Avatar(new Vector2(Raylib.GetScreenWidth() / 2, 260)){IsMuted = true};
+    private Avatar _avatar = new Avatar(new Vector2(Raylib.GetScreenWidth() / 2, 260));
     
     public Room()
     {
