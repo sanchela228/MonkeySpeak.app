@@ -17,4 +17,5 @@ public interface ICallManager
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
+    public event Action<bool>? OnRemoteMuteChanged;
 }

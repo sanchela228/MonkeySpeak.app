@@ -21,16 +21,18 @@ public class Room : Scene
     private CallFacade Facade;
     private readonly FontFamily _mainFontStartup;
 
-    private Avatar _avatar = new Avatar(new Vector2(Raylib.GetScreenWidth() / 2, 260));
+    private Avatar _avatar = new Avatar(new Vector2(Raylib.GetScreenWidth() / 2, 260)){IsMuted = true};
     
     public Room()
     {
         Facade = Context.Instance.CallFacade;
-
+        
         Facade.OnRemoteMuteChanged += (test) =>
         {
             _avatar.IsMuted = test;
         };
+        
+        Facade.OnCallEnded += HandleCallEnded;
         
         Task.Run(() => { Facade.StartAudioProcess(); });
         
@@ -62,10 +64,10 @@ public class Room : Scene
             BackgroundColor = new Color(220, 80, 80),
         };
         
-        hangupControl.OnRelease += (node) =>
+        hangupControl.OnRelease += async (node) =>
         {
             Facade.Hangup();
-            Engine.Managers.Scenes.Instance.PushScene(new StartUp(false));
+            HandleCallEnded();
         };
         
         
@@ -93,7 +95,10 @@ public class Room : Scene
 
     }
     
-
+    private void HandleCallEnded()
+    {
+        Engine.Managers.Scenes.Instance.PushScene(new StartUp(false));
+    }
     
     protected override void Update(float dt)
     {

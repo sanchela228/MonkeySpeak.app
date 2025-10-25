@@ -40,6 +40,7 @@ public class P2PCallManager : ICallManager
     private bool _microphoneEnabled;
     public event Action<bool>? OnRemoteMuteChanged;
     private readonly UdpControlService _controls = new UdpControlService();
+    private bool _suppressHangupNotify;
 
     public CallSession CurrentSession() => _activeSession;
 
@@ -156,50 +157,57 @@ public class P2PCallManager : ICallManager
     }
     public async Task HangupAsync(CallSession session)
     {
-        // Move to Closed state first
         Transition(session, CallState.Closed);
 
-        // Stop audio processing thread/devices
-        try { audioTranslator?.Dispose(); } catch { }
-        audioTranslator = null;
-
-        // Stop UDP and cancel background tasks
-        try { _udpCts?.Cancel(); } catch { }
-        try { _udpManager?.Stop(); } catch { }
-
-        // Detach UDP events to avoid callbacks after hangup
         try
         {
+            if (!_suppressHangupNotify)
+                _controls?.SendHangup();
+            
+            audioTranslator?.Dispose();
+
+            _udpCts?.Cancel();
+            _udpManager?.Stop();
+
             if (_udpManager != null)
             {
                 _udpManager.OnHolePunchData -= HandlePuncherData;
                 _udpManager.OnConnected -= HandleOnConnected;
             }
-        }
-        catch { }
 
-        // Detach control service
-        try { _controls.Detach(); } catch { }
+            try
+            {
+                _controls.OnRemoteMuteChanged -= HandleRemoteMuteChanged;
+                _controls.OnRemoteHangup -= HandleRemoteHangup;
+            }
+            catch
+            {
+            }
 
-        _udpManager = null;
-        try { _udpCts?.Dispose(); } catch { }
-        _udpCts = null;
+            _controls.Detach();
+            _udpCts?.Dispose();
 
-        // Unsubscribe signaling to avoid stale messages for a dead session
-        try
-        {
             if (_signalingSubscribed)
             {
                 _signaling.OnMessage -= HandleSignalingMessage;
                 _signalingSubscribed = false;
             }
+
         }
-        catch { }
-
-        // Reset state for a clean next session
-        _connectedRaised = false;
-        _activeSession = null;
-
+        catch (Exception ex)
+        {
+            Logger.Error($"[P2P] Hangup: {ex}");
+        }
+        finally
+        {
+            _udpManager = null;
+            audioTranslator = null;
+            _udpCts = null;
+            _connectedRaised = false;
+            _activeSession = null;
+            _suppressHangupNotify = false;
+        }
+       
         await Task.CompletedTask;
     }
 
@@ -242,9 +250,6 @@ public class P2PCallManager : ICallManager
         Transition(_activeSession, CallState.Connected);
         _signaling.SendAsync(new SuccessConnectedSession());
         
-        // Task.Run(() => { StartAudioProcess(); });
-        
-        // Send our current mic state so remote UI syncs immediately
         _controls.Send(ControlCode.MuteState, (byte)(_microphoneEnabled ? 1 : 0));
         OnConnected?.Invoke();
     }
@@ -272,10 +277,10 @@ public class P2PCallManager : ICallManager
                         _udpManager.OnConnected += HandleOnConnected;
                         _udpCts = new CancellationTokenSource();
                         _udpManager.StartWithClient(new UdpClient(_activeSession.LocalUdpPort), remote, _udpCts.Token);
-
-                        // Attach control service
+                        
                         _controls.Attach(_udpManager);
-                        _controls.OnRemoteMuteChanged += (isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
+                        _controls.OnRemoteMuteChanged += HandleRemoteMuteChanged;
+                        _controls.OnRemoteHangup += HandleRemoteHangup;
                     }
                     break;
             }
@@ -293,6 +298,23 @@ public class P2PCallManager : ICallManager
         {
             _connectedRaised = true;
             Transition(_activeSession, CallState.Connected);
+        }
+    }
+
+    private void HandleRemoteMuteChanged(bool isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
+
+    private async void HandleRemoteHangup()
+    {
+        try
+        {
+            if (_activeSession == null) return;
+            _suppressHangupNotify = true;
+            await HangupAsync(_activeSession);
+        }
+        catch { }
+        finally
+        {
+            _suppressHangupNotify = false;
         }
     }
 

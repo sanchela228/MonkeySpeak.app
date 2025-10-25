@@ -5,8 +5,8 @@ namespace App.System.Calls.Application.Controls;
 
 public enum ControlCode : byte
 {
+    Hangup = 0x00,
     MuteState = 0x01,
-    // Future: VolumeLevel = 0x02, HandRaise = 0x03, Typing = 0x04, ...
 }
 
 public class UdpControlService
@@ -16,6 +16,7 @@ public class UdpControlService
 
     public event Action<ControlCode, ReadOnlyMemory<byte>>? OnControl;
     public event Action<bool>? OnRemoteMuteChanged;
+    public event Action? OnRemoteHangup;
 
     public void Attach(UdpUnifiedManager udp)
     {
@@ -44,7 +45,6 @@ public class UdpControlService
         }
     }
 
-    // Generic send (payload as span)
     public void Send(ControlCode code, ReadOnlySpan<byte> payload)
     {
         try
@@ -58,7 +58,6 @@ public class UdpControlService
         catch { }
     }
 
-    // Convenience for one-byte payload
     public void Send(ControlCode code, byte value)
     {
         Span<byte> payload = stackalloc byte[1];
@@ -66,10 +65,14 @@ public class UdpControlService
         Send(code, payload);
     }
 
-    // Backward compatibility helper for current code paths
     public void SendMuteState(bool enabled)
     {
         Send(ControlCode.MuteState, (byte)(enabled ? 1 : 0));
+    }
+
+    public void SendHangup()
+    {
+        Send(ControlCode.Hangup, ReadOnlySpan<byte>.Empty);
     }
 
     private void HandleControlData(byte[] data)
@@ -80,12 +83,15 @@ public class UdpControlService
             var code = (ControlCode)data[0];
             var payload = data.AsMemory(1);
 
-            // Raise generic event first
             OnControl?.Invoke(code, payload);
+            
+            Console.WriteLine($"HandleControlData: {code}, {payload}");
 
-            // Route known controls
             switch (code)
             {
+                case ControlCode.Hangup:
+                    OnRemoteHangup?.Invoke();
+                    break;
                 case ControlCode.MuteState:
                     if (payload.Length >= 1)
                     {

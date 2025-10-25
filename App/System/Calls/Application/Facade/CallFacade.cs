@@ -15,9 +15,7 @@ public class CallFacade
 {
     private readonly INetworkConfig _netConfig;
     private readonly WebSocketClient _wsClient;
-
     private readonly ICallManager _engine;
-    private Action<CallSession, CallState>? _engineStateHandler;
 
     public CallFacade(INetworkConfig netConfig, WebSocketClient wsClient)
     {
@@ -28,17 +26,10 @@ public class CallFacade
         IStunClient stun = new MainServerStunClient();
 
         _engine = new P2PCallManager(signaling, stun, _netConfig);
-
-        _engineStateHandler = (session, state) => OnSessionStateChanged?.Invoke(session, state);
-        _engine.OnSessionStateChanged += _engineStateHandler;
-
-        _wsClient.MessageDispatcher.On<SessionCreated>(msg => OnSessionCreated?.Invoke(msg.Value));
+        _engine.OnSessionStateChanged += CallStateHandler;
+        _engine.OnConnected += HandleEngineConnected;
         
-        _engine.OnConnected += () => OnConnected?.Invoke();
-        if (_engine is P2PCallManager p2p)
-        {
-            p2p.OnRemoteMuteChanged += (isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
-        }
+        _wsClient.MessageDispatcher.On<SessionCreated>(msg => OnSessionCreated?.Invoke(msg.Value));
     }
 
     private bool _microphoneEnabled = true;
@@ -51,6 +42,17 @@ public class CallFacade
             SetMicrophoneStatus(_microphoneEnabled);
         }
     }
+
+    private void CallStateHandler(CallSession session, CallState state)
+    {
+        OnSessionStateChanged?.Invoke(session, state);
+        if (state == CallState.Closed)
+        {
+            OnCallEnded?.Invoke();
+        }
+    }
+    
+    private void CallMuteHandler(bool isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
 
     public async void Hangup()
     {
@@ -69,6 +71,7 @@ public class CallFacade
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
     public event Action OnConnected;
+    public event Action OnCallEnded;
     public event Action<bool>? OnRemoteMuteChanged;
 
     public Task<CallSession> CreateSessionAsync() => _engine.CreateSessionAsync();
@@ -79,10 +82,13 @@ public class CallFacade
 
     public void Clear()
     {
-        if (_engineStateHandler != null)
-        {
-            try { _engine.OnSessionStateChanged -= _engineStateHandler; } catch { }
-            _engineStateHandler = null;
-        }
+        _engine.OnRemoteMuteChanged -= CallMuteHandler;
+        _engine.OnSessionStateChanged -= CallStateHandler; 
+    }
+
+    private void HandleEngineConnected()
+    {
+        OnConnected?.Invoke();
+        _engine.OnRemoteMuteChanged += CallMuteHandler;
     }
 }
