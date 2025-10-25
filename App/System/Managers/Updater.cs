@@ -31,13 +31,14 @@ public class Updater(INetworkConfig networkConfig)
 
     public async Task StartProcessUpdate()
     {
-        Context.Instance.Network.DownloadUpdateState = new DownloadUpdateState()
+        var context = Context.Instance;
+        context.Network.DownloadUpdateState = new DownloadUpdateState()
         {
             IsDownloading = true,
             StatusMessage = "Downloading update"
         };
 
-        var dataDirectory = Context.Instance.DataDirectory;
+        var dataDirectory = context.DataDirectory;
         var downloadsPath =  Path.Combine(dataDirectory, "Downloads");
         var actualUpdateZipPath = Path.Combine(downloadsPath, "ActualUpdate.zip");
 
@@ -57,18 +58,21 @@ public class Updater(INetworkConfig networkConfig)
         var updateFolderPath = Path.Combine(downloadsPath, "ActualUpdate");
         
         await DownloadFileFromServer(downloadPath, actualUpdateZipPath, Context.Instance.Network.DownloadUpdateState);
-        
-        // TODO: ADD BACKUP AND UNPACK THEM IF UPDATE FAILED
-        ExtractFile(actualUpdateZipPath, updateFolderPath);
-        DeleteFile(actualUpdateZipPath);
+
+        if (!HasError)
+        {
+            // TODO: ADD BACKUP AND UNPACK THEM IF UPDATE FAILED
+            ExtractFile(actualUpdateZipPath, updateFolderPath);
+            DeleteFile(actualUpdateZipPath);
+        }
         
         if (HasError) RestoreFromBackup();
         else
         {
             ApplyUpdate(updateFolderPath, AppDomain.CurrentDomain.BaseDirectory);
             
-            Context.Instance.Network.DownloadUpdateState.IsDownloading = false;
-            Context.Instance.Network.DownloadUpdateState.StatusMessage = "Update applied";
+            context.Network.DownloadUpdateState.IsDownloading = false;
+            context.Network.DownloadUpdateState.StatusMessage = "Update applied";
         }
     }
 
@@ -103,6 +107,7 @@ public class Updater(INetworkConfig networkConfig)
         }
         catch (Exception ex)
         {
+            HasError = true;
             Logger.Write(Logger.Type.Error, $"Error download file from server", ex);
         }
     }
@@ -172,12 +177,14 @@ public class Updater(INetworkConfig networkConfig)
 
     public void RestoreFromBackup()
     {
-        
+        Context.Instance.Network.DownloadUpdateState.StatusMessage = "Download error";
+        Context.Instance.Network.DownloadUpdateState.IsDownloading = false;
+
     }
     
     public bool HasError;
 
-    private string GetActualDownloadUrl() => $"download/versions/{_manifest.Version}/win64/source/source_win64_{_manifest.Version}.zip";
+    private string GetActualDownloadUrl() => $"download/versions/{_manifest.Version}/win64/source_win64_{_manifest.Version}.zip";
     
     public async Task<Manifest> GetUpdateInfoFromStreamAsync(string xmlUrl)
     {
