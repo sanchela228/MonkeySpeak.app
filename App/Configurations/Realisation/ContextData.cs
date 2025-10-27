@@ -12,7 +12,7 @@ public class ContextData : IContextData
     public void SaveContext()
     {
         var serializer = new XmlSerializer(typeof(ContextData));
-        using var writer = new StreamWriter(Context.Instance.DataDirectory + "/" + Context.NameDataFile);
+        using var writer = new StreamWriter(Context.DataDirectory + "/" + Context.NameDataFile);
         serializer.Serialize(writer, this);
     }
 }

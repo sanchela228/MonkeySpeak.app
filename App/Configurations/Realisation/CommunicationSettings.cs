@@ -70,7 +70,7 @@ public class CommunicationSettings : ICommunicationSettings
 
     public CommunicationSettings()
     {
-        string path = Path.Combine(Context.Instance.DataDirectory, Context.NameCommunicationSettingsFile);
+        string path = Path.Combine(Context.DataDirectory, Context.NameCommunicationSettingsFile);
     
         if (File.Exists(path))
         {
@@ -100,7 +100,7 @@ public class CommunicationSettings : ICommunicationSettings
         try
         {
             var serializer = new XmlSerializer(typeof(CommunicationSettings));
-            string path = Path.Combine(Context.Instance.DataDirectory, Context.NameCommunicationSettingsFile);
+            string path = Path.Combine(Context.DataDirectory, Context.NameCommunicationSettingsFile);
             using var writer = new StreamWriter(path);
             serializer.Serialize(writer, this);
         }

@@ -28,7 +28,7 @@ public class StartUp: Scene
     
     public StartUp(bool firstLaunch = true)
     {
-        Network = Context.Instance.Network;
+        Network = Context.Network;
         
         _textureMainPic = Resources.Texture("Images\\LogoMain90.png");
         _mainFontStartup = new FontFamily()
@@ -105,7 +105,7 @@ public class StartUp: Scene
         
         authLink.OnClick += async (sender) => 
         {
-            string authUrl = Context.Instance.Network.GenerateAuthorizationUrl();
+            string authUrl = Context.Network.GenerateAuthorizationUrl();
             Process.Start( new ProcessStartInfo(authUrl) { UseShellExecute = true } );
         };
         

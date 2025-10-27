@@ -25,7 +25,7 @@ public class DemoStunClientWithHttp : IStunClient
         {
             _httpClient.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
             
-            int portFromConfig = Context.Instance.Network.Config.Port;
+            int portFromConfig = Context.Network.Config.Port;
             var response = await _httpClient.GetStringAsync($"http://{domain}:{portFromConfig}/get-public-endpoint");
             response = response.Trim();
             

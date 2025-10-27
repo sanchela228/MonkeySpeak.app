@@ -71,9 +71,9 @@ public class Creator : Scene
             Engine.Managers.Scenes.Instance.PushScene(new Room());
         };
         
-        Context.Instance.CallFacade.OnConnected += _onConnected;
-        Context.Instance.CallFacade.OnSessionCreated += _onSessionCreatedHandler;
-        Context.Instance.CallFacade.CreateSessionAsync(_cancellationTokenSource.Token);
+        Context.CallFacade.OnConnected += _onConnected;
+        Context.CallFacade.OnSessionCreated += _onSessionCreatedHandler;
+        Context.CallFacade.CreateSessionAsync(_cancellationTokenSource.Token);
     }
     
     protected override void Update(float deltaTime)
@@ -109,16 +109,16 @@ public class Creator : Scene
 
         if (_onSessionCreatedHandler != null)
         {
-            Context.Instance.CallFacade.OnSessionCreated -= _onSessionCreatedHandler;
+            Context.CallFacade.OnSessionCreated -= _onSessionCreatedHandler;
             _onSessionCreatedHandler = null;
         }
 
         if (_onConnected != null)
         {
-            Context.Instance.CallFacade.OnConnected += _onConnected;
+            Context.CallFacade.OnConnected += _onConnected;
             _onConnected = null;
         }
         
-        Context.Instance.CallFacade.Clear();
+        Context.CallFacade.Clear();
     }
 }

@@ -25,7 +25,7 @@ public class Room : Scene
     
     public Room()
     {
-        Facade = Context.Instance.CallFacade;
+        Facade = Context.CallFacade;
         
         Facade.OnRemoteMuteChanged += (test) =>
         {

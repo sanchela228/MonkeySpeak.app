@@ -74,14 +74,23 @@ public class Invited : Scene
             Console.WriteLine($"[CallFacade] Connected");
             Engine.Managers.Scenes.Instance.PushScene(new Room());
         };
+
+
+        Context.CallFacade.OnSessionStateChanged += (session, state) =>
+        {
+            if (state == CallState.Failed)
+            {
+                Console.WriteLine("Error code");
+            }
+        };
         
-        Context.Instance.CallFacade.OnConnected += _onConnected;
+        Context.CallFacade.OnConnected += _onConnected;
         _onSessionStateChanged = (session, state) =>
         {
             Console.WriteLine($"[CallFacade] Active session change state -> {state}");
         };
         
-        Context.Instance.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
+        Context.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
     }
     
     protected override void Update(float deltaTime)
@@ -119,7 +128,7 @@ public class Invited : Scene
             if ( _inputText.Length == maxInputLength && !_sendRequestAuth )
             {
                 _sendRequestAuth = true;
-                await Context.Instance.CallFacade.ConnectToSessionAsync( _inputText.ToString().ToLower() );
+                await Context.CallFacade.ConnectToSessionAsync( _inputText.ToString().ToLower() );
             }
             
             key = Raylib.GetCharPressed();
@@ -142,14 +151,14 @@ public class Invited : Scene
         if (Input.IsPressed(KeyboardKey.Enter) && _inputText.Length == maxInputLength && !_sendRequestAuth)
         {
             _sendRequestAuth = true;
-            await Context.Instance.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
+            await Context.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
         }
     }
     
     protected override void Dispose()
     {
-        Context.Instance.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
-        Context.Instance.CallFacade.OnConnected -= _onConnected;
+        Context.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
+        Context.CallFacade.OnConnected -= _onConnected;
 
         _onSessionStateChanged = null;
         _onConnected = null;

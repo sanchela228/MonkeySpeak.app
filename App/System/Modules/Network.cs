@@ -131,7 +131,7 @@ public class Network(INetworkConfig config) : IDisposable
     {
         var url = GetUrl("/auth");
         
-        var secureStorage = Context.Instance.SecureStorage;
+        var secureStorage = Context.SecureStorage;
         
         string codeVerifier = PkceHelper.GenerateCodeVerifier();
         secureStorage.Save("temp_code_verifier", codeVerifier);

@@ -23,7 +23,7 @@ public class Updater(INetworkConfig networkConfig)
         if (_manifest is null)
             return false;
 
-        if (_manifest.Version <= Context.Instance.AppConfig.Version)
+        if (_manifest.Version <= Context.AppConfig.Version)
             return false;
         
         return true;
@@ -31,13 +31,13 @@ public class Updater(INetworkConfig networkConfig)
 
     public async Task StartProcessUpdate()
     {
-        Context.Instance.Network.DownloadUpdateState = new DownloadUpdateState()
+        Context.Network.DownloadUpdateState = new DownloadUpdateState()
         {
             IsDownloading = true,
             StatusMessage = "Downloading update"
         };
 
-        var dataDirectory = Context.Instance.DataDirectory;
+        var dataDirectory = Context.DataDirectory;
         var downloadsPath =  Path.Combine(dataDirectory, "Downloads");
         var actualUpdateZipPath = Path.Combine(downloadsPath, "ActualUpdate.zip");
 
@@ -56,7 +56,7 @@ public class Updater(INetworkConfig networkConfig)
         var downloadPath = NetworkConfig.DomainUrl() + "/" + GetActualDownloadUrl();
         var updateFolderPath = Path.Combine(downloadsPath, "ActualUpdate");
         
-        await DownloadFileFromServer(downloadPath, actualUpdateZipPath, Context.Instance.Network.DownloadUpdateState);
+        await DownloadFileFromServer(downloadPath, actualUpdateZipPath, Context.Network.DownloadUpdateState);
         
         // TODO: ADD BACKUP AND UNPACK THEM IF UPDATE FAILED
         ExtractFile(actualUpdateZipPath, updateFolderPath);
@@ -67,8 +67,8 @@ public class Updater(INetworkConfig networkConfig)
         {
             ApplyUpdate(updateFolderPath, AppDomain.CurrentDomain.BaseDirectory);
             
-            Context.Instance.Network.DownloadUpdateState.IsDownloading = false;
-            Context.Instance.Network.DownloadUpdateState.StatusMessage = "Update applied";
+            Context.Network.DownloadUpdateState.IsDownloading = false;
+            Context.Network.DownloadUpdateState.StatusMessage = "Update applied";
         }
     }
 

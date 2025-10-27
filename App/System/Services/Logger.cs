@@ -27,14 +27,14 @@ public static class Logger
     {
         
 #if !DEBUG
-        var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
-        var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;
-        var logsLogFile = Context.Instance.LogsDataDirectory + "/" + NameLogsFile;
+        var lastLogFile = Context.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
+        var errorsLogFile = Context.LogsDataDirectory + "/" + NameErrorsFile;
+        var logsLogFile = Context.LogsDataDirectory + "/" + NameLogsFile;
         
         
-        if (LastSessionKeyTouch != Context.Instance.CurrentSessionToken)
+        if (LastSessionKeyTouch != Context.CurrentSessionToken)
         {
-            LastSessionKeyTouch = Context.Instance.CurrentSessionToken;
+            LastSessionKeyTouch = Context.CurrentSessionToken;
             CreateOrClearLogFile(lastLogFile);
         }
         
@@ -71,14 +71,14 @@ public static class Logger
     public async static void Write(Type type, string message, Exception exc)
     {
 #if !DEBUG
-        var lastLogFile = Context.Instance.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
-        var errorsLogFile = Context.Instance.LogsDataDirectory + "/" + NameErrorsFile;
-        var logsLogFile = Context.Instance.LogsDataDirectory + "/" + NameLogsFile;
+        var lastLogFile = Context.LogsDataDirectory + "/" + NameLastLaunchLogsFile;
+        var errorsLogFile = Context.LogsDataDirectory + "/" + NameErrorsFile;
+        var logsLogFile = Context.LogsDataDirectory + "/" + NameLogsFile;
         
         
-        if (LastSessionKeyTouch != Context.Instance.CurrentSessionToken)
+        if (LastSessionKeyTouch != Context.CurrentSessionToken)
         {
-            LastSessionKeyTouch = Context.Instance.CurrentSessionToken;
+            LastSessionKeyTouch = Context.CurrentSessionToken;
             CreateOrClearLogFile(lastLogFile);
         }
         
