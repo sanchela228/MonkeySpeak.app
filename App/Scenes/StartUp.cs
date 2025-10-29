@@ -116,7 +116,7 @@ public class StartUp: Scene
         
         Network.OnStateChanged += (net, networkState) =>
         {
-            if (networkState == Network.NetworkState.Connecting || networkState == Network.NetworkState.Reconnecting)
+            if (networkState == Network.NetworkState.Connecting || networkState == Network.NetworkState.Reconnecting )
             {
                 _load = true;
                 retryLink.IsActive = false;
@@ -207,6 +207,7 @@ public class StartUp: Scene
 
     protected override void Draw()
     {
+        // TODO: FIX STARTUP LOGIC DOWNLOAD AND SHOW STATUSES
         Animator.Draw();
         
         if (_load) Loader.Draw();
