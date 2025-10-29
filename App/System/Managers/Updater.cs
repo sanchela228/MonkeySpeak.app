@@ -173,9 +173,6 @@ public class Updater(INetworkConfig networkConfig)
 
     public void RestoreFromBackup()
     {
-        Context.Instance.Network.DownloadUpdateState.StatusMessage = "Download error";
-        Context.Instance.Network.DownloadUpdateState.IsDownloading = false;
-
     }
     
     public bool HasError;
