@@ -97,7 +97,7 @@ public class Room : Scene
     
     private void HandleCallEnded()
     {
-        Engine.Managers.Scenes.Instance.PushScene(new StartUp(false));
+        Engine.Managers.Scenes.PushScene(new StartUp(false));
     }
     
     protected override void Update(float dt)

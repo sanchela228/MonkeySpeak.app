@@ -1,25 +1,22 @@
 namespace Engine.Managers; 
 
-public class Scenes
+public static class Scenes
 {
-    static Scenes() => Instance = new();
-    public static Scenes Instance { get; private set; }
+    private static readonly Stack<Scene> _scenes = new();
+    private static bool _shouldPopScene = false;
+    private static Scene? _sceneToPop = null;
     
-    private readonly Stack<Scene> _scenes = new();
-    private bool _shouldPopScene = false;
-    private Scene? _sceneToPop = null;
-    
-    public Action OnScenePopped;
-    public Action OnScenePushed;
+    public static Action OnScenePopped;
+    public static Action OnScenePushed;
 
-    public void PushScene(Scene scene)
+    public static void PushScene(Scene scene)
     {
         _scenes.Push(scene);
         
         OnScenePushed?.Invoke();
     }
     
-    public void PopScene()
+    public static void PopScene()
     {
         _shouldPopScene = true;
         _sceneToPop = _scenes.Count > 0 ? _scenes.Peek() : null;
@@ -27,7 +24,7 @@ public class Scenes
         OnScenePopped?.Invoke();
     }
     
-    private void ProcessPop()
+    private static void ProcessPop()
     {
         if (_shouldPopScene && _sceneToPop != null)
         {
@@ -37,26 +34,26 @@ public class Scenes
         }
     }
     
-    public Scene? PeekScene() 
+    public static Scene? PeekScene() 
     {
         if (_scenes.Count == 0) return null;
         return _scenes.Peek();
     }
     
-    public void Update(float deltaTime)
+    public static void Update(float deltaTime)
     {
         _scenes.Peek()?.RootUpdate(deltaTime);
         ProcessPop();
     }
     
-    public void Draw() => _scenes.Peek()?.RootDraw();
+    public static void Draw() => _scenes.Peek()?.RootDraw();
     
-    public void Dispose()
+    public static void Dispose()
     {
         while (_scenes.Count > 0)
             PopScene();
         ProcessPop();
     }
     
-    public bool HasPreviousScene() => _scenes.Count > 1;
+    public static bool HasPreviousScene() => _scenes.Count > 1;
 }

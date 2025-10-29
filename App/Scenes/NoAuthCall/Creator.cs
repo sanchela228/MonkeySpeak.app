@@ -53,7 +53,7 @@ public class Creator : Scene
 
         buttonBack.OnClick += (sender) => {
             _cancellationTokenSource?.Cancel();
-            Engine.Managers.Scenes.Instance.PopScene();
+            Engine.Managers.Scenes.PopScene();
         };
         
         AddNode(buttonBack);
@@ -68,7 +68,7 @@ public class Creator : Scene
         {
             await Task.Delay(200);
             Console.WriteLine($"[CallFacade] Connected");
-            Engine.Managers.Scenes.Instance.PushScene(new Room());
+            Engine.Managers.Scenes.PushScene(new Room());
         };
         
         Context.CallFacade.OnConnected += _onConnected;

@@ -43,7 +43,7 @@ public class Invited : Scene
         
         buttonBack.OnClick += (sender) =>
         {
-            Scenes.Instance.PopScene();
+            Scenes.PopScene();
         };
         
         AddNode(buttonBack);
@@ -61,7 +61,7 @@ public class Invited : Scene
             _inputsRow.MarkSuccess();
             await Task.Delay(200);
             Console.WriteLine($"[CallFacade] Connected");
-            Scenes.Instance.PushScene(new Room());
+            Scenes.PushScene(new Room());
         };
 
         Context.CallFacade.OnConnected += _onConnected;

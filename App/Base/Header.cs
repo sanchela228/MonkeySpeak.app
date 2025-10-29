@@ -25,7 +25,7 @@ public class Header : IDisposable
     {
         _textureMainPic = Resources.Texture("Images\\Browse.png");
 
-        Engine.Managers.Scenes.Instance.OnScenePushed += () =>
+        Engine.Managers.Scenes.OnScenePushed += () =>
         {
             MainBackground.Instance.AnimateSpeedChange(3f, 0.7f);
         };

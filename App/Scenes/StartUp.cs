@@ -68,11 +68,11 @@ public class StartUp: Scene
         };
         
         test2.OnClick += (sender) => {
-            Engine.Managers.Scenes.Instance.PushScene( new Creator() );
+            Engine.Managers.Scenes.PushScene( new Creator() );
         };
         
         test3.OnClick += (sender) => {
-            Engine.Managers.Scenes.Instance.PushScene( new Invited() );
+            Engine.Managers.Scenes.PushScene( new Invited() );
         };
         
         AddNode(test2);
