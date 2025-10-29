@@ -23,7 +23,7 @@ public class Window : IDisposable
     {
         Logger.Write(Logger.Type.Info, "Run application");
         
-        Engine.Managers.Scenes.Instance.PushScene( startScene );
+        Engine.Managers.Scenes.PushScene( startScene );
         
         Image image = Raylib.LoadImage(@"Resources\Textures\Images\LogoMain.png");
         
@@ -55,7 +55,7 @@ public class Window : IDisposable
                 Header.Update(deltaTime);
                 Input.Update(deltaTime);
                 Notificator.Update(deltaTime);
-                Engine.Managers.Scenes.Instance.Update(deltaTime);
+                Engine.Managers.Scenes.Update(deltaTime);
                 Graphics.MainBackground.Instance.Update(deltaTime);
             
                 Raylib.BeginDrawing();
@@ -64,7 +64,7 @@ public class Window : IDisposable
             
                 Header.Draw();
                 Notificator.Draw();
-                Engine.Managers.Scenes.Instance.Draw();
+                Engine.Managers.Scenes.Draw();
                 
                 Raylib.EndDrawing();
             }
@@ -79,7 +79,7 @@ public class Window : IDisposable
     {
         Logger.Write(Logger.Type.Info, "Close application");
         
-        Engine.Managers.Scenes.Instance.Dispose();
+        Engine.Managers.Scenes.Dispose();
         Raylib.CloseWindow();
     }
 }

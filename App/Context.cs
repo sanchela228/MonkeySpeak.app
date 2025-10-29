@@ -10,19 +10,19 @@ using Language = App.Configurations.Interfaces.Language;
 
 namespace App;
 
-public class Context
+public static class Context
 {
-    public readonly string DataDirectory = Path.Combine(
+    public static readonly string DataDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "MonkeySpeak"
     );
     
-    public readonly string LogsDataDirectory = Path.Combine(
+    public static readonly string LogsDataDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "MonkeySpeak\\Logs"
     );
     
-    public readonly string DownloadDataDirectory = Path.Combine(
+    public static readonly string DownloadDataDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "MonkeySpeak\\Downloads"
     );
@@ -31,17 +31,17 @@ public class Context
     public const string NameCommunicationSettingsFile = "CommunicationSettings.xml";
     public const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
 
-    public Guid CurrentSessionToken { get; } = Guid.NewGuid();
-    public Platforms.Platforms CurrentPlatform { get; private set; } = Platforms.Platforms.Windows;
+    public static Guid CurrentSessionToken { get; } = Guid.NewGuid();
+    public static Platforms.Platforms CurrentPlatform { get; private set; } = Platforms.Platforms.Windows;
 
-    public IAppConfig AppConfig { get; private set; }
-    public IContextData ContextData { get; private set; }
-    public ICommunicationSettings CommunicationSettings { get; private set; }
-    public System.Modules.Network Network { get; private set; }
+    public static IAppConfig AppConfig { get; private set; }
+    public static IContextData ContextData { get; private set; }
+    public static ICommunicationSettings CommunicationSettings { get; private set; }
+    public static System.Modules.Network Network { get; private set; }
 
-    public CallFacade CallFacade { get; private set; }
+    public static CallFacade CallFacade { get; private set; }
 
-    public void SetUp()
+    public static void SetUp()
     {
         Logger.Write(Logger.Type.Info, "------- Starting SetUp context application ---------");
         
@@ -96,13 +96,13 @@ public class Context
         }
     }
 
-    public bool DataDirectoryInitialized() => Directory.Exists(DataDirectory);
+    public static bool DataDirectoryInitialized() => Directory.Exists(DataDirectory);
 
-    private string _devicePrivateKey;
+    private static string _devicePrivateKey;
     
     
-    public ISecureStorage SecureStorage { get; private set; }
-    public void InitializeDataDirectory()
+    public static ISecureStorage SecureStorage { get; private set; }
+    public static void InitializeDataDirectory()
     {
         try
         {
@@ -136,7 +136,4 @@ public class Context
             throw new InvalidOperationException("Failed to initialize data directory", ex);
         }
     }
-    
-    static Context() => Instance = new();
-    public static Context Instance { get; private set; }
 }

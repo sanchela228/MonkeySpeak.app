@@ -53,7 +53,7 @@ public class Creator : Scene
 
         buttonBack.OnClick += (sender) => {
             _cancellationTokenSource?.Cancel();
-            Engine.Managers.Scenes.Instance.PopScene();
+            Engine.Managers.Scenes.PopScene();
         };
         
         AddNode(buttonBack);
@@ -66,14 +66,14 @@ public class Creator : Scene
         
         _onConnected = async () =>
         {
-            await Task.Delay(2000);
+            await Task.Delay(200);
             Console.WriteLine($"[CallFacade] Connected");
-            Engine.Managers.Scenes.Instance.PushScene(new Room());
+            Engine.Managers.Scenes.PushScene(new Room());
         };
         
-        Context.Instance.CallFacade.OnConnected += _onConnected;
-        Context.Instance.CallFacade.OnSessionCreated += _onSessionCreatedHandler;
-        Context.Instance.CallFacade.CreateSessionAsync(_cancellationTokenSource.Token);
+        Context.CallFacade.OnConnected += _onConnected;
+        Context.CallFacade.OnSessionCreated += _onSessionCreatedHandler;
+        Context.CallFacade.CreateSessionAsync(_cancellationTokenSource.Token);
     }
     
     protected override void Update(float deltaTime)
@@ -109,16 +109,16 @@ public class Creator : Scene
 
         if (_onSessionCreatedHandler != null)
         {
-            Context.Instance.CallFacade.OnSessionCreated -= _onSessionCreatedHandler;
+            Context.CallFacade.OnSessionCreated -= _onSessionCreatedHandler;
             _onSessionCreatedHandler = null;
         }
 
         if (_onConnected != null)
         {
-            Context.Instance.CallFacade.OnConnected += _onConnected;
+            Context.CallFacade.OnConnected += _onConnected;
             _onConnected = null;
         }
         
-        Context.Instance.CallFacade.Clear();
+        Context.CallFacade.Clear();
     }
 }

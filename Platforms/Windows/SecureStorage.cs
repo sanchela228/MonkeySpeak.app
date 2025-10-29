@@ -8,10 +8,10 @@ namespace Platforms.Windows;
 public class SecureStorage : ISecureStorage
 {
     private static readonly byte[] s_entropy = Encoding.UTF8.GetBytes(
-        Context.Instance.ContextData.ApplicationId + ":" + Context.Instance.ContextData.MachineId
+        Context.ContextData.ApplicationId + ":" + Context.ContextData.MachineId
     );
     
-    private static readonly string _directoryPath = Context.Instance.DataDirectory + "/"; 
+    private static readonly string _directoryPath = Context.DataDirectory + "/"; 
 
     public void Save(string key, string value)
     {

@@ -93,7 +93,7 @@ public class P2PCallManager : ICallManager
 #if DEBUG
         publicEp = localLanEp;
 #else
-        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken, Context.Instance.Network.Config.Domain);
+        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken, Context.Network.Config.Domain);
 #endif
         
         if (publicEp is not null)
@@ -131,7 +131,7 @@ public class P2PCallManager : ICallManager
 #if DEBUG
         publicEp = localLanEp;
 #else
-        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken, Context.Instance.Network.Config.Domain);
+        publicEp = await _stun.GetPublicEndPointAsync(_localPort, _config.StunTimeoutMs, cancellationToken, Context.Network.Config.Domain);
 #endif
 
         if (publicEp is not null)
@@ -265,7 +265,6 @@ public class P2PCallManager : ICallManager
                     if (_activeSession == null) return;
                     if (string.IsNullOrWhiteSpace(hp.IpEndPoint)) return;
                     if (!TryParseIpEndPoint(hp.IpEndPoint, out var remote)) return;
-
                     
                     _activeSession.SetInterlocutor(new Interlocutor(remote, CallState.HolePunching));
                     Transition(_activeSession, CallState.HolePunching);
@@ -283,6 +282,11 @@ public class P2PCallManager : ICallManager
                         _controls.OnRemoteHangup += HandleRemoteHangup;
                     }
                     break;
+                case ErrorConnectToSession errorConnectToSession:
+                    if (_activeSession == null) return;
+                    Transition(_activeSession, CallState.Failed);
+                    break;
+                default: Logger.Error($"[HandleSignalingMessage] Unknown message: {msg}"); break;
             }
         }
         catch

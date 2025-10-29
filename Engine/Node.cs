@@ -25,7 +25,7 @@ public abstract class Node : IDisposable
     public abstract void Draw();
     public abstract void Dispose();
 
-    public Node() => Scene = SceneManager.Instance.PeekScene();
+    public Node() => Scene = SceneManager.PeekScene();
     
     public bool IsActive { get; set; } = true;
     
@@ -148,8 +148,8 @@ public abstract class Node : IDisposable
         if (position is not null)
             Position = position ?? Vector2.Zero;
         
-        if (SceneManager.Instance.PeekScene() is not null && SceneManager.Instance.PeekScene().ContainsNode(this))
-            SceneManager.Instance.PeekScene().RemoveNode(this);
+        if (SceneManager.PeekScene() is not null && SceneManager.PeekScene().ContainsNode(this))
+            SceneManager.PeekScene().RemoveNode(this);
 
         if (_parent != null && !_parent._childrens.Contains(this))
         {
