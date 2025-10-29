@@ -10,6 +10,8 @@ public class DemoInputInvited : Node
 {
     public Char? Symbol;
     public bool IsFailed;
+    public enum BorderState { None, Error, Success }
+    public BorderState State { get; set; } = BorderState.None;
     private FontFamily _mainFontBack;
     public DemoInputInvited()
     {
@@ -33,10 +35,10 @@ public class DemoInputInvited : Node
     {
         Raylib.DrawRectangleRounded(Bounds, 0.3f, 10, new Color(255, 255, 255, 20));
 
-        if (IsFailed)
-        {
+        if (State == BorderState.Error || IsFailed)
             Raylib.DrawRectangleRoundedLinesEx(Bounds, 0.3f, 10, 2, Color.Red);
-        }
+        else if (State == BorderState.Success)
+            Raylib.DrawRectangleRoundedLinesEx(Bounds, 0.3f, 10, 2, Color.Green);
         
         if (Symbol.HasValue)
         {
@@ -47,7 +49,6 @@ public class DemoInputInvited : Node
             );
         }
     }
-
     public override void Dispose()
     {
         // throw new NotImplementedException();

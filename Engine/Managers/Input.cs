@@ -23,6 +23,9 @@ public static class Input
     public static void Update(float deltaTime)
     {
         _time += deltaTime;
+        
+        _pressed.Clear();
+        _released.Clear();
         ScanKeyboardStates();
 
         foreach (var kv in _chords)
@@ -82,8 +85,6 @@ public static class Input
         }
         
         _prevDown = new HashSet<KeyboardKey>(_down);
-        _pressed.Clear();
-        _released.Clear();
     }
 
     public static bool IsDown(KeyboardKey key) => _down.Contains(key);
@@ -136,7 +137,7 @@ public static class Input
 
         foreach (KeyboardKey key in Enum.GetValues(typeof(KeyboardKey)))
         {
-            if (key != KeyboardKey.Null) continue;
+            if (key == KeyboardKey.Null) continue;
             
             if (Raylib.IsKeyDown(key))
                 _down.Add(key);

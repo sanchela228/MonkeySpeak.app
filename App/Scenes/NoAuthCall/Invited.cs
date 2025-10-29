@@ -1,5 +1,7 @@
 using System.Numerics;
 using System.Text;
+using App;
+using App.Scenes;
 using App.System.Calls.Domain;
 using App.System.Managers;
 using App.System.Services;
@@ -12,13 +14,11 @@ using Interface.Inputs;
 using Raylib_cs;
 using PointRendering = Engine.PointRendering;
 
-namespace App.Scenes.NoAuthCall;
-
 public class Invited : Scene
 {
     private FontFamily _mainFontBack;
     private Button buttonBack;
-    private List<DemoInputInvited> _linkInputs;
+    private DemoInputInvitedRow _inputsRow;
 
     private Action<CallSession, CallState>? _onSessionStateChanged;
     private Action? _onConnected;
@@ -36,63 +36,47 @@ public class Invited : Scene
         
         buttonBack = new Classic(_mainFontBack)
         {
-            Position = new Vector2(Raylib.GetScreenWidth()/ 2, Raylib.GetScreenHeight() / 2 + 170),
+            Position = new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2 + 170),
             Padding = new Vector2(30, 18),
             Text = Language.Get("Back")
         };
         
-        buttonBack.OnClick += (sender) => {
-            Engine.Managers.Scenes.Instance.PopScene();
+        buttonBack.OnClick += (sender) =>
+        {
+            Scenes.Instance.PopScene();
         };
         
         AddNode(buttonBack);
         
-        var listInputs = new List<DemoInputInvited>
+        _inputsRow = new DemoInputInvitedRow()
         {
-            new(){PointRendering = PointRendering.LeftTop},
-            new(){PointRendering = PointRendering.LeftTop},
-            new(){PointRendering = PointRendering.LeftTop},
-            new(){PointRendering = PointRendering.LeftTop},
-            new(){PointRendering = PointRendering.LeftTop},
-            new(){PointRendering = PointRendering.LeftTop}
+            Position = new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2 - 60),
+            PointRendering = PointRendering.Center
         };
 
-        _linkInputs = listInputs;
-        
-        // TODO: FIX PlaceInLine for POINTRENDERING CENTER
-        Graphics.Render.PlaceInLine(
-            listInputs, 
-            new Vector2(Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight() / 2 - 90),
-            22
-        );
-
-        AddNodes(listInputs);
+        AddNode(_inputsRow);
         
         _onConnected = async () =>
         {
-            await Task.Delay(2000);
+            _inputsRow.MarkSuccess();
+            await Task.Delay(200);
             Console.WriteLine($"[CallFacade] Connected");
-            Engine.Managers.Scenes.Instance.PushScene(new Room());
+            Scenes.Instance.PushScene(new Room());
         };
 
-
-        Context.CallFacade.OnSessionStateChanged += (session, state) =>
-        {
-            if (state == CallState.Failed)
-            {
-                Console.WriteLine("Error code");
-            }
-        };
-        
         Context.CallFacade.OnConnected += _onConnected;
         _onSessionStateChanged = (session, state) =>
         {
             Console.WriteLine($"[CallFacade] Active session change state -> {state}");
+            if (state == CallState.Failed)
+            {
+                _ = _inputsRow.MarkErrorAsync();
+            }
         };
         
         Context.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
     }
-    
+
     protected override void Update(float deltaTime)
     {
         HandleTextInput();
@@ -114,15 +98,16 @@ public class Invited : Scene
     private int maxInputLength = 6;
     private async Task HandleTextInput()
     {
+        if (_sendRequestAuth) return;
+
         int key = Raylib.GetCharPressed();
         while (key > 0)
         {
             if (key is >= 32 and <= 125 && _inputText.Length < maxInputLength)
             {
                 _inputText.Append((char)key);
-                _linkInputs.ForEach(x => x.IsFailed = false);
-
-                _linkInputs[_inputText.Length - 1].Symbol = (char) key;
+                _inputsRow.ResetStates();
+                _inputsRow.SetSymbol(_inputText.Length - 1, (char)key);
             }
             
             if ( _inputText.Length == maxInputLength && !_sendRequestAuth )
@@ -134,24 +119,14 @@ public class Invited : Scene
             key = Raylib.GetCharPressed();
         }
 
-        if (Input.IsPressed(KeyboardKey.Backspace))
+        if (Input.IsPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
         {
-            // NOT WORK
-            Console.WriteLine("WDQWDQDW");
-        }
-        if (Raylib.IsKeyPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
-        {
+            Console.WriteLine("LOG");
             _inputText.Remove(_inputText.Length - 1, 1);
-            _linkInputs.ForEach(x => x.IsFailed = false);
-            _linkInputs[_inputText.Length].Symbol = null;
+            _inputsRow.ResetStates();
+            _inputsRow.SetSymbol(_inputText.Length, null);
 
             _sendRequestAuth = false;
-        }
-
-        if (Input.IsPressed(KeyboardKey.Enter) && _inputText.Length == maxInputLength && !_sendRequestAuth)
-        {
-            _sendRequestAuth = true;
-            await Context.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
         }
     }
     
