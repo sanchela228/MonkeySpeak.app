@@ -1,5 +1,7 @@
 using System.Numerics;
 using System.Text;
+using System.Linq;
+
 using App;
 using App.Scenes;
 using App.System.Calls.Domain;
@@ -70,11 +72,17 @@ public class Invited : Scene
             Console.WriteLine($"[CallFacade] Active session change state -> {state}");
             if (state == CallState.Failed)
             {
+                _sendRequestAuth = false;
                 _ = _inputsRow.MarkErrorAsync();
             }
         };
         
         Context.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
+
+        var clip = Raylib.GetClipboardText_();
+        
+        if (clip.Length == 6)
+            TryAutoPasteFromClipboardOnStart();
     }
 
     protected override void Update(float deltaTime)
@@ -98,8 +106,25 @@ public class Invited : Scene
     private int maxInputLength = 6;
     private async Task HandleTextInput()
     {
-        if (_sendRequestAuth) return;
+        if (_inputsRow.IsLocked) return;
 
+        bool ctrlDown = Input.IsDown(KeyboardKey.LeftControl) || Input.IsDown(KeyboardKey.RightControl);
+        if (ctrlDown && Input.IsPressed(KeyboardKey.V))
+        {
+            var clip = Raylib.GetClipboardText_();
+            
+            var pasted = SanitizeToCode(clip, maxInputLength);
+            if (!string.IsNullOrEmpty(pasted))
+            {
+                ApplyCodeToUI(pasted);
+                if (_inputText.Length == maxInputLength && !_sendRequestAuth)
+                {
+                    _sendRequestAuth = true;
+                    await Context.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
+                }
+            }
+        }
+        
         int key = Raylib.GetCharPressed();
         while (key > 0)
         {
@@ -129,12 +154,47 @@ public class Invited : Scene
             _sendRequestAuth = false;
         }
     }
+
+    private void TryAutoPasteFromClipboardOnStart()
+    {
+        var clip = Raylib.GetClipboardText_();
+        
+        var pasted = SanitizeToCode(clip, maxInputLength);
+        if (!string.IsNullOrEmpty(pasted) && pasted.Length == maxInputLength)
+        {
+            ApplyCodeToUI(pasted);
+            _sendRequestAuth = true;
+            // fire-and-forget подключение
+            _ = Context.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
+        }
+    }
+
+    private string SanitizeToCode(string? src, int take)
+    {
+        if (string.IsNullOrWhiteSpace(src)) return string.Empty;
+        var filtered = new string(src
+            .Where(char.IsLetterOrDigit)
+            .Take(take)
+            .ToArray());
+        return filtered;
+    }
+
+    private void ApplyCodeToUI(string code)
+    {
+        _inputText.Clear();
+        _inputsRow.ResetStates();
+        _inputsRow.ClearAllSymbols();
+        for (int i = 0; i < Math.Min(code.Length, maxInputLength); i++)
+        {
+            _inputText.Append(code[i]);
+            _inputsRow.SetSymbol(i, code[i]);
+        }
+    }
     
     protected override void Dispose()
     {
         Context.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
         Context.CallFacade.OnConnected -= _onConnected;
-
         _onSessionStateChanged = null;
         _onConnected = null;
     }
