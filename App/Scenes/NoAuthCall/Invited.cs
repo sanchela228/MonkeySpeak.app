@@ -109,7 +109,7 @@ public class Invited : Scene
         if (_inputsRow.IsLocked) return;
 
         bool ctrlDown = Input.IsDown(KeyboardKey.LeftControl) || Input.IsDown(KeyboardKey.RightControl);
-        if (ctrlDown && Input.IsPressed(KeyboardKey.V))
+        if (ctrlDown && Input.IsPressed(KeyboardKey.V) && _inputText.Length == 0)
         {
             var clip = Raylib.GetClipboardText_();
             
@@ -128,6 +128,9 @@ public class Invited : Scene
         int key = Raylib.GetCharPressed();
         while (key > 0)
         {
+            if (_inputText.Length == maxInputLength)
+                return;
+            
             if (key is >= 32 and <= 125 && _inputText.Length < maxInputLength)
             {
                 _inputText.Append((char)key);
@@ -146,7 +149,6 @@ public class Invited : Scene
 
         if (Input.IsPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
         {
-            Console.WriteLine("LOG");
             _inputText.Remove(_inputText.Length - 1, 1);
             _inputsRow.ResetStates();
             _inputsRow.SetSymbol(_inputText.Length, null);

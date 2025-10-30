@@ -85,7 +85,7 @@ public class P2PCallManager : ICallManager
     public async Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken)
     {
         var session = new CallSession();
-        Transition(session, CallState.Negotiating);
+        Transition(session, CallState.Idle);
         
         var localLanEp = GetLocalLanEndpoint(_localPort);
         IPEndPoint publicEp = null;
@@ -123,7 +123,7 @@ public class P2PCallManager : ICallManager
     public async Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken)
     {
         var session = new CallSession();
-        Transition(session, CallState.Negotiating);
+        Transition(session, CallState.Idle);
         
         var localLanEp = GetLocalLanEndpoint(_localPort);
         IPEndPoint publicEp = null;
@@ -281,6 +281,10 @@ public class P2PCallManager : ICallManager
                         _controls.OnRemoteMuteChanged += HandleRemoteMuteChanged;
                         _controls.OnRemoteHangup += HandleRemoteHangup;
                     }
+                    break;
+                case SessionCreated sessionCreated:
+                    if (_activeSession == null) return;
+                    Transition(_activeSession, CallState.Waiting);
                     break;
                 case ErrorConnectToSession errorConnectToSession:
                     if (_activeSession == null) return;

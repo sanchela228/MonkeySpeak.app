@@ -83,7 +83,6 @@ public class CallFacade
     public void Clear()
     {
         _engine.OnRemoteMuteChanged -= CallMuteHandler;
-        _engine.OnSessionStateChanged -= CallStateHandler; 
     }
 
     private void HandleEngineConnected()
