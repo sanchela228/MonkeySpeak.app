@@ -1,5 +1,5 @@
 using System.Net.WebSockets;
-using App.Configurations.Interfaces;
+using App.Configurations.Roots;
 using App.System.Managers;
 using App.System.Services;
 using App.System.Utils;
@@ -8,7 +8,7 @@ using Raylib_cs;
 namespace App.System.Modules;
 
 
-public class Network(INetworkConfig config) : IDisposable
+public class Network(NetworkConfig config) : IDisposable
 {
     public enum NetworkState
     {
@@ -18,7 +18,7 @@ public class Network(INetworkConfig config) : IDisposable
         Reconnecting,
         Error
     }
-    public INetworkConfig Config { get; set; } = config;
+    public NetworkConfig Config { get; set; } = config;
     public WebSocketClient WebSocketClient { get; private set; }
     
     private NetworkState _state = NetworkState.Disconnected;

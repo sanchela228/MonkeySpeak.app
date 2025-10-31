@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using App.Configurations.Interfaces;
+using App.Configurations.Roots;
 using App.System.Calls.Application;
 using App.System.Calls.Domain;
 using App.System.Calls.Infrastructure;
@@ -70,7 +70,7 @@ public class P2PCallManager : ICallManager
 #endif
     }
 
-    public P2PCallManager(ISignalingClient signaling, IStunClient stun, INetworkConfig netConfig)
+    public P2PCallManager(ISignalingClient signaling, IStunClient stun, NetworkConfig netConfig)
         : this(signaling, stun, new CallConfig(netConfig))
     {
     }

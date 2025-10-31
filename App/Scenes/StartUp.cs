@@ -136,7 +136,7 @@ public class StartUp: Scene
                 test2.IsActive = false;
                 test3.IsActive = false;
                 
-                Notificator.AddNotification("Lost connection", "[Connectivity]");
+                // Notificator.AddNotification("Lost connection", "[Connectivity]");
             }
         
             if (networkState == Network.NetworkState.Connected)
@@ -149,7 +149,7 @@ public class StartUp: Scene
                 test2.IsActive = true;
                 test3.IsActive = true;
                 
-                Notificator.AddNotification("Connected to server", "[Connectivity]");
+                // Notificator.AddNotification("Connected to server", "[Connectivity]");
             }
         };
 

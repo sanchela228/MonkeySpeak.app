@@ -2,15 +2,14 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Principal;
 using System.Xml.Serialization;
-using App.Configurations.Interfaces;
-using App.Configurations.Realisation;
+using App.Configurations.Roots;
 using App.System.Services;
 
 namespace App.System.Managers;
 
-public class Updater(INetworkConfig networkConfig)
+public class Updater(NetworkConfig networkConfig)
 {
-    public readonly INetworkConfig NetworkConfig = networkConfig;
+    public readonly NetworkConfig NetworkConfig = networkConfig;
     
     private Manifest _manifest;
     private const string ManifestFileName = "Manifest.xml";

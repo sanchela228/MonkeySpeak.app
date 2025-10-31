@@ -1,7 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using App.Configurations.Interfaces;
+using App.Configurations.Roots;
 using App.System.Managers;
 using App.System.Models.Websocket;
 using App.System.Models.Websocket.Messages;
@@ -9,12 +9,12 @@ using App.System.Services;
 
 namespace App.System.Modules;
 
-public class WebSocketClient(INetworkConfig conf)
+public class WebSocketClient(NetworkConfig conf)
 {
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cts;
     private Uri _uri;
-    private INetworkConfig _config = conf;
+    private NetworkConfig _config = conf;
 
     public MessageDispatcher MessageDispatcher { get; private set; } = new MessageDispatcher();
 

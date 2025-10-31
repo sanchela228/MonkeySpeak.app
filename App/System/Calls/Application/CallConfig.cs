@@ -1,4 +1,4 @@
-using App.Configurations.Interfaces;
+using App.Configurations.Roots;
 
 namespace App.System.Calls.Application;
 
@@ -16,7 +16,7 @@ public class CallConfig
 
     public bool DisableUdpConnReset { get; init; } = true;
 
-    public CallConfig(INetworkConfig config)
+    public CallConfig(NetworkConfig config)
     {
         
     }
