@@ -39,11 +39,13 @@ public static class Context
     public static System.Modules.Network Network { get; private set; }
 
     public static CallFacade CallFacade { get; private set; }
+    
+    public static ISecureStorage SecureStorage { get; private set; }
+    public static IUser SystemUser { get; private set; }
 
     public static void SetUp()
     {
         Logger.Write(Logger.Type.Info, "------- Starting SetUp context application ---------");
-        
         
         if (!DataDirectoryInitialized())
             InitializeDataDirectory();
@@ -53,21 +55,28 @@ public static class Context
         
         PlatformServiceFactory.Register( new List<ISecureStorage>
         {
-            new Platforms.Windows.SecureStorage(),
-            new Platforms.MacOS.SecureStorage()
+            new Platforms.Windows.SecureStorage()
+        });
+        
+        PlatformServiceFactory.Register( new List<IUser>
+        {
+            new Platforms.Windows.User()
         });
             
         SecureStorage = PlatformServiceFactory.GetService<ISecureStorage>(CurrentPlatform);
+        SystemUser = PlatformServiceFactory.GetService<IUser>(CurrentPlatform);
         
         System.Services.Language.Load(ContextData.LanguageSelected);
 
         try
         {
             _devicePrivateKey = SecureStorage.Load("device_private_key");
+            
             if (string.IsNullOrEmpty(_devicePrivateKey))
             {
                 (string publicKey, string privateKey) = DeviceCrypto.GenerateKeyPair();
                 _devicePrivateKey = privateKey;
+                
                 SecureStorage.Save("device_private_key", _devicePrivateKey);
                 SecureStorage.Save("device_public_key", publicKey);
             }
@@ -97,9 +106,6 @@ public static class Context
     public static bool DataDirectoryInitialized() => Directory.Exists(DataDirectory);
 
     private static string _devicePrivateKey;
-    
-    
-    public static ISecureStorage SecureStorage { get; private set; }
     public static void InitializeDataDirectory()
     {
         try

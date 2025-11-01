@@ -176,8 +176,8 @@ public class Updater(NetworkConfig networkConfig)
             Logger.Write($"[Updater] BAT process: {processId}, arguments: {arguments}");
 
             
-            bool needElevation = !CanWriteTo(targetFolderPath);
-            bool elevated = IsAdministrator();
+            bool needElevation = !Context.SystemUser.CanWriteTo(targetFolderPath);
+            bool elevated = Context.SystemUser.IsAdministrator();
 
             var startInfo = new ProcessStartInfo
             {
@@ -206,30 +206,6 @@ public class Updater(NetworkConfig networkConfig)
 
     public static void RestoreFromBackup()
     {
-    }
-    
-    // TODO: MOVE TO PLATFORM CODE
-    static bool IsAdministrator()
-    {
-        var wi = WindowsIdentity.GetCurrent();
-        var wp = new WindowsPrincipal(wi);
-        return wp.IsInRole(WindowsBuiltInRole.Administrator);
-    }
-    
-    static bool CanWriteTo(string folder)
-    {
-        try
-        {
-            var testFile = Path.Combine(folder, $".write_test_{Guid.NewGuid():N}.tmp");
-            using (var fs = new FileStream(testFile, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                fs.WriteByte(0x42);
-            }
-            File.Delete(testFile);
-            return true;
-        }
-        catch (UnauthorizedAccessException) { return false; }
-        catch { return false; }
     }
     
     public bool HasError;

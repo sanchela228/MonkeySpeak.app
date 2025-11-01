@@ -182,7 +182,7 @@ public class Invited : Scene
         {
             ApplyCodeToUI(pasted);
             _sendRequestAuth = true;
-            // fire-and-forget подключение
+            
             _ = Context.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
         }
     }
