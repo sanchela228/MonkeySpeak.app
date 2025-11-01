@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Threading;
-using App.Configurations.Interfaces;
+using App.Configurations.Roots;
 using App.System.Calls.Application.Adapters;
 using App.System.Calls.Domain;
 using App.System.Calls.Infrastructure;
@@ -13,11 +13,11 @@ namespace App.System.Calls.Application.Facade;
 
 public class CallFacade
 {
-    private readonly INetworkConfig _netConfig;
+    private readonly NetworkConfig _netConfig;
     private readonly WebSocketClient _wsClient;
     private readonly ICallManager _engine;
 
-    public CallFacade(INetworkConfig netConfig, WebSocketClient wsClient)
+    public CallFacade(NetworkConfig netConfig, WebSocketClient wsClient)
     {
         _netConfig = netConfig;
         _wsClient = wsClient;
@@ -83,7 +83,6 @@ public class CallFacade
     public void Clear()
     {
         _engine.OnRemoteMuteChanged -= CallMuteHandler;
-        _engine.OnSessionStateChanged -= CallStateHandler; 
     }
 
     private void HandleEngineConnected()

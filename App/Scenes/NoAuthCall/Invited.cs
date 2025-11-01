@@ -79,10 +79,14 @@ public class Invited : Scene
         
         Context.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
 
-        var clip = Raylib.GetClipboardText_();
-        
-        if (clip.Length == 6)
-            TryAutoPasteFromClipboardOnStart();
+        try
+        {
+            var clip = Raylib.GetClipboardText_();
+            
+            if (clip.Length == 6)
+                TryAutoPasteFromClipboardOnStart();
+        }
+        catch (Exception e) { }
     }
 
     protected override void Update(float deltaTime)
@@ -109,9 +113,15 @@ public class Invited : Scene
         if (_inputsRow.IsLocked) return;
 
         bool ctrlDown = Input.IsDown(KeyboardKey.LeftControl) || Input.IsDown(KeyboardKey.RightControl);
-        if (ctrlDown && Input.IsPressed(KeyboardKey.V))
+        if (ctrlDown && Input.IsPressed(KeyboardKey.V) && _inputText.Length == 0)
         {
-            var clip = Raylib.GetClipboardText_();
+            var clip = string.Empty;
+            
+            try
+            {
+                clip = Raylib.GetClipboardText_();
+            }
+            catch (Exception e) { clip = string.Empty; }
             
             var pasted = SanitizeToCode(clip, maxInputLength);
             if (!string.IsNullOrEmpty(pasted))
@@ -128,6 +138,9 @@ public class Invited : Scene
         int key = Raylib.GetCharPressed();
         while (key > 0)
         {
+            if (_inputText.Length == maxInputLength)
+                return;
+            
             if (key is >= 32 and <= 125 && _inputText.Length < maxInputLength)
             {
                 _inputText.Append((char)key);
@@ -146,7 +159,6 @@ public class Invited : Scene
 
         if (Input.IsPressed(KeyboardKey.Backspace) && _inputText.Length > 0)
         {
-            Console.WriteLine("LOG");
             _inputText.Remove(_inputText.Length - 1, 1);
             _inputsRow.ResetStates();
             _inputsRow.SetSymbol(_inputText.Length, null);
@@ -157,14 +169,20 @@ public class Invited : Scene
 
     private void TryAutoPasteFromClipboardOnStart()
     {
-        var clip = Raylib.GetClipboardText_();
+        var clip = string.Empty;
+            
+        try
+        {
+            clip = Raylib.GetClipboardText_();
+        }
+        catch (Exception e) { clip = string.Empty; }
         
         var pasted = SanitizeToCode(clip, maxInputLength);
         if (!string.IsNullOrEmpty(pasted) && pasted.Length == maxInputLength)
         {
             ApplyCodeToUI(pasted);
             _sendRequestAuth = true;
-            // fire-and-forget подключение
+            
             _ = Context.CallFacade.ConnectToSessionAsync(_inputText.ToString().ToLower());
         }
     }

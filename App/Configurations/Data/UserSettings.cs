@@ -1,20 +1,20 @@
 using System.Xml.Serialization;
-using App.Configurations.Interfaces;
 using App.System.Services;
-using SoundFlow.Structs;
+using App.Configurations;
 
-namespace App.Configurations.Realisation;
+namespace App.Configurations.Data;
 
 
 
 [Serializable]
-public class CommunicationSettingsData
+public class UserSettingsData
 {
     public string CaptureDeviceIdString { get; set; } = string.Empty;
     public string PlaybackDeviceIdString { get; set; } = string.Empty;
 }
-public class CommunicationSettings : ICommunicationSettings
+public class UserSettings : XmlConfigBase<UserSettings>
 {
+    protected override string RootDirectory => Path.Combine(Context.DataDirectory, "Configurations");
     private event Action OnDataChange;
     
     [XmlIgnore]
@@ -68,45 +68,46 @@ public class CommunicationSettings : ICommunicationSettings
         }
     }
 
-    public CommunicationSettings()
+    public override string FileName => "UserSettings.xml";
+    public UserSettings()
     {
-        string path = Path.Combine(Context.DataDirectory, Context.NameCommunicationSettingsFile);
-    
-        if (File.Exists(path))
-        {
-            try
-            {
-                var serializer = new XmlSerializer(typeof(CommunicationSettingsData));
-                using var reader = new StreamReader(path);
-                var cThis = (CommunicationSettingsData) serializer.Deserialize(reader);
-        
-                if (IntPtr.TryParse(cThis.CaptureDeviceIdString, out var capturePtr))
-                    _captureDeviceId = capturePtr;
-                
-                if (IntPtr.TryParse(cThis.PlaybackDeviceIdString, out var playbackPtr))
-                    _playbackDeviceId = playbackPtr;
-            }
-            catch (Exception ex)
-            {
-               Logger.Write(Logger.Type.Error, "Can't load CommunicationSettingsData from xml.", ex);
-            }
-        }
-    
-        OnDataChange += SaveSettings;
+        OnDataChange += Save;
     }
 
-    private void SaveSettings()
+    public override void Save()
     {
         try
         {
-            var serializer = new XmlSerializer(typeof(CommunicationSettings));
-            string path = Path.Combine(Context.DataDirectory, Context.NameCommunicationSettingsFile);
-            using var writer = new StreamWriter(path);
-            serializer.Serialize(writer, this);
+            var dir = Path.GetDirectoryName(FilePath);
+            
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+
+            var serializer = new XmlSerializer(typeof(UserSettingsData));
+            var data = new UserSettingsData
+            {
+                CaptureDeviceIdString = CaptureDeviceIdString,
+                PlaybackDeviceIdString = PlaybackDeviceIdString
+            };
+            
+            using var writer = new StreamWriter(FilePath);
+            serializer.Serialize(writer, data);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка при сохранении настроек: {ex.Message}");
+            Logger.Write(Logger.Type.Error, "Ошибка при сохранении настроек", ex);
         }
+    }
+
+    protected override void ApplyDefaults()
+    {
+        _captureDeviceId = null;
+        _playbackDeviceId = null;
+    }
+
+    protected override void CopyFrom(UserSettings other)
+    {
+        _captureDeviceId = other._captureDeviceId;
+        _playbackDeviceId = other._playbackDeviceId;
     }
 }

@@ -1,17 +1,16 @@
-using App.Configurations.Interfaces;
 using Engine.Managers;
 
 namespace App.System.Services;
 
 public static class Language
 {
-    public static App.Configurations.Interfaces.Language CurrentLanguage { get; set; } = App.Configurations.Interfaces.Language.English;
+    public static App.Configurations.Data.Language CurrentLanguage { get; set; } = App.Configurations.Data.Language.English;
     private static Dictionary<string, string> _dictionary = new();
     private static bool _loaded;
 
     public static string Get(string code) => _loaded ? _dictionary.GetValueOrDefault(code, code) : code;
     
-    public static async Task Load(App.Configurations.Interfaces.Language language)
+    public static async Task Load(App.Configurations.Data.Language language)
     {
         if (_dictionary.Count > 0)
             _dictionary = new();    

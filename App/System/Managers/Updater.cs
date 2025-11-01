@@ -1,36 +1,41 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Security.Principal;
 using System.Xml.Serialization;
-using App.Configurations.Interfaces;
-using App.Configurations.Realisation;
+using App.Configurations.Roots;
 using App.System.Services;
 
 namespace App.System.Managers;
 
-public class Updater(INetworkConfig networkConfig)
+public class Updater(NetworkConfig networkConfig)
 {
-    public readonly INetworkConfig NetworkConfig = networkConfig;
+    public readonly NetworkConfig NetworkConfig = networkConfig;
     
     private Manifest _manifest;
     private const string ManifestFileName = "Manifest.xml";
 
     public async Task<bool> CheckUpdate()
     {
+        Logger.Write($"[Updater] CheckUpdate: {_manifest}");
         _manifest = await GetUpdateInfoFromStreamAsync(NetworkConfig.DomainUrl() + "/" + ManifestFileName);
         
-        Logger.Write($"[Updater] CheckUpdate: {_manifest}");
+        Logger.Write($"[Updater] From server: {_manifest.Version}, current: {Context.AppConfig.Version}");
         
         if (_manifest is null)
             return false;
 
         if (_manifest.Version <= Context.AppConfig.Version)
+        {
+            Logger.Write("[Updater] Nothing to update");
             return false;
+        }
         
         return true;
     }
 
     public async Task StartProcessUpdate()
     {
+        Logger.Write($"[Updater] Update started");
         Context.Network.DownloadUpdateState = new DownloadUpdateState()
         {
             IsDownloading = true,
@@ -76,6 +81,7 @@ public class Updater(INetworkConfig networkConfig)
     {
         try
         {
+            Logger.Write($"[Updater] Start download from server {path}");
             using var headResponse = await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, path));
             headResponse.EnsureSuccessStatusCode();
             updaterState.TotalBytes = headResponse.Content.Headers.ContentLength ?? 0;
@@ -85,6 +91,8 @@ public class Updater(INetworkConfig networkConfig)
             
             if (updaterState.TotalBytes == 0)
                 updaterState.TotalBytes = response.Content.Headers.ContentLength ?? 0;
+            
+            Logger.Write($"[Updater] From server bytes {updaterState.TotalBytes}");
 
             await using (var contentStream = await response.Content.ReadAsStreamAsync())
             {
@@ -100,6 +108,8 @@ public class Updater(INetworkConfig networkConfig)
                     }
                 }
             }
+            
+            Logger.Write($"[Updater] End download");
         }
         catch (Exception ex)
         {
@@ -110,6 +120,8 @@ public class Updater(INetworkConfig networkConfig)
     
     private void ExtractFile(string path, string output)
     {
+        Logger.Write($"[Updater] Start extract: {path}");
+        
         try
         {
             if (!File.Exists(path))
@@ -118,6 +130,7 @@ public class Updater(INetworkConfig networkConfig)
             if (!Directory.Exists(output)) Directory.CreateDirectory(output);
 
             ZipFile.ExtractToDirectory(path, output, overwriteFiles: true);
+            Logger.Write("[Updater] End extract");
         }
         catch (Exception ex)
         {
@@ -128,6 +141,8 @@ public class Updater(INetworkConfig networkConfig)
 
     private void DeleteFile(string path)
     {
+        Logger.Write("[Updater] Delete zip");
+        
         try
         {
             if (File.Exists(path)) File.Delete(path);
@@ -143,35 +158,53 @@ public class Updater(INetworkConfig networkConfig)
     {
         try
         {
+            Logger.Write("[Updater] ApplyUpdate start");
+            
             var batFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.bat");
             
             if (!File.Exists(batFilePath))
             {
+                Logger.Write(Logger.Type.Error, "update.bat file not found");
                 throw new FileNotFoundException("update.bat file not found");
             }
-
+            
+            Logger.Write($"[Updater] BAT file finded: {batFilePath}");
+            
             var processId = Process.GetCurrentProcess().Id;
             var arguments = $"\"{targetFolderPath}\" \"{updateFolderPath}\" \"{executableName}\" {processId}";
+            
+            Logger.Write($"[Updater] BAT process: {processId}, arguments: {arguments}");
+
+            
+            bool needElevation = !Context.SystemUser.CanWriteTo(targetFolderPath);
+            bool elevated = Context.SystemUser.IsAdministrator();
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = batFilePath,
-                Arguments = arguments,
                 UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
+                FileName = "cmd.exe",
+                Arguments = $"/c \"\"{batFilePath}\" {arguments}\"",
+                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
+                WindowStyle = ProcessWindowStyle.Hidden
             };
-
+            
+            Logger.Write("[Updater] Start process");
+            
+            if (needElevation && !elevated)
+            {
+                startInfo.Verb = "runas";
+            }
+            
             Process.Start(startInfo);
             Environment.Exit(0);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to start update: {ex.Message}");
+            Logger.Error($"Failed to start update: {ex.Message}");
         }
     }
 
-    public void RestoreFromBackup()
+    public static void RestoreFromBackup()
     {
     }
     

@@ -119,6 +119,6 @@ public class Creator : Scene
             _onConnected = null;
         }
         
-        Context.CallFacade.Clear();
+        Context.CallFacade.Hangup();
     }
 }

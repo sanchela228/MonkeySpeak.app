@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using App.Configurations.Interfaces;
+using App.Configurations.Roots;
 using App.System.Calls.Application;
 using App.System.Calls.Domain;
 using App.System.Calls.Infrastructure;
@@ -70,7 +70,7 @@ public class P2PCallManager : ICallManager
 #endif
     }
 
-    public P2PCallManager(ISignalingClient signaling, IStunClient stun, INetworkConfig netConfig)
+    public P2PCallManager(ISignalingClient signaling, IStunClient stun, NetworkConfig netConfig)
         : this(signaling, stun, new CallConfig(netConfig))
     {
     }
@@ -85,7 +85,7 @@ public class P2PCallManager : ICallManager
     public async Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken)
     {
         var session = new CallSession();
-        Transition(session, CallState.Negotiating);
+        Transition(session, CallState.Idle);
         
         var localLanEp = GetLocalLanEndpoint(_localPort);
         IPEndPoint publicEp = null;
@@ -123,7 +123,7 @@ public class P2PCallManager : ICallManager
     public async Task<CallSession> ConnectToSessionAsync(string code, CancellationToken cancellationToken)
     {
         var session = new CallSession();
-        Transition(session, CallState.Negotiating);
+        Transition(session, CallState.Idle);
         
         var localLanEp = GetLocalLanEndpoint(_localPort);
         IPEndPoint publicEp = null;
@@ -281,6 +281,10 @@ public class P2PCallManager : ICallManager
                         _controls.OnRemoteMuteChanged += HandleRemoteMuteChanged;
                         _controls.OnRemoteHangup += HandleRemoteHangup;
                     }
+                    break;
+                case SessionCreated sessionCreated:
+                    if (_activeSession == null) return;
+                    Transition(_activeSession, CallState.Waiting);
                     break;
                 case ErrorConnectToSession errorConnectToSession:
                     if (_activeSession == null) return;
