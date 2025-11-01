@@ -10,9 +10,9 @@ public class ContextData : XmlConfigBase<ContextData>
     public string MachineId { get; set; }
     public Language LanguageSelected { get; set; }
 
-    public override string FileName => Context.NameDataFile;
+    public override string FileName => "AppData.xml";
 
-    public override void ApplyDefaults()
+    protected override void ApplyDefaults()
     {
         ApplicationId = Guid.NewGuid();
         MachineId = ComputerIdentity.GetMacAddress();

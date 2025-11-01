@@ -13,7 +13,7 @@ public class NetworkConfig : XmlConfigBase<NetworkConfig>
     
     public override string FileName => "NetworkConfig.xml";
     
-    public override void ApplyDefaults()
+    protected override void ApplyDefaults()
     {
         Domain = "localhost";
         UseSSL = false;

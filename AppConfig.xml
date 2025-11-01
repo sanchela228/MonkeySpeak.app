@@ -2,4 +2,5 @@
 <AppConfig>
     <VersionName>0.1.6</VersionName>
     <Version>14</Version>
+    <Platform>Windows</Platform>
 </AppConfig>

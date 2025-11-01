@@ -14,7 +14,7 @@ public class UserSettingsData
 }
 public class UserSettings : XmlConfigBase<UserSettings>
 {
-    protected override string RootDirectory => Context.DataDirectory;
+    protected override string RootDirectory => Path.Combine(Context.DataDirectory, "Configurations");
     private event Action OnDataChange;
     
     [XmlIgnore]
@@ -68,8 +68,7 @@ public class UserSettings : XmlConfigBase<UserSettings>
         }
     }
 
-    public override string FileName => Context.NameUserSettingsFile;
-
+    public override string FileName => "UserSettings.xml";
     public UserSettings()
     {
         OnDataChange += Save;
@@ -79,12 +78,18 @@ public class UserSettings : XmlConfigBase<UserSettings>
     {
         try
         {
+            var dir = Path.GetDirectoryName(FilePath);
+            
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+
             var serializer = new XmlSerializer(typeof(UserSettingsData));
             var data = new UserSettingsData
             {
                 CaptureDeviceIdString = CaptureDeviceIdString,
                 PlaybackDeviceIdString = PlaybackDeviceIdString
             };
+            
             using var writer = new StreamWriter(FilePath);
             serializer.Serialize(writer, data);
         }
@@ -94,37 +99,7 @@ public class UserSettings : XmlConfigBase<UserSettings>
         }
     }
 
-    public override void LoadOrDefault()
-    {
-        try
-        {
-            if (Exists())
-            {
-                var serializer = new XmlSerializer(typeof(UserSettingsData));
-                using var reader = new StreamReader(FilePath);
-                var cThis = (UserSettingsData)serializer.Deserialize(reader);
-
-                if (IntPtr.TryParse(cThis.CaptureDeviceIdString, out var capturePtr))
-                    _captureDeviceId = capturePtr;
-
-                if (IntPtr.TryParse(cThis.PlaybackDeviceIdString, out var playbackPtr))
-                    _playbackDeviceId = playbackPtr;
-
-                return;
-            }
-
-            ApplyDefaults();
-            Save();
-        }
-        catch (Exception ex)
-        {
-            Logger.Write(Logger.Type.Error, "Can't load UserSettings from xml. Applying defaults", ex);
-            ApplyDefaults();
-            try { Save(); } catch { /* ignore */ }
-        }
-    }
-
-    public override void ApplyDefaults()
+    protected override void ApplyDefaults()
     {
         _captureDeviceId = null;
         _playbackDeviceId = null;

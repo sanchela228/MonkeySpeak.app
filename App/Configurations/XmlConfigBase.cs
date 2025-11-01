@@ -8,6 +8,7 @@ public abstract class XmlConfigBase<T> where T : class
     public abstract string FileName { get; }
     protected abstract string RootDirectory { get; }
     protected abstract void CopyFrom(T other);
+    protected abstract void ApplyDefaults();
 
     public string FilePath => Path.Combine(RootDirectory, FileName);
 
@@ -42,6 +43,4 @@ public abstract class XmlConfigBase<T> where T : class
             try { Save(); } catch { /* ignore secondary errors */ }
         }
     }
-
-    public virtual void ApplyDefaults() { }
 }

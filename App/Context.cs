@@ -26,8 +26,6 @@ public static class Context
         "MonkeySpeak\\Downloads"
     );
     
-    public const string NameDataFile = "AppData.xml";
-    public const string NameUserSettingsFile = "CommunicationSettings.xml";
     public const string NameAuthorizationNetworkTokenFile = "AuthNetworkToken";
 
     public static Guid CurrentSessionToken { get; } = Guid.NewGuid();

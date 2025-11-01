@@ -10,7 +10,7 @@ public class AppConfig : XmlConfigBase<AppConfig>
 
     public override string FileName => "AppConfig.xml";
 
-    public override void ApplyDefaults()
+    protected override void ApplyDefaults()
     {
         VersionName = "dev";
         Version = 1;
