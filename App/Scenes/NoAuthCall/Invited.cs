@@ -79,10 +79,14 @@ public class Invited : Scene
         
         Context.CallFacade.OnSessionStateChanged += _onSessionStateChanged;
 
-        var clip = Raylib.GetClipboardText_();
-        
-        if (clip.Length == 6)
-            TryAutoPasteFromClipboardOnStart();
+        try
+        {
+            var clip = Raylib.GetClipboardText_();
+            
+            if (clip.Length == 6)
+                TryAutoPasteFromClipboardOnStart();
+        }
+        catch (Exception e) { }
     }
 
     protected override void Update(float deltaTime)
@@ -111,7 +115,13 @@ public class Invited : Scene
         bool ctrlDown = Input.IsDown(KeyboardKey.LeftControl) || Input.IsDown(KeyboardKey.RightControl);
         if (ctrlDown && Input.IsPressed(KeyboardKey.V) && _inputText.Length == 0)
         {
-            var clip = Raylib.GetClipboardText_();
+            var clip = string.Empty;
+            
+            try
+            {
+                clip = Raylib.GetClipboardText_();
+            }
+            catch (Exception e) { clip = string.Empty; }
             
             var pasted = SanitizeToCode(clip, maxInputLength);
             if (!string.IsNullOrEmpty(pasted))
@@ -159,7 +169,13 @@ public class Invited : Scene
 
     private void TryAutoPasteFromClipboardOnStart()
     {
-        var clip = Raylib.GetClipboardText_();
+        var clip = string.Empty;
+            
+        try
+        {
+            clip = Raylib.GetClipboardText_();
+        }
+        catch (Exception e) { clip = string.Empty; }
         
         var pasted = SanitizeToCode(clip, maxInputLength);
         if (!string.IsNullOrEmpty(pasted) && pasted.Length == maxInputLength)
