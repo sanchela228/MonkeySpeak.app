@@ -85,12 +85,17 @@ public class Header : IDisposable
                 return;
             }
         }
-            
+
         if (Raylib.IsMouseButtonReleased(MouseButton.Left))
+        {
             _isDragging = false;
+            Raylib.SetMouseCursor(MouseCursor.Default);
+        }
             
         if (_isDragging)
         {
+            Raylib.SetMouseCursor(MouseCursor.ResizeAll);
+            
             Vector2 offset = mousePos - _mouseStartPos;
             Vector2 newWindowPos = _windowStartPos + offset;
             Raylib.SetWindowPosition((int)newWindowPos.X, (int)newWindowPos.Y);
