@@ -58,14 +58,16 @@ public class Updater(NetworkConfig networkConfig)
             }
         }
 
-        var downloadPath = NetworkConfig.DomainUrl() + "/" + GetActualDownloadUrl();
         var updateFolderPath = Path.Combine(downloadsPath, "ActualUpdate");
         
-        await DownloadFileFromServer(downloadPath, actualUpdateZipPath, Context.Network.DownloadUpdateState);
+        await DownloadFileFromServer(GetActualDownloadUrl(), actualUpdateZipPath, Context.Network.DownloadUpdateState);
         
         // TODO: ADD BACKUP AND UNPACK THEM IF UPDATE FAILED
-        ExtractFile(actualUpdateZipPath, updateFolderPath);
-        DeleteFile(actualUpdateZipPath);
+        if (!HasError)
+        {
+            ExtractFile(actualUpdateZipPath, updateFolderPath);
+            DeleteFile(actualUpdateZipPath);
+        }
         
         if (HasError) RestoreFromBackup();
         else
@@ -206,11 +208,19 @@ public class Updater(NetworkConfig networkConfig)
 
     public static void RestoreFromBackup()
     {
+        Context.Network.DownloadUpdateState.IsDownloading = false;
+        Context.Network.DownloadUpdateState.StatusMessage = "Update failed";
     }
     
     public bool HasError;
 
-    private string GetActualDownloadUrl() => $"download/versions/{_manifest.Version}/win64/source_win64_{_manifest.Version}.zip";
+    public string GetActualDownloadUrl()
+    {
+        string baseUrl = NetworkConfig.DomainUrl();
+        string path = $"{_manifest.PathDownload.Trim('/')}/{_manifest.FileSource.Trim('/')}";
+    
+        return new Uri( new Uri(baseUrl), path).ToString();
+    }
     
     public async Task<Manifest> GetUpdateInfoFromStreamAsync(string xmlUrl)
     {
@@ -239,6 +249,10 @@ public class Updater(NetworkConfig networkConfig)
     public class Manifest()
     {
         public int Version;
+        public string VersionName;
+        public string PathDownload;
+        public string FileSource;
+        public string FileSetup;
     }
     
     public class DownloadUpdateState

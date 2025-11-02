@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AppConfig>
-    <VersionName>0.1.6</VersionName>
-    <Version>14</Version>
+    <VersionName>0.1.8</VersionName>
+    <Version>17</Version>
     <Platform>Windows</Platform>
 </AppConfig>
