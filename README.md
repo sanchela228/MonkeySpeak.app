@@ -1,134 +1,134 @@
 # MonkeySpeak
 
-**MonkeySpeak** — это P2P приложение для голосовой связи, работающее без центрального сервера для передачи аудио. Все звонки происходят напрямую между участниками.
+**MonkeySpeak** is a P2P voice communication application that operates without a central server for audio transmission. All calls occur directly between participants.
 
-## Основные возможности
+## Key Features
 
-- **P2P голосовая связь** — прямое соединение между участниками без задержек
-- **Минимальная нагрузка на сервер** — сервер используется только для координации соединения
-- **Качественное аудио** — кодирование Opus с битрейтом 32 kbps
-- **Простой интерфейс** — создание комнаты или подключение по коду
+- **P2P voice communication** — direct connection between participants without delays
+- **Minimal server load** — server is used only for connection coordination
+- **High-quality audio** — Opus encoding with 32 kbps bitrate
+- **Simple interface** — create a room or connect by code
 
-## Технологии
+## Technologies
 
-- **.NET 9.0** — основной фреймворк
-- **Raylib-cs** — графический интерфейс
-- **SoundFlow** — захват и воспроизведение аудио
-- **Concentus (Opus)** — аудио кодек для сжатия голоса
-- **WebSocket** — сигнализация между клиентами
-- **UDP** — передача аудио данных
+- **.NET 9.0** — core framework
+- **Raylib-cs** — graphical interface
+- **SoundFlow** — audio capture and playback
+- **Concentus (Opus)** — audio codec for voice compression
+- **WebSocket** — signaling between clients
+- **UDP** — audio data transmission
 
 ## Engine
 
-Проект использует собственную реализацию игрового движка на базе **Raylib-cs**. Engine включает систему сцен, менеджеры ресурсов, анимацию и UI компоненты, что позволяет создавать интерактивный интерфейс приложения.
+The project uses a custom game engine implementation based on **Raylib-cs**. The Engine includes a scene system, resource managers, animation, and UI components, enabling the creation of an interactive application interface.
 
-## Серверная часть
+## Server Side
 
-Для работы приложения необходим сервер, который выполняет функции **сигналинга** (обмен информацией о соединении через WebSocket) и **STUN-сервера** (определение публичного IP-адреса).
+The application requires a server that performs **signaling** functions (exchanging connection information via WebSocket) and **STUN server** functions (determining public IP address).
 
-Серверная часть открыто распространяется в репозитории: [monkeyspeak.backend](https://github.com/sanchela228/monkeyspeak.backend)
+The server side is openly distributed in the repository: [monkeyspeak.backend](https://github.com/sanchela228/monkeyspeak.backend)
 
-Вы можете легко развернуть сервер локально или в своей сети для полностью автономной работы системы.
+You can easily deploy the server locally or on your network for fully autonomous system operation.
 
-## Как работает связь
+## How Communication Works
 
-### 1. Инициализация соединения
+### 1. Connection Initialization
 
-Пользователь может создать сессию или подключиться к существующей по коду:
-
-```
-[Пользователь] → [CreateSession/ConnectToSession] → [WebSocket сервер]
-```
-
-### 2. Получение публичного IP
-
-Приложение использует STUN-сервер для определения публичного IP-адреса:
+A user can create a session or connect to an existing one by code:
 
 ```
-[UDP клиент] → [STUN сервер] → [Публичный IP:Port]
+[User] → [CreateSession/ConnectToSession] → [WebSocket Server]
 ```
 
-- В DEBUG режиме используется локальный LAN адрес
-- В RELEASE режиме получается публичный IP через STUN
+### 2. Public IP Retrieval
 
-### 3. Обмен информацией через сигнализацию
-
-WebSocket сервер передает информацию о IP-адресах между участниками:
+The application uses a STUN server to determine the public IP address:
 
 ```
-[Клиент A] ← [WebSocket: HolePunching] → [Клиент B]
+[UDP Client] → [STUN Server] → [Public IP:Port]
+```
+
+- In DEBUG mode, the local LAN address is used
+- In RELEASE mode, the public IP is obtained via STUN
+
+### 3. Information Exchange via Signaling
+
+The WebSocket server transmits IP address information between participants:
+
+```
+[Client A] ← [WebSocket: HolePunching] → [Client B]
             IP A ←----------→ IP B
 ```
 
 ### 4. UDP Hole Punching
 
-Устанавливается прямое UDP соединение между участниками:
+A direct UDP connection is established between participants:
 
 ```
-[Клиент A UDP] ←--PING/PONG--→ [Клиент B UDP]
+[Client A UDP] ←--PING/PONG--→ [Client B UDP]
 ```
 
-- Отправка PING пакетов для пробития NAT
-- Получение PONG подтверждает установку соединения
-- После успешного пробития состояние меняется на `Connected`
+- Sending PING packets to punch through NAT
+- Receiving PONG confirms connection establishment
+- After successful punching, state changes to `Connected`
 
-### 5. Передача аудио
+### 5. Audio Transmission
 
-После установки соединения начинается обмен аудио данными:
+After connection is established, audio data exchange begins:
 
 ```
-[Микрофон] → [Захват PCM] → [Opus кодирование] → [UDP пакет] 
+[Microphone] → [PCM Capture] → [Opus Encoding] → [UDP Packet] 
                                                       ↓
-[Динамик] ← [Воспроизведение] ← [Opus декодирование] ← [UDP прием]
+[Speaker] ← [Playback] ← [Opus Decoding] ← [UDP Reception]
 ```
 
-**Параметры аудио:**
-- Частота дискретизации: 48 кHz (Broadcast качество)
-- Каналы: стерео
-- Длительность фрейма: 20 ms
-- Битрейт: 32 kbps
-- Тип сигнала: OPUS_SIGNAL_VOICE
+**Audio Parameters:**
+- Sample rate: 48 kHz (Broadcast quality)
+- Channels: stereo
+- Frame duration: 20 ms
+- Bitrate: 32 kbps
+- Signal type: OPUS_SIGNAL_VOICE
 
-### 6. Управление соединением
+### 6. Connection Control
 
-Через UDP передаются не только аудио данные, но и управляющие команды:
+UDP transmits not only audio data but also control commands:
 
-- **MessageType.Audio** — аудио данные
-- **MessageType.Control** — управляющие команды (мут, размут, отбой)
-- **MessageType.HolePunch** — служебные сообщения для поддержания соединения
+- **MessageType.Audio** — audio data
+- **MessageType.Control** — control commands (mute, unmute, hangup)
+- **MessageType.HolePunch** — service messages for maintaining connection
 
-## Структура проекта
+## Project Structure
 
 ```
 MonkeySpeak/
 ├── App/
-│   ├── Scenes/              # UI сцены (StartUp, Room, Creator, Invited)
+│   ├── Scenes/              # UI scenes (StartUp, Room, Creator, Invited)
 │   ├── System/
-│   │   ├── Calls/           # Логика звонков
+│   │   ├── Calls/           # Call logic
 │   │   │   ├── Application/ # P2PCallManager, CallFacade
-│   │   │   ├── Media/       # AudioTranslator (обработка аудио)
-│   │   │   └── Infrastructure/ # WebSocket, STUN клиенты
+│   │   │   ├── Media/       # AudioTranslator (audio processing)
+│   │   │   └── Infrastructure/ # WebSocket, STUN clients
 │   │   ├── Managers/        # UdpUnifiedManager
 │   │   └── Modules/         # WebSocketClient, Network
-│   └── Context.cs           # Глобальный контекст приложения
-└── Program.cs               # Точка входа
+│   └── Context.cs           # Global application context
+└── Program.cs               # Entry point
 ```
 
-## Запуск
+## Running
 
-1. Убедитесь, что установлен **.NET 9.0 SDK**
-2. Настройте `NetworkConfig.xml` с адресом вашего сервера:
+1. Make sure **.NET 9.0 SDK** is installed
+2. Configure `NetworkConfig.xml` with your server address:
    ```xml
    <Domain>your-server.com</Domain>
    <Port>8080</Port>
    ```
-3. Соберите и запустите проект:
+3. Build and run the project:
    ```bash
    dotnet run
    ```
 
-## Безопасность
+## Security
 
-- Приватные ключи устройства хранятся в `SecureStorage`
-- Каждая сессия имеет уникальный токен
-- P2P соединение минимизирует передачу данных через сервер
+- Device private keys are stored in `SecureStorage`
+- Each session has a unique token
+- P2P connection minimizes data transmission through the server
