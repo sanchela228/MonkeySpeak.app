@@ -75,6 +75,11 @@ public class P2PCallManager : ICallManager
     {
     }
 
+    public void ToggleDenTEST()
+    {
+       audioTranslator.ToggleDenoise();
+    }
+
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
 
@@ -221,6 +226,7 @@ public class P2PCallManager : ICallManager
                 Logger.Write(Logger.Type.Error, "[StartAudioProcess] UDP manager is not initialized");
                 return;
             }
+            
             audioTranslator = new AudioTranslator(_udpManager, new CancellationTokenSource());
         }
         catch (Exception ex)

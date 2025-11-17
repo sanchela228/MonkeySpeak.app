@@ -14,6 +14,7 @@ public interface ICallManager
     void SetMicrophoneStatus(bool status);
 
     void StartAudioProcess();
+    void ToggleDenTEST();
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;

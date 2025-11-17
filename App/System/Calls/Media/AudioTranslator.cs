@@ -7,6 +7,7 @@ using App.System.Managers;
 using App.System.Services;
 using Concentus.Enums;
 using Concentus.Structs;
+using RNNoise.NET;
 using SoundFlow.Abstracts.Devices;
 using SoundFlow.Backends.MiniAudio;
 using SoundFlow.Components;
@@ -37,6 +38,7 @@ public class AudioTranslator : IDisposable
         _audioThread = new Thread(ConfigureAudioEngine);
         _audioThread.IsBackground = true;
         _audioThread.Start();
+        
         Logger.Write(Logger.Type.Info, "[AudioTranslator] initialized with UdpUnifiedManager");
     }
     
@@ -57,6 +59,28 @@ public class AudioTranslator : IDisposable
         await _udpManager.SendAudioAsync(new ReadOnlyMemory<byte>(data, 0, length));
     }
     
+    // RNNoise (10 ms @ 48kHz, mono)
+    private readonly List<float> rnnoiseBuffer = new(480);
+    private readonly List<float> opusBuffer = new(480);
+
+    private readonly AudioFormat audioFormat = new AudioFormat()
+    {
+        SampleRate = 48000,
+        Channels = 1,
+        Format = SampleFormat.F32
+    };
+
+    private OpusEncoder encoder;
+    private OpusDecoder decoder;
+    private Denoiser denoiser;
+
+    private const int MaxOpusPacketBytes = 4096;
+    private const int frameDurationMs = 10;
+    private byte[] opusPacket = new byte[MaxOpusPacketBytes];
+    
+    private int frameSizePerChannel => audioFormat.SampleRate / (1000 / frameDurationMs);
+    private int frameSamplesTotal => frameSizePerChannel * audioFormat.Channels;
+    
     private void ConfigureAudioEngine()
     {
         try
@@ -64,86 +88,32 @@ public class AudioTranslator : IDisposable
             _isRunning = true;
             
             using var engine = new MiniAudioEngine();
-            var format = AudioFormat.Broadcast;
-            var sampleFormat = SampleFormat.F32;
 
-            captureDeviceWorker = engine.InitializeCaptureDevice(null, format);
-            playbackDeviceWorker = engine.InitializePlaybackDevice(null, format);
+            captureDeviceWorker = engine.InitializeCaptureDevice(null, audioFormat);
+            playbackDeviceWorker = engine.InitializePlaybackDevice(null, audioFormat);
 
             pcmStream = new ProducerConsumerStream();
 
             using var streamDataProvider = new RawDataProvider(
                 pcmStream,
-                sampleFormat,
-                format.SampleRate,
-                format.Channels
+                audioFormat.Format,
+                audioFormat.SampleRate,
+                audioFormat.Channels
             );
+            
+            denoiser = new Denoiser();
 
-            player = new SoundPlayer(engine, format, streamDataProvider);
+            player = new SoundPlayer(engine, audioFormat, streamDataProvider);
             playbackDeviceWorker.MasterMixer.AddComponent(player);
 
-            OpusEncoder encoder =
-                new OpusEncoder(format.SampleRate, format.Channels, OpusApplication.OPUS_APPLICATION_VOIP);
-            encoder.Bitrate = 32000; // 32 kbps
-            encoder.Complexity = 5; // (0-10)
+            encoder = new OpusEncoder(audioFormat.SampleRate, audioFormat.Channels, OpusApplication.OPUS_APPLICATION_VOIP);
+            encoder.Bitrate = 64000; // 64 kbps
+            encoder.Complexity = 8; // (0-10)
             encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
-            var decoder = new OpusDecoder(format.SampleRate, format.Channels);
-
-            int frameDurationMs = 20;
-            int frameSizePerChannel = format.SampleRate / (1000 / frameDurationMs); // 480 / 48 кГц
-            int channels = format.Channels;
-            int frameSamplesTotal = frameSizePerChannel * channels;
-
-            List<float> captureBuffer = new List<float>(frameSamplesTotal * 4);
-            const int MaxOpusPacketBytes = 4096;
-
-            var opusPacket = new byte[MaxOpusPacketBytes];
-
-            captureDeviceWorker.OnAudioProcessed += (samples, capability) =>
-            {
-                if (_captureEnabled)
-                {
-                    for (int i = 0; i < samples.Length; i++)
-                    {
-                        captureBuffer.Add(samples[i]);
-                    }
-
-                    while (captureBuffer.Count >= frameSamplesTotal)
-                    {
-                        var framePcm = new float[frameSamplesTotal];
-                        captureBuffer.CopyTo(0, framePcm, 0, frameSamplesTotal);
-                        captureBuffer.RemoveRange(0, frameSamplesTotal);
-
-                        int encodedBytes = encoder.Encode(framePcm, 0, frameSizePerChannel, opusPacket, 0,
-                            MaxOpusPacketBytes);
-                        if (encodedBytes <= 0)
-                        {
-                            continue;
-                        }
-
-                        _ = SendAudioBytesAsync(opusPacket, encodedBytes);
-                    }
-                }
-            };
-
-            this.OnDataReceived += (receivedData) =>
-            {
-                try
-                {
-                    var decodedFrame = new float[frameSamplesTotal];
-                    int decodedSamples = decoder.Decode(receivedData, 0, receivedData.Length, decodedFrame, 0,
-                        frameSizePerChannel, false);
-
-                    ReadOnlySpan<byte> decodedBytes = MemoryMarshal.AsBytes<float>(decodedFrame);
-                    var outBuf = new byte[decodedBytes.Length];
-                    decodedBytes.CopyTo(outBuf);
-                    pcmStream.Write(outBuf, 0, outBuf.Length);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Decoding error: {ex.Message}");
-                }
-            };
+            decoder = new OpusDecoder(audioFormat.SampleRate, audioFormat.Channels);
+            
+            captureDeviceWorker.OnAudioProcessed += OnAudioProcessedHandler;
+            OnDataReceived += OnDataReceivedHandler;
 
             player.Play();
             playbackDeviceWorker.Start();
@@ -161,6 +131,78 @@ public class AudioTranslator : IDisposable
             Logger.Write(Logger.Type.Error, $"[AudioTranslator] Error in audio engine: {ex.Message}", ex);
             throw;
         }
+    }
+
+    private void OnDataReceivedHandler(byte[] bytes)
+    {
+        try
+        {
+            var decodedFrame = new float[frameSamplesTotal];
+            int decodedSamples = decoder.Decode(bytes, 0, bytes.Length, decodedFrame, 0,
+                frameSizePerChannel, false);
+
+            ReadOnlySpan<byte> decodedBytes = MemoryMarshal.AsBytes<float>(decodedFrame);
+            var outBuf = new byte[decodedBytes.Length];
+            decodedBytes.CopyTo(outBuf);
+            pcmStream.Write(outBuf, 0, outBuf.Length);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Decoding error: {ex.Message}");
+        }
+    }
+    
+    private void OnAudioProcessedHandler(Span<float> samples, Capability capability)
+    {
+        if (!_captureEnabled)
+            return;
+                
+        float[] inputBuffer = samples.ToArray();
+
+        // normalize entry
+        for (int i = 0; i < inputBuffer.Length; i++)
+        {
+            if (float.IsNaN(inputBuffer[i]) || float.IsInfinity(inputBuffer[i]))
+                inputBuffer[i] = 0f;
+            else
+                inputBuffer[i] = Math.Clamp(inputBuffer[i], -1.0f, 1.0f);
+        }
+
+        rnnoiseBuffer.AddRange(inputBuffer);
+                
+        while (rnnoiseBuffer.Count >= 480)
+        {
+            float[] rnFrame = rnnoiseBuffer.GetRange(0, 480).ToArray();
+            rnnoiseBuffer.RemoveRange(0, 480);
+
+            if (_denoiseEnabled)
+            {
+                Span<float> span = rnFrame.AsSpan();
+                float vadScore = denoiser.Denoise(span, finish: false) / 480.0f;
+            }
+
+            opusBuffer.AddRange(rnFrame);
+        }
+    
+        while (opusBuffer.Count >= 480)
+        {
+            float[] opusFrame = opusBuffer.GetRange(0, 480).ToArray();
+            opusBuffer.RemoveRange(0, 480);
+
+            int encodedBytes = encoder.Encode(opusFrame, 0, 480, opusPacket, 0, MaxOpusPacketBytes);
+
+            if (encodedBytes > 0)
+                _ = SendAudioBytesAsync(opusPacket, encodedBytes);
+        }
+    }
+   
+    private volatile bool _denoiseEnabled = true;
+    private float _vadGain = 1.0f;
+    
+    public void ToggleDenoise()
+    {
+        _denoiseEnabled = !_denoiseEnabled;
+        Logger.Write(Logger.Type.Info, $"[AudioTranslator] Denoise {(_denoiseEnabled ? "enabled" : "disabled")}");
     }
     
     private void StopAudioDevices()
