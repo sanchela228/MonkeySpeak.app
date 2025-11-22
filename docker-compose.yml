@@ -20,6 +20,7 @@ services:
     ports:
       - "${HTTP_PORT_SERVER}:80"
       - "${HTTPS_PORT_SERVER}:443"
+      - "3478:3478/udp"
     restart: unless-stopped
     depends_on:
       db:
