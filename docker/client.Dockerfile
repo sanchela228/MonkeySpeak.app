@@ -1,0 +1,11 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+COPY ../App ./App
+
+WORKDIR /src/App
+RUN dotnet restore
+
+RUN dotnet publish -c Release -r win-x64 --self-contained true -o /build/win
+
+CMD ["bash", "-c", "cp -r /build/* /output"]
