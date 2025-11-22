@@ -20,6 +20,7 @@
       <PackageReference Include="Raylib-cs" Version="7.0.1" />
       <PackageReference Include="SoundFlow" Version="1.2.1" />
       <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.8" />
+      <PackageReference Include="YellowDogMan.RRNoise.NET" Version="0.1.6" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,8 +33,6 @@
       <None Update="update.bat">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Include=".docs\SoundFlow\sourcehtml_doc.txt" />
-      <None Include=".docs\SoundFlow\SoundFlow_API.md" />
       <None Update="sticker.webm">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

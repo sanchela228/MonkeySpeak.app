@@ -68,6 +68,9 @@ public class CallFacade
     }
 
     public void StartAudioProcess() => _engine.StartAudioProcess();
+
+    public void ToggleDemoDenoise() => _engine.ToggleDenTEST();
+    
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
     public event Action OnConnected;

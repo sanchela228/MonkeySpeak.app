@@ -102,6 +102,12 @@ public class Room : Scene
     
     protected override void Update(float dt)
     {
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Space))
+        {
+            Facade.ToggleDemoDenoise();
+        }
+        
         // if (Facade.MicrophoneEnabled)
         // {
         //     ButtonMute.BackgroundColor = Color.Green;
