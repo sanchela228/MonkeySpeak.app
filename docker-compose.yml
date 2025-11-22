@@ -30,7 +30,7 @@ services:
   client-build:
     build:
       context: .
-      dockerfile: docker/App.Dockerfile
+      dockerfile: docker/App.DockerFile
     container_name: client
     depends_on:
       backend:
