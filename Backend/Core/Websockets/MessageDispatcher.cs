@@ -98,5 +98,26 @@ public class MessageDispatcher
         {
             author.Status = Connection.StatusConnection.Connected;
         });
+        
+        On<Messages.NoAuthCall.HangupSession>((msg, author) =>
+        {
+            author.Status = Connection.StatusConnection.Idle;
+    
+            var room = rooms.FirstOrDefault(x => x.Connections.Contains(author));
+    
+            if (room != null)
+            {
+                foreach (var conn in room.Connections.Where(c => c != author))
+                {
+                    conn.Send(new Messages.NoAuthCall.HangupSession()
+                    {
+                        Value = "Call ended"
+                    });
+                    conn.Status = Connection.StatusConnection.Idle;
+                }
+        
+                rooms.Remove(room);
+            }
+        });
     }
 }

@@ -163,6 +163,8 @@ public class P2PCallManager : ICallManager
     public async Task HangupAsync(CallSession session)
     {
         Transition(session, CallState.Closed);
+        
+        _signaling?.SendAsync(new HangupSession());
 
         try
         {
@@ -185,9 +187,7 @@ public class P2PCallManager : ICallManager
                 _controls.OnRemoteMuteChanged -= HandleRemoteMuteChanged;
                 _controls.OnRemoteHangup -= HandleRemoteHangup;
             }
-            catch
-            {
-            }
+            catch { }
 
             _controls.Detach();
             _udpCts?.Dispose();
