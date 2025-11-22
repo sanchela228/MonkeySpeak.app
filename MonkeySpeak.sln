@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App", "App\App.csproj", "{F7250918-0A9A-4479-8BD0-98F5D84253F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App", "sources\App\App.csproj", "{F7250918-0A9A-4479-8BD0-98F5D84253F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend", "Backend\Backend.csproj", "{CAE6AB49-7096-4E89-9E3A-EA6D7B928774}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend", "sources\Backend\Backend.csproj", "{CAE6AB49-7096-4E89-9E3A-EA6D7B928774}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

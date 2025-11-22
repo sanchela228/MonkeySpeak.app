@@ -1,0 +1,54 @@
+@page
+@using MonkeySpeak.Backend.Core.Configurations
+@model Pages.DebugModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Debug</title>
+    @* <link rel="stylesheet" href="~/css/site.css"/> *@
+
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Madimi+One&display=swap" rel="stylesheet">
+
+</head>
+<body>
+<main>
+
+    <h2>Rooms:</h2>
+    @foreach (var room in Model.GetAllRooms())
+    {
+        <div>
+            <h6>@room.Id</h6>
+            <p>IP: @room.Code</p>
+            <p>Count connections: @room.Connections.Count</p>
+            <p>State: @room.State</p>
+            <p>Connections: </p>
+            <ul>
+                @foreach (var conn in room.Connections)
+                {
+                    <li>@conn.Id</li>
+                }
+            </ul>
+            <hr>
+        </div>
+    }
+    
+    <h2>Connections:</h2>
+    @foreach (var item in Model.GetAllConnections())
+    {
+        <div>
+            <h6>@item.Id</h6>
+            <p>IP: @item.PublicIp</p>
+            <p>Status: @item.Status</p>
+            <p>Websocket state: @item.WebSocket.State</p>
+            <hr>
+        </div>
+    }
+    
+</main>
+</body>
+</html>
