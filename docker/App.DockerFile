@@ -11,5 +11,4 @@ RUN dotnet publish -c Release -r win-x64 --self-contained true -o /build/win
 RUN apt-get update && apt-get install -y zip
 WORKDIR /build
 RUN zip -r source.zip win/
-
 CMD ["bash", "-c", "cp -r /build/* /output"]

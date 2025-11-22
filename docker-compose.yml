@@ -6,7 +6,6 @@ services:
     build:
       context: .
       args:
-        - REMOTE_GIT_LINK_BACKEND=${REMOTE_GIT_LINK_BACKEND}
         - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
         - ASPNETCORE_URLS=http://+:80
         - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASS}
@@ -14,7 +13,6 @@ services:
       dockerfile: docker/Backend.Dockerfile
     container_name: backend
     environment:
-      - REMOTE_GIT_LINK_BACKEND=${REMOTE_GIT_LINK_BACKEND}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://+:80
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERTIFICATE_PASS}
@@ -32,14 +30,13 @@ services:
   client-build:
     build:
       context: .
-      dockerfile: docker/Client.Dockerfile
+      dockerfile: docker/App.Dockerfile
     container_name: client
     depends_on:
       backend:
         condition: service_started
     volumes:
       - ./builds:/builds
-      - ./sources/Backend/wwwroot/download:/output
     command: ["bash", "-c", "cp -r /build/* /output"]
     
   db:

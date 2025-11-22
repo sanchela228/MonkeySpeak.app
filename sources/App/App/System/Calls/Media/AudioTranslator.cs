@@ -138,8 +138,7 @@ public class AudioTranslator : IDisposable
         try
         {
             var decodedFrame = new float[frameSamplesTotal];
-            int decodedSamples = decoder.Decode(bytes, 0, bytes.Length, decodedFrame, 0,
-                frameSizePerChannel, false);
+            int decodedSamples = decoder.Decode(bytes, 0, bytes.Length, decodedFrame, 0, frameSizePerChannel, true);
 
             ReadOnlySpan<byte> decodedBytes = MemoryMarshal.AsBytes<float>(decodedFrame);
             var outBuf = new byte[decodedBytes.Length];
