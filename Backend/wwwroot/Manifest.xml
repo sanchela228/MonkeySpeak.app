@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Manifest>
+    <Version>17</Version>
+    <VersionName>0.1.8</VersionName>
+    <PathDownload>download/versions/17/</PathDownload>
+    <FileSource>source.zip</FileSource>
+    <FileSetup>MonkeySpeakSetup.exe</FileSetup>
+</Manifest>
