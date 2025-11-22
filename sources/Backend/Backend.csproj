@@ -24,7 +24,12 @@
 
     <ItemGroup>
       <Folder Include="Core\Http\MIddlewares\" />
+      <Folder Include="wwwroot\download\" />
       <Folder Include="wwwroot\fonts\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="wwwroot\download\" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,6 +37,8 @@
       <_ContentIncludedByDefault Remove="wwwroot\download\versions\9\win64\source_win64_9.zip" />
       <_ContentIncludedByDefault Remove="wwwroot\download\versions\12\win64\MonkeySpeakSetup.exe" />
       <_ContentIncludedByDefault Remove="wwwroot\download\versions\12\win64\source_win64_12.zip" />
+      <_ContentIncludedByDefault Remove="wwwroot\download\versions\17\MonkeySpeakSetup.exe" />
+      <_ContentIncludedByDefault Remove="wwwroot\download\versions\17\source.zip" />
     </ItemGroup>
 
 </Project>
