@@ -33,8 +33,6 @@
       <None Update="update.bat">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Include=".docs\SoundFlow\sourcehtml_doc.txt" />
-      <None Include=".docs\SoundFlow\SoundFlow_API.md" />
       <None Update="sticker.webm">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
