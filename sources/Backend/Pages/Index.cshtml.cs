@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Reflection;
 using System.Xml.Serialization;
 using Microsoft.Extensions.Options;
-using MonkeySpeak.Backend.Core.Configurations;
-using MonkeySpeak.Backend.Core.Resources.Xml;
+using Core.Configurations;
+using Core.Resources.Xml;
 
 namespace Pages
 {

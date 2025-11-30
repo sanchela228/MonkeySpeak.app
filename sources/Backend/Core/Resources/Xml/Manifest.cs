@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace MonkeySpeak.Backend.Core.Resources.Xml;
+namespace Core.Resources.Xml;
 
 [XmlRoot("Manifest")]
 public class Manifest()

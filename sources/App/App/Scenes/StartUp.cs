@@ -110,7 +110,7 @@ public class StartUp: Scene
         };
         
         
-        AddNode(authLink);
+        // AddNode(authLink);
         AddNode(retryLink);
         _load = true;
         

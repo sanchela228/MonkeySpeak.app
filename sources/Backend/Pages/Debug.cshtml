@@ -1,5 +1,5 @@
 @page
-@using MonkeySpeak.Backend.Core.Configurations
+@using Core.Configurations
 @model Pages.DebugModel
 
 <!DOCTYPE html>
@@ -22,15 +22,15 @@
     @foreach (var room in Model.GetAllRooms())
     {
         <div>
-            <h6>@room.Id</h6>
-            <p>IP: @room.Code</p>
-            <p>Count connections: @room.Connections.Count</p>
-            <p>State: @room.State</p>
+            <h6>@room.Value.Id</h6>
+            <p>IP: @room.Value.Code</p>
+            <p>Count connections: @room.Value.Connections.Count</p>
+            <p>State: @room.Value.State</p>
             <p>Connections: </p>
             <ul>
-                @foreach (var conn in room.Connections)
+                @foreach (var conn in room.Value.Connections)
                 {
-                    <li>@conn.Id</li>
+                    <li>@conn.Value.Id</li>
                 }
             </ul>
             <hr>
@@ -41,10 +41,10 @@
     @foreach (var item in Model.GetAllConnections())
     {
         <div>
-            <h6>@item.Id</h6>
-            <p>IP: @item.PublicIp</p>
-            <p>Status: @item.Status</p>
-            <p>Websocket state: @item.WebSocket.State</p>
+            <h6>@item.Value.Id</h6>
+            <p>IP: @item.Value.PublicIp</p>
+            <p>Status: @item.Value.Status</p>
+            <p>Websocket state: @item.Value.WebSocket.State</p>
             <hr>
         </div>
     }

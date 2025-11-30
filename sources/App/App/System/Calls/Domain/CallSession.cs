@@ -4,7 +4,7 @@ namespace App.System.Calls.Domain;
 
 public class CallSession
 {
-    public string? PeerId { get; private set; }
+    public Interlocutor Self { get; private set; }
 
     public CallState State { get; private set; } = CallState.Idle;
     public int LocalUdpPort { get; private set; }

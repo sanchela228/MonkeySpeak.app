@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
@@ -7,7 +8,7 @@ using Core.Websockets;
 using Microsoft.EntityFrameworkCore;
 using ContextDatabase = Core.Database.Context;
 
-namespace MonkeySpeak.Backend.Core.Configurations;
+namespace Core.Configurations;
 
 public class App
 {
@@ -16,8 +17,8 @@ public class App
     
     public Context DbContext { get; }
     
-    public static List<Connection> connections = new();
-    public static List<Room> rooms = new();
+    public static ConcurrentDictionary<Guid, Connection> connections = new();
+    public static ConcurrentDictionary<string, Room> rooms = new();
     public string BackendVersion { get; set; }
    
     public string FrontendVersion { get; set; }
@@ -38,72 +39,7 @@ public class App
     static WebSocketOptions webSocketOptions = new() {
         KeepAliveInterval = TimeSpan.FromMinutes(2)
     };
-    
-    public async static void InitWebsockets(WebApplication app)
-    {
-        app.UseWebSockets(webSocketOptions);
-        
-        app.Map("/connector", async context =>
-        {
-            if (context.WebSockets.IsWebSocketRequest)
-            {
-                using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                using var scope = app.Services.CreateScope();
 
-                var dbContext = scope.ServiceProvider.GetRequiredService<ContextDatabase>();
-                
-                var websocketMiddleware = new WebsocketMiddleware(webSocket, dbContext, connections, rooms);
-                await websocketMiddleware.OpenWebsocketConnection(context);
-            }
-            else context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        });
-        
-        // DEMO TEST WHILE UDP NOT WORK
-        app.MapGet("/get-public-endpoint", async (HttpContext context) =>
-        {
-           
-            var remoteIp = context.Connection.RemoteIpAddress;
-            var remotePort = context.Connection.RemotePort;
-
-            string response = $"{remoteIp}:{remotePort}";
-            await context.Response.WriteAsync(response);
-        });
-        
-        app.UseWebSockets();
-
-        Task.Run(RunUdpStunTest);
-    }
-
-    public static void RunUdpStunTest()
-    {
-        Console.WriteLine("Starting UDP STUN server on port 3478...");
-        using (UdpClient udp = new UdpClient(3478))
-        {
-            IPEndPoint remoteEP = null;
-            Console.WriteLine("UDP STUN server started successfully on port 3478");
-
-            while (true)
-            {
-                try
-                {
-                    byte[] data = udp.Receive(ref remoteEP);
-                    Console.WriteLine($"Got request from {remoteEP}");
-
-                    string response = $"{remoteEP.Address}:{remoteEP.Port}";
-                    byte[] respBytes = Encoding.UTF8.GetBytes(response);
-
-                    int bytesSent = udp.Send(respBytes, respBytes.Length, remoteEP);
-                    Console.WriteLine($"Sent {bytesSent} bytes to {remoteEP}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Server error: {ex.Message}");
-                    remoteEP = null;
-                }
-            }
-        }
-    }
-    
     public static async Task ApplyMigrations(WebApplication app)
     {
         using var scope = app.Services.CreateScope();

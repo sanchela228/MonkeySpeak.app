@@ -14,7 +14,6 @@ public class WebSocketClient(NetworkConfig conf)
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cts;
     private Uri _uri;
-    private NetworkConfig _config = conf;
 
     public MessageDispatcher MessageDispatcher { get; private set; } = new MessageDispatcher();
 

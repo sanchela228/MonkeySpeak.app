@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -7,14 +8,14 @@ using ContextDatabase = Core.Database.Context;
 
 namespace Core.Websockets;
 
-public class WebsocketMiddleware(WebSocket ws, ContextDatabase dbContext, List<Connection> connections, 
-    List<Room> rooms)
+public class WebsocketMiddleware(WebSocket ws, ContextDatabase dbContext, ConcurrentDictionary<Guid, Connection> connections, 
+    ConcurrentDictionary<string, Room> rooms)
 {
     public MessageDispatcher MessageDispatcher { get; } = new();
     public async Task OpenWebsocketConnection(HttpContext context)
     {
         var connection = new Connection(ws);
-        connections.Add(connection);
+        connections.TryAdd(connection.Id, connection);
 
         try
         {
@@ -30,29 +31,32 @@ public class WebsocketMiddleware(WebSocket ws, ContextDatabase dbContext, List<C
         {
             if (rooms.Count > 0)
             {
-                var room = rooms.FirstOrDefault(x => x.Connections.Contains(connection));
-        
+                var room = rooms.Values.FirstOrDefault(r => r.Connections.ContainsKey(connection.Id));
                 if (room != null)
                 {
-                    room.Connections.Remove(connection);
-            
-                    if (room.Connections.Count == 0) rooms.Remove(room);
+                    room.Connections.TryRemove(connection.Id, out _);
+
+                    if (room.Connections.Count == 0)
+                    {
+                        rooms.TryRemove(room.Code, out _);
+                    }
                     else
                     {
-                        rooms.Remove(room);
-                
-                        foreach (var conn in room.Connections)
+                        foreach (var conn in room.Connections.Values)
                         {
-                            conn.Send(new Messages.NoAuthCall.ErrorConnectToSession()
+                            conn.Send(new Messages.NoAuthCall.InterlocutorLeft
                             {
-                                Value = "Participant disconnected"
+                                InterlocutorId = connection.Id.ToString(),
+                                Value = "Participant left"
                             });
                         }
+
+                        room.SetState(room.Connections.Count >= 2 ? Room.RoomState.Running : Room.RoomState.Waiting);
                     }
                 }
             }
-            
-            connections.Remove(connection);
+
+            connections.TryRemove(connection.Id, out _);
         }
     }
 
@@ -94,7 +98,7 @@ public class WebsocketMiddleware(WebSocket ws, ContextDatabase dbContext, List<C
                 {
                     var messageObj = JsonSerializer.Deserialize<Context>(message, options);
 
-                    if (messageObj != null && messageObj.ApplicationId != null)
+                    if (messageObj != null)
                         MessageDispatcher.Dispatch(messageObj, connection);
                 }
                 catch (NotSupportedException ex)

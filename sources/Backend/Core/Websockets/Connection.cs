@@ -1,7 +1,10 @@
+using System;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Core.Websockets;
 
@@ -21,7 +24,7 @@ public class Connection
         this.WebSocket = WebSocket;
     }
 
-    public async void Send(IMessage message)
+    public virtual async Task SendAsync(IMessage message)
     {
         var context = Context.Create(message);
         var buffer = Encoding.UTF8.GetBytes( JsonSerializer.Serialize<Context>(context) );
@@ -29,6 +32,11 @@ public class Connection
         await WebSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
     }
     
+    public virtual void Send(IMessage message)
+    {
+        _ = SendAsync(message);
+    }
+
     public enum StatusConnection
     {
         Idle,

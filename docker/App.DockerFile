@@ -9,6 +9,8 @@ RUN dotnet restore
 RUN dotnet publish -c Release -r win-x64 --self-contained true -o /build/win
 
 RUN apt-get update && apt-get install -y zip
-WORKDIR /build
-RUN zip -r source.zip win/
+
+WORKDIR /build/win
+RUN zip -r /build/source.zip ./*
+
 CMD ["bash", "-c", "cp -r /build/* /output"]

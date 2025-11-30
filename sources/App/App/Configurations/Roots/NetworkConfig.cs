@@ -6,9 +6,6 @@ public class NetworkConfig : XmlConfigBase<NetworkConfig>
     public string Domain { get; set; }
     public bool UseSSL { get; set; }
     public int Port { get; set; }
-    public string STUNServer { get; set; }
-    public string TURNServer { get; set; }
-    public int ConnectionTimeout { get; set; }
     public int MaxRetries { get; set; }
     
     public override string FileName => "NetworkConfig.xml";
@@ -18,9 +15,6 @@ public class NetworkConfig : XmlConfigBase<NetworkConfig>
         Domain = "localhost";
         UseSSL = false;
         Port = 8080;
-        STUNServer = string.Empty;
-        TURNServer = string.Empty;
-        ConnectionTimeout = 10000;
         MaxRetries = 3;
     }
     
@@ -29,9 +23,6 @@ public class NetworkConfig : XmlConfigBase<NetworkConfig>
         Domain = other.Domain;
         UseSSL = other.UseSSL;
         Port = other.Port;
-        STUNServer = other.STUNServer;
-        TURNServer = other.TURNServer;
-        ConnectionTimeout = other.ConnectionTimeout;
         MaxRetries = other.MaxRetries;
     }
     
@@ -39,8 +30,8 @@ public class NetworkConfig : XmlConfigBase<NetworkConfig>
     {
         string url = "";
         
-        url += this.UseSSL ? "https://" : "http://";
-        url += this.Domain + ":" + this.Port;
+        url += UseSSL ? "https://" : "http://";
+        url += Domain + ":" + Port;
         
         return url; 
     }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Reflection;
 using Microsoft.Extensions.Options;
-using MonkeySpeak.Backend.Core.Configurations;
+using Core.Configurations;
 
 namespace Pages
 {

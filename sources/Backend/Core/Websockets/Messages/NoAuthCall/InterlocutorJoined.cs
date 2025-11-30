@@ -1,10 +1,8 @@
-using System.Net;
-
 namespace Core.Websockets.Messages.NoAuthCall;
 
-public class HolePunching : IMessage
+public class InterlocutorJoined : IMessage
 {
+    public string Id { get; set; }
     public string Value { get; set; }
-    public string InterlocutorId { get; set; }
     public string IpEndPoint { get; set; }
 }

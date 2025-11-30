@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace Core.Websockets;
@@ -6,7 +7,7 @@ public class Room
 {
     public readonly Guid Id;
     public readonly string Code;
-    public readonly List<Connection> Connections = [];
+    public ConcurrentDictionary<Guid, Connection> Connections { get; } = new();
 
     public RoomState State { get; private set; } = RoomState.Waiting;
     
@@ -28,10 +29,18 @@ public class Room
         }
         
         Code = strR.ToString();
-        Connections.Add(creator);
+        Connections.TryAdd(creator.Id, creator);
         
         _creator = creator;
     }
+
+    public void SetState(RoomState state)
+    {
+        State = state;
+        OnStateChange?.Invoke(this, state);
+    }
+
+    public event Action<Room, RoomState>? OnStateChange;
     
     public bool IsCreator(Connection conn) => _creator == conn;
 
