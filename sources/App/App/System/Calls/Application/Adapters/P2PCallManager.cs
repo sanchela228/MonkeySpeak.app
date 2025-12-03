@@ -37,10 +37,10 @@ public class P2PCallManager : ICallManager
     private int _localPort;
     private UdpUnifiedManager _udpManager;
     private CancellationTokenSource _udpCts;
-    private bool _microphoneEnabled;
+    private bool _microphoneEnabled = true;
     public event Action<bool>? OnRemoteMuteChanged;
+    public event Action<string, bool>? OnRemoteMuteChangedByInterlocutor;
     private readonly UdpControlService _controls = new UdpControlService();
-    private bool _suppressHangupNotify;
 
     public CallSession CurrentSession() => _activeSession;
 
@@ -56,7 +56,17 @@ public class P2PCallManager : ICallManager
     public void SetMicrophoneStatus(bool status)
     {
         _microphoneEnabled = status;
-        audioTranslator.ToggleCaptureAudio(_microphoneEnabled);
+        Logger.Write(Logger.Type.Info, $"[P2P] SetMicrophoneStatus: {status}");
+        
+        if (audioTranslator != null)
+        {
+            audioTranslator.ToggleCaptureAudio(_microphoneEnabled);
+        }
+        else
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] audioTranslator is null in SetMicrophoneStatus");
+        }
+        
         _controls.Send(ControlCode.MuteState, (byte)(_microphoneEnabled ? 1 : 0));
     }
     
@@ -78,6 +88,14 @@ public class P2PCallManager : ICallManager
     public void ToggleDenTEST()
     {
        audioTranslator.ToggleDenoise();
+    }
+    
+    public Dictionary<string, float> GetAudioLevels()
+    {
+        if (audioTranslator != null) 
+            return audioTranslator.GetAudioLevels();
+        
+        return new Dictionary<string, float>();
     }
 
     public event Action<CallSession, CallState>? OnSessionStateChanged;
@@ -163,17 +181,13 @@ public class P2PCallManager : ICallManager
     public async Task HangupAsync(CallSession session)
     {
         Transition(session, CallState.Closed);
-        
         _signaling?.SendAsync(new HangupSession());
 
         try
         {
-            if (!_suppressHangupNotify)
-                _controls?.SendHangup();
-            
             audioTranslator?.Dispose();
 
-            _udpCts?.Cancel();
+            await _udpCts?.CancelAsync();
             _udpManager?.Stop();
 
             if (_udpManager != null)
@@ -184,8 +198,7 @@ public class P2PCallManager : ICallManager
 
             try
             {
-                _controls.OnRemoteMuteChanged -= HandleRemoteMuteChanged;
-                _controls.OnRemoteHangup -= HandleRemoteHangup;
+                _controls.OnRemoteMuteChangedByInterlocutor -= HandleRemoteMuteChangedByInterlocutor;
             }
             catch { }
 
@@ -210,28 +223,47 @@ public class P2PCallManager : ICallManager
             _udpCts = null;
             _connectedRaised = false;
             _activeSession = null;
-            _suppressHangupNotify = false;
         }
        
         await Task.CompletedTask;
     }
 
     private AudioTranslator audioTranslator;
+    private bool _audioProcessStartRequested = false;
+    
     public void StartAudioProcess()
+    {
+        _audioProcessStartRequested = true;
+        TryInitializeAudioTranslator();
+    }
+    
+    private void TryInitializeAudioTranslator()
     {
         try
         {
+            if (!_audioProcessStartRequested)
+            {
+                return;
+            }
+            
+            if (audioTranslator != null)
+            {
+                Logger.Write(Logger.Type.Info, "[AudioTranslator] Already initialized");
+                return;
+            }
+            
             if (_udpManager == null)
             {
-                Logger.Write(Logger.Type.Error, "[StartAudioProcess] UDP manager is not initialized");
+                Logger.Write(Logger.Type.Warning, "[AudioTranslator] UDP manager not ready yet, waiting...");
                 return;
             }
             
             audioTranslator = new AudioTranslator(_udpManager, new CancellationTokenSource());
+            Logger.Write(Logger.Type.Info, "[AudioTranslator] Successfully initialized");
         }
         catch (Exception ex)
         {
-            Logger.Write(Logger.Type.Error, $"[StartAudioProcess] Error: {ex.Message}", ex);
+            Logger.Write(Logger.Type.Error, $"[AudioTranslator] Initialization error: {ex.Message}", ex);
         }
     }
 
@@ -267,40 +299,107 @@ public class P2PCallManager : ICallManager
             var msg = ctx.ToMessage();
             switch (msg)
             {
-                case HolePunching hp:
-                    if (_activeSession == null) return;
-                    if (string.IsNullOrWhiteSpace(hp.IpEndPoint)) return;
-                    if (!TryParseIpEndPoint(hp.IpEndPoint, out var remote)) return;
+                case InterlocutorJoined joined:
+                    Logger.Write($"[P2P] InterlocutorJoined event: {joined.Id}");
                     
-                    _activeSession.SetInterlocutor(new Interlocutor(remote, CallState.HolePunching));
-                    Transition(_activeSession, CallState.HolePunching);
+                    if (_activeSession == null) 
+                        return;
                     
+                    if (string.IsNullOrWhiteSpace(joined.IpEndPoint)) 
+                        return;
+                    
+                    if (!TryParseIpEndPoint(joined.IpEndPoint, out var joinRemote)) 
+                        return;
+
                     if (_udpManager == null)
                     {
                         _udpManager = new UdpUnifiedManager();
                         _udpManager.OnHolePunchData += HandlePuncherData;
                         _udpManager.OnConnected += HandleOnConnected;
                         _udpCts = new CancellationTokenSource();
-                        _udpManager.StartWithClient(new UdpClient(_activeSession.LocalUdpPort), remote, _udpCts.Token);
-                        
+                        _udpManager.StartWithClient(new UdpClient(_activeSession.LocalUdpPort), joinRemote, _udpCts.Token);
+
                         _controls.Attach(_udpManager);
-                        _controls.OnRemoteMuteChanged += HandleRemoteMuteChanged;
-                        _controls.OnRemoteHangup += HandleRemoteHangup;
+
+                        _controls.OnRemoteMuteChangedByInterlocutor += HandleRemoteMuteChangedByInterlocutor;
+
+                        TryInitializeAudioTranslator();
+                    }
+
+                    try 
+                    { 
+                        _udpManager.AddInterlocutor(joined.Id, joinRemote);
+                        Logger.Write($"[P2P] Added interlocutor to UDP: {joined.Id.Substring(0, Math.Min(8, joined.Id.Length))}");
+                    } 
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"[P2P] Failed to add interlocutor to UDP: {ex.Message}");
+                    }
+
+                    if (_activeSession.Interlocutors.All(x => x.Id != joined.Id))
+                    {
+                        _activeSession.Interlocutors.Add(new Interlocutor(joined.Id, joinRemote, CallState.Connected));
+                        
+                        var interlocutorId = joined.Id;
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(50);
+                            
+                            try
+                            {
+                                _controls?.SendMuteStateToInterlocutor(_microphoneEnabled, interlocutorId);
+                                Logger.Write($"[P2P] Sent mute state ({_microphoneEnabled}) to new interlocutor {interlocutorId}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Write(Logger.Type.Warning, $"[P2P] Failed to send mute state to {interlocutorId}: {ex.Message}");
+                            }
+                        });
                     }
                     break;
+
+                case InterlocutorLeft left:
+                    Logger.Write($"[P2P] InterlocutorLeft event: {left.InterlocutorId}");
+                    
+                    if (_activeSession == null) 
+                        return;
+                    
+                    try { _udpManager?.RemoveInterlocutor(left.InterlocutorId); } 
+                    catch { }
+                    
+                    try { audioTranslator?.RemoveInterlocutorChannel(left.InterlocutorId); } 
+                    catch { }
+                    
+                    _activeSession.Interlocutors.RemoveAll(x => x.Id == left.InterlocutorId);
+                    
+                    if (_activeSession.Interlocutors.Count == 0)
+                    {
+                        Logger.Write($"[P2P] No other participants left, ending call");
+                        _ = Task.Run(async () => await HangupAsync(_activeSession));
+                    }
+                    break;
+
+                case ConnectedToSession connectedToSession:
+                    if (_activeSession == null) return;
+                    Transition(_activeSession, CallState.Connected);
+                    break;
+
                 case SessionCreated sessionCreated:
                     if (_activeSession == null) return;
                     Transition(_activeSession, CallState.Waiting);
                     break;
+                
                 case ErrorConnectToSession errorConnectToSession:
                     if (_activeSession == null) return;
                     Transition(_activeSession, CallState.Failed);
                     break;
+                
                 default: Logger.Error($"[HandleSignalingMessage] Unknown message: {msg}"); break;
             }
         }
-        catch
+        catch (Exception messageReadEx)
         {
+            Logger.Error($"[P2P] Failed to handle signaling message: {messageReadEx.Message}");
         }
     }
 
@@ -315,21 +414,16 @@ public class P2PCallManager : ICallManager
         }
     }
 
-    private void HandleRemoteMuteChanged(bool isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
-
-    private async void HandleRemoteHangup()
+    private void HandleRemoteMuteChanged(bool isMuted)
     {
-        try
-        {
-            if (_activeSession == null) return;
-            _suppressHangupNotify = true;
-            await HangupAsync(_activeSession);
-        }
-        catch { }
-        finally
-        {
-            _suppressHangupNotify = false;
-        }
+        Logger.Write(Logger.Type.Warning, $"[P2P] HandleRemoteMuteChanged (OLD, no ID): isMuted={isMuted}. This should NOT be used in mesh!");
+        OnRemoteMuteChanged?.Invoke(isMuted);
+    }
+    
+    private void HandleRemoteMuteChangedByInterlocutor(string interlocutorId, bool isMuted)
+    {
+        Logger.Write(Logger.Type.Info, $"[P2P] HandleRemoteMuteChangedByInterlocutor: {interlocutorId.Substring(0, Math.Min(8, interlocutorId.Length))}, isMuted={isMuted}");
+        OnRemoteMuteChangedByInterlocutor?.Invoke(interlocutorId, isMuted);
     }
 
     private static bool TryParseIpEndPoint(string s, out IPEndPoint ep)

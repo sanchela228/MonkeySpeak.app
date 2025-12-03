@@ -73,18 +73,18 @@ public class MessageDispatcher
 
             foreach (var conn in room.Connections.Values.Where(c => c != author))
             {
-                conn.Send(new Messages.NoAuthCall.HolePunching
+                conn.Send(new Messages.NoAuthCall.InterlocutorJoined
                 {
                     IpEndPoint = author.PublicIp,
                     Value = room.Code,
-                    InterlocutorId = author.Id.ToString()
+                    Id = author.Id.ToString()
                 });
 
-                author.Send(new Messages.NoAuthCall.HolePunching
+                author.Send(new Messages.NoAuthCall.InterlocutorJoined
                 {
                     IpEndPoint = conn.PublicIp,
                     Value = room.Code,
-                    InterlocutorId = conn.Id.ToString()
+                    Id = conn.Id.ToString()
                 });
             }
         });

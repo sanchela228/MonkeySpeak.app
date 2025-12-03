@@ -8,7 +8,6 @@ public class CallSession
 
     public CallState State { get; private set; } = CallState.Idle;
     public int LocalUdpPort { get; private set; }
-
     public IPEndPoint? PublicEndPoint { get; private set; }
     public IPEndPoint? LocalEndPoint { get; private set; }
 
@@ -19,11 +18,6 @@ public class CallSession
         LocalUdpPort = localUdpPort;
         PublicEndPoint = publicEp;
         LocalEndPoint = localEp;
-    }
-
-    public void SetInterlocutor(Interlocutor interlocutor)
-    {
-        Interlocutors.Add(interlocutor);
     }
 
     public void TransitionTo(CallState newState)

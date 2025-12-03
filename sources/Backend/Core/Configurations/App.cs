@@ -16,9 +16,6 @@ public class App
     public static App Instance { get; private set; }
     
     public Context DbContext { get; }
-    
-    public static ConcurrentDictionary<Guid, Connection> connections = new();
-    public static ConcurrentDictionary<string, Room> rooms = new();
     public string BackendVersion { get; set; }
    
     public string FrontendVersion { get; set; }

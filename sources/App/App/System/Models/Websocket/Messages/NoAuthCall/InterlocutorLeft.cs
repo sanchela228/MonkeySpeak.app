@@ -1,7 +1,7 @@
 namespace App.System.Models.Websocket.Messages.NoAuthCall;
 
-public class SessionCreated : IMessage
+public class InterlocutorLeft : IMessage
 {
     public string Value { get; set; }
-    public string SelfInterlocutorId { get; set; }
+    public string InterlocutorId { get; set; }
 }

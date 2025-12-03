@@ -2,15 +2,9 @@ using System.Net;
 
 namespace App.System.Calls.Domain;
 
-public class Interlocutor
+public class Interlocutor(string id, IPEndPoint remoteIp, CallState state)
 {
-    public IPEndPoint RemoteIp;
-    public CallState State;
-    
-    public Interlocutor(IPEndPoint remoteIp, CallState state)
-    {
-        this.RemoteIp = remoteIp;
-        this.State = state;
-    }
-   
+    public string Id = id;
+    public IPEndPoint RemoteIp = remoteIp;
+    public CallState State = state;
 }

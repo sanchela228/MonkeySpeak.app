@@ -15,7 +15,7 @@ public class Avatar : Node
     {
         Position = pos;
         InterlocutorMutedIcon = Resources.Texture("Images\\Icons\\MicrophoneMuted_White.png");
-        Size = new Vector2(220, 220);
+        Size = new Vector2(30, 30);
     }
     
     public override void Update(float deltaTime)

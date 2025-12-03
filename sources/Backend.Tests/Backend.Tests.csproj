@@ -28,4 +28,19 @@
         <ProjectReference Include="..\Backend\Backend.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="obj\Backend.Tests.csproj.nuget.dgspec.json" />
+      <Content Include="obj\Debug\net9.0\Backend.Tests.AssemblyInfoInputs.cache" />
+      <Content Include="obj\Debug\net9.0\Backend.Tests.assets.cache" />
+      <Content Include="obj\Debug\net9.0\Backend.Tests.csproj.AssemblyReference.cache" />
+      <Content Include="obj\project.assets.json" />
+      <Content Include="obj\project.nuget.cache" />
+      <Content Include="obj\project.packagespec.json" />
+      <Content Include="obj\rider.project.restore.info" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="obj\Debug\net9.0\.NETCoreApp,Version=v9.0.AssemblyAttributes.cs" />
+    </ItemGroup>
+
 </Project>

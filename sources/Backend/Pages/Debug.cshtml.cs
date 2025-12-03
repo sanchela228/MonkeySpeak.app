@@ -9,7 +9,7 @@ namespace Pages
 {
     public class DebugModel(IOptions<App> appInfo) : PageModel
     {
-        public ConcurrentDictionary<Guid, Connection> GetAllConnections() => App.connections;
-        public ConcurrentDictionary<string, Room> GetAllRooms() => App.rooms;
+        public ConcurrentDictionary<Guid, Connection> GetAllConnections() => Backend.Core.Context.Connections;
+        public ConcurrentDictionary<string, Room> GetAllRooms() => Backend.Core.Context.Rooms;
     }
 }

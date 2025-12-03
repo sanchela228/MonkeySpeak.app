@@ -60,14 +60,15 @@ public class Creator : Scene
         
         _onSessionCreatedHandler = code =>
         {
-            Console.WriteLine($"[CallFacade] Session code: {code}");
             _code = code;
+            
+            try { Raylib.SetClipboardText(code); }
+            catch { }
         };
         
         _onConnected = async () =>
         {
             await Task.Delay(200);
-            Console.WriteLine($"[CallFacade] Connected");
             Engine.Managers.Scenes.PushScene(new Room());
         };
         

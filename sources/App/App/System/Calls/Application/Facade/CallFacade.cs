@@ -28,6 +28,7 @@ public class CallFacade
         _engine = new P2PCallManager(signaling, stun, _netConfig);
         _engine.OnSessionStateChanged += CallStateHandler;
         _engine.OnConnected += HandleEngineConnected;
+        _engine.OnRemoteMuteChangedByInterlocutor += CallMuteByInterlocutorHandler;
         
         _wsClient.MessageDispatcher.On<SessionCreated>(msg => OnSessionCreated?.Invoke(msg.Value));
     }
@@ -53,12 +54,15 @@ public class CallFacade
     }
     
     private void CallMuteHandler(bool isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
+    private void CallMuteByInterlocutorHandler(string interlocutorId, bool isMuted) => OnRemoteMuteChangedByInterlocutor?.Invoke(interlocutorId, isMuted);
 
     public async void Hangup()
     {
         await HangupAsync(_engine.CurrentSession());
         Clear();
     }
+    
+    public CallSession CurrentSession() => _engine.CurrentSession();
 
     private void SetMicrophoneStatus(bool status)
     {
@@ -71,11 +75,14 @@ public class CallFacade
 
     public void ToggleDemoDenoise() => _engine.ToggleDenTEST();
     
+    public Dictionary<string, float> GetAudioLevels() => _engine.GetAudioLevels();
+    
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
     public event Action OnConnected;
     public event Action OnCallEnded;
     public event Action<bool>? OnRemoteMuteChanged;
+    public event Action<string, bool>? OnRemoteMuteChangedByInterlocutor;
 
     public Task<CallSession> CreateSessionAsync() => _engine.CreateSessionAsync();
     public Task<CallSession> CreateSessionAsync(CancellationToken cancellationToken) => _engine.CreateSessionAsync(cancellationToken);
@@ -85,12 +92,12 @@ public class CallFacade
 
     public void Clear()
     {
-        _engine.OnRemoteMuteChanged -= CallMuteHandler;
+        _engine.OnRemoteMuteChangedByInterlocutor -= CallMuteByInterlocutorHandler;
     }
 
     private void HandleEngineConnected()
     {
         OnConnected?.Invoke();
-        _engine.OnRemoteMuteChanged += CallMuteHandler;
+        _engine.OnRemoteMuteChangedByInterlocutor += CallMuteByInterlocutorHandler;
     }
 }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using Backend.Tests.Mocks;
 using Core.Websockets;
 using Core.Websockets.Messages.NoAuthCall;

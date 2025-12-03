@@ -15,8 +15,10 @@ public interface ICallManager
 
     void StartAudioProcess();
     void ToggleDenTEST();
+    Dictionary<string, float> GetAudioLevels();
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
     public event Action<bool>? OnRemoteMuteChanged;
+    public event Action<string, bool>? OnRemoteMuteChangedByInterlocutor;
 }
