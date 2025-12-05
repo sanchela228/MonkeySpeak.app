@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Net;
 
 namespace App.System.Calls.Domain;
@@ -11,7 +12,7 @@ public class CallSession
     public IPEndPoint? PublicEndPoint { get; private set; }
     public IPEndPoint? LocalEndPoint { get; private set; }
 
-    public List<Interlocutor> Interlocutors = [];
+    public ObservableCollection<Interlocutor> Interlocutors = [];
     
     public void SetLocal(int localUdpPort, IPEndPoint? publicEp, IPEndPoint? localEp)
     {

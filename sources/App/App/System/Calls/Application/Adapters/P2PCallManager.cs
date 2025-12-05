@@ -370,7 +370,11 @@ public class P2PCallManager : ICallManager
                     try { audioTranslator?.RemoveInterlocutorChannel(left.InterlocutorId); } 
                     catch { }
                     
-                    _activeSession.Interlocutors.RemoveAll(x => x.Id == left.InterlocutorId);
+                    for (int i = _activeSession.Interlocutors.Count - 1; i >= 0; i--)
+                    {
+                        if (_activeSession.Interlocutors[i].Id == left.InterlocutorId)
+                            _activeSession.Interlocutors.RemoveAt(i);
+                    }
                     
                     if (_activeSession.Interlocutors.Count == 0)
                     {

@@ -19,7 +19,8 @@ public class Room
         
         // TODO: CLEAR THIS
         
-        const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        // const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        const string chars = "asdwfx";
         var random = new Random();
         var strR = new StringBuilder(6);
     

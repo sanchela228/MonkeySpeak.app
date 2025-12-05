@@ -70,7 +70,6 @@ public static class Notificator
                 
                 if (_currentDisplayTime >= DisplayDuration)
                 {
-                    // Скрываем уведомление и переходим к паузе
                     OnNotificationHide?.Invoke();
                     _currentPauseTime = 0f;
                     _state = NotificationState.Pausing;
@@ -82,10 +81,8 @@ public static class Notificator
                 _currentPauseTime += deltaTime;
                 
                 if (_currentPauseTime >= PauseBetweenNotifications)
-                {
-                    // Пауза закончилась, показываем следующее уведомление
                     ShowNextNotification();
-                }
+                
                 break;
         }
     }

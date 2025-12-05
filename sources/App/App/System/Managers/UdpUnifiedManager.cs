@@ -32,7 +32,6 @@ public class UdpUnifiedManager : IDisposable
     private CancellationTokenSource? _cts;
     private volatile bool _isConnected;
 
-    // Multi-interlocutor state
     private readonly Dictionary<string, IPEndPoint> _interlocutorToRemote = new();
     private readonly Dictionary<IPEndPoint, string> _remoteToInterlocutor = new();
     private readonly Dictionary<string, bool> _interlocutorConnected = new();

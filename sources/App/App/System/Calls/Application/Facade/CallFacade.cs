@@ -25,6 +25,7 @@ public class CallFacade
         ISignalingClient signaling = new WebsocketSignalingClient(_wsClient);
         IStunClient stun = new MainServerStunClient();
 
+        // HARDCODE 
         _engine = new P2PCallManager(signaling, stun, _netConfig);
         _engine.OnSessionStateChanged += CallStateHandler;
         _engine.OnConnected += HandleEngineConnected;
@@ -36,7 +37,7 @@ public class CallFacade
     private bool _microphoneEnabled = true;
     public bool MicrophoneEnabled
     {
-        get { return _microphoneEnabled; }
+        get => _microphoneEnabled;
         set
         {
             _microphoneEnabled = value;
@@ -52,9 +53,17 @@ public class CallFacade
             OnCallEnded?.Invoke();
         }
     }
-    
-    private void CallMuteHandler(bool isMuted) => OnRemoteMuteChanged?.Invoke(isMuted);
-    private void CallMuteByInterlocutorHandler(string interlocutorId, bool isMuted) => OnRemoteMuteChangedByInterlocutor?.Invoke(interlocutorId, isMuted);
+
+    private void CallMuteByInterlocutorHandler(string interlocutorId, bool isMuted)
+    {
+        var interlocutor = _engine.CurrentSession().Interlocutors.First(il => il.Id == interlocutorId);
+
+        if (interlocutor is not null)
+        {
+            interlocutor.IsMuted = isMuted;
+            OnRemoteMuteChangedByInterlocutor?.Invoke(interlocutorId, isMuted);
+        }
+    }
 
     public async void Hangup()
     {
@@ -64,12 +73,7 @@ public class CallFacade
     
     public CallSession CurrentSession() => _engine.CurrentSession();
 
-    private void SetMicrophoneStatus(bool status)
-    {
-        _engine.SetMicrophoneStatus(status);
-        
-        // TODO: ADD SIGNALING EVENT FOR MUTE AND UNMUTE
-    }
+    private void SetMicrophoneStatus(bool status) =>  _engine.SetMicrophoneStatus(status);
 
     public void StartAudioProcess() => _engine.StartAudioProcess();
 
@@ -79,8 +83,8 @@ public class CallFacade
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
-    public event Action OnConnected;
-    public event Action OnCallEnded;
+    public event Action? OnConnected;
+    public event Action? OnCallEnded;
     public event Action<bool>? OnRemoteMuteChanged;
     public event Action<string, bool>? OnRemoteMuteChangedByInterlocutor;
 

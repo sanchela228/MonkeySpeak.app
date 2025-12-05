@@ -21,6 +21,8 @@ public enum OverlapsMode
 
 public abstract class Node : IDisposable
 {
+    public string Id { get; } = Guid.NewGuid().ToString();
+    
     public abstract void Update(float deltaTime);
     public abstract void Draw();
     public abstract void Dispose();
@@ -193,7 +195,6 @@ public abstract class Node : IDisposable
             foreach (var node in list)
                 node.SetParent(this);
                 
-            // Сортируем всех детей по Order
             if (_childrens.Count > 1)
                 _childrens.Sort((node1, node2) => node1.Order.CompareTo(node2.Order));
         }
@@ -207,7 +208,6 @@ public abstract class Node : IDisposable
         foreach (var node in list)
             node.SetParent(this);
             
-        // Сортируем всех детей по Order
         if (_childrens.Count > 1)
             _childrens.Sort((node1, node2) => node1.Order.CompareTo(node2.Order));
     }
