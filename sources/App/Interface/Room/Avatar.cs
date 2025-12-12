@@ -1,4 +1,9 @@
+using System;
+using System.IO;
+using System.Numerics;
 using Engine;
+using Engine.Helpers;
+using Engine.Managers;
 using Raylib_cs;
 
 namespace Interface.Room;
@@ -6,30 +11,104 @@ namespace Interface.Room;
 public class Avatar : Node
 {
     public float AudioLevel = 0f;
+
+    public bool FramesLoaded { get; protected set; } = false;
+    private static readonly Lock FramesLoadingLock = new();
+    private Texture2D textureVideo;
+    protected RenderTexture2D? _canvas;
+    
+    private List<byte[]> _frames;
+    private int _currentFrame;
+    private float _frameTime;
+    private float _timer;
+    
+    private string _videoPath;
+    private float _fps;
+    private bool _texturesLoaded = false;
+    
+    private int _videoWidth = 512;
+    private int _videoHeight = 512;
+
+    public Avatar(string videoPath, float fps = 30f)
+    {
+        lock (FramesLoadingLock)
+        {
+            FramesLoaded = false;
+        }
+        
+        _videoPath = videoPath;
+        _fps = fps;
+        _frameTime = 1f / fps;
+        
+        Task.Run(() =>
+        {
+            lock (FramesLoadingLock)
+            {
+                using var videoReader = new VideoReader(_videoPath);
+                _videoWidth = videoReader.Width;
+                _videoHeight = videoReader.Height;
+                
+                _frames = videoReader.GetCachedCompressedFrames();
+                FramesLoaded = true;
+            }
+        });
+    }
     
     public override void Update(float deltaTime)
     {
-        // throw new NotImplementedException();
+        if (!shaderLoaded)
+        {
+            circleShader = Resources.Shader("circle_mask.frag");
+            shaderLoaded = true;
+        }
         
-        // InterlocutorMutedIcon = Resources.Texture("Images\\Icons\\MicrophoneMuted_White.png");
+        if (FramesLoaded)
+        {
+            if (_canvas is null)
+                _canvas = Raylib.LoadRenderTexture(_videoWidth, _videoHeight);
+        }
+        
+        if (FramesLoaded && _canvas is not null and {} canvas && _frames.Count > 0 && (_currentFrame == 0 || AudioLevel > 0.004f))
+        {
+            _timer += deltaTime;
+            
+            if (_timer >= _frameTime)
+            {
+                Raylib.UpdateTexture(canvas.Texture, VideoReader.UncompressFrame(_frames[_currentFrame], _videoWidth * _videoHeight * 4));
+                
+                _currentFrame++;
+                if (_currentFrame >= _frames.Count)
+                    _currentFrame = 0;
+                
+                _timer -= _frameTime;
+          
+                while (_timer >= _frameTime && _frames.Count > 0)
+                {
+                    _currentFrame++;
+                    if (_currentFrame >= _frames.Count)
+                        _currentFrame = 0;
+                    _timer -= _frameTime;
+                }
+            }
+        }
     }
-
 
     private float mainSmoothedAudioLevel = 0f;
     private float secondarySmoothedAudioLevel = 0f;
-
+    private Shader circleShader;
+    private bool shaderLoaded = false;
     public override void Draw()
     {
         float currentAudioLevel = AudioLevel;
-    
+        
         float mainAudioLevel = SmoothValue(
             currentAudioLevel,
             ref mainSmoothedAudioLevel,
             0.2f,
             0.98f,
-            (Size.X / 2) + 5f
+            (Size.X / 2) + 4f
         );
-    
+        
         float secondaryAudioLevel = SmoothValue(
             currentAudioLevel, 
             ref secondarySmoothedAudioLevel,
@@ -38,11 +117,51 @@ public class Avatar : Node
             (Size.X / 2) + 8f, 
             1.02f
         );
-    
+        
         Raylib.DrawCircleV(Position, secondaryAudioLevel, new Color(10, 255, 10, 75));
         Raylib.DrawCircleV(Position, mainAudioLevel, new Color(10, 255, 10, 100));
         
-        Raylib.DrawCircleV(Position, Size.X / 2, Color.White);
+        if (shaderLoaded && FramesLoaded && _canvas is not null and {} canvas)
+        {
+            Raylib.SetShaderValue(
+                circleShader,
+                Raylib.GetShaderLocation(circleShader, "resolution"),
+                new float[] { Size.X, Size.Y },
+                ShaderUniformDataType.Vec2
+            );
+            
+            float radius = Size.X / 2f;
+        
+            Raylib_cs.Rectangle source = new Raylib_cs.Rectangle(
+                0, 0,
+                canvas.Texture.Width,
+                canvas.Texture.Height
+            );
+            
+            Raylib_cs.Rectangle dest = new Raylib_cs.Rectangle(
+                Position.X,
+                Position.Y,
+                radius * 2,
+                radius * 2
+            );
+        
+            Vector2 origin = new Vector2(radius, radius);
+
+            Raylib.BeginShaderMode(circleShader);
+            Raylib.DrawTexturePro(
+                _canvas.Value.Texture,
+                source,
+                dest,
+                origin,
+                0f,
+                Color.White
+            );
+            Raylib.EndShaderMode();
+        }
+        else
+        {
+            Raylib.DrawCircleV(Position, Size.X / 2, Color.White);
+        }
     }
     
     private float SmoothValue(float currentAudioLevel, ref float smoothedAudioLevel, float audioSmoothingFactor, 
@@ -63,21 +182,17 @@ public class Avatar : Node
     
         var sizeAudio = (Size.X / 2) + smoothedAudioLevel * 100;
 
-        // if (sizeAudio > 80.07)
-        // {
-        //     sizeAudio += 1;
-        //     sizeAudio *= multiplier;
-        // }
-
         if (sizeAudio > maxAudioLevel)
             sizeAudio = maxAudioLevel;
         
         return sizeAudio;
     }
 
-    
     public override void Dispose()
     {
-        // throw new NotImplementedException();
+        if (FramesLoaded)
+        {
+            _frames.Clear();
+        }
     }
 }

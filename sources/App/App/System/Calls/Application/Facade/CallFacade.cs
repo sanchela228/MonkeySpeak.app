@@ -97,6 +97,9 @@ public class CallFacade
     public void Clear()
     {
         _engine.OnRemoteMuteChangedByInterlocutor -= CallMuteByInterlocutorHandler;
+        _engine.OnSessionStateChanged -= CallStateHandler;
+        _engine.OnConnected -= HandleEngineConnected;
+        _engine.OnRemoteMuteChanged -= OnRemoteMuteChanged;
     }
 
     private void HandleEngineConnected()

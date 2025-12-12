@@ -10,6 +10,7 @@ public class MainBackground
     private int _timeLoc;
     private int _resolutionLoc;
     private float _speed = 0.2f;
+    private const float _baseSpeed = 0.2f;
     private float[] _thresholds = new float[]{
         0.25f,
         0.28f,
@@ -91,7 +92,7 @@ public class MainBackground
             }
             else
             {
-                _speed = _animStartSpeed;
+                _speed = _baseSpeed;
                 _isAnimating = false;
             }
         }
@@ -113,7 +114,7 @@ public class MainBackground
     
     public void AnimateSpeedChange(float targetSpeed, float duration, float holdTime = 0f)
     {
-        _animStartSpeed = _speed;
+        _animStartSpeed = _baseSpeed;
         _animTargetSpeed = targetSpeed;
         _animDuration = duration;
         _animHoldTime = holdTime;

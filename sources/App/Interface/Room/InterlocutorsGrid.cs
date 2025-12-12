@@ -32,8 +32,8 @@ public class InterlocutorsGrid : Node
     
     private Dictionary<Interlocutor, Avatar> mapInterlocutorsToAvatars = new();
 
-    public float DefaultRadius = 100f;
-    public float MaxRadius = 140f;
+    public float DefaultRadius = 150f;
+    public float MaxRadius = 150f;
     public float MinRadius = 20f;
     public float Spacing = 34f;
 
@@ -47,6 +47,7 @@ public class InterlocutorsGrid : Node
 
     private void OnInterlocutorsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        Console.WriteLine("OnInterlocutorsChanged changed");
         SyncInterlocutorsWithChildrenAvatars();
     }
     
@@ -56,18 +57,20 @@ public class InterlocutorsGrid : Node
         {
             if (!mapInterlocutorsToAvatars.ContainsKey(il))
             {
-                var av = new Avatar();
+                int r = Random.Shared.Next(1, 5);
+                var av = new Avatar($"sticker{r}.webm");
                 mapInterlocutorsToAvatars.Add(il, av);
                 AddChild(av);
             }
         }
-
+        
         foreach (var ilPair in mapInterlocutorsToAvatars)
         {
             if (!Interlocutors.Contains(ilPair.Key))
             {
                 mapInterlocutorsToAvatars.Remove(ilPair.Key);
                 RemoveChild(ilPair.Value);
+                ilPair.Value.Dispose();
             }
         }
     }
@@ -105,11 +108,6 @@ public class InterlocutorsGrid : Node
                 continue;
             
             Childrens[i].Size = new Vector2(_displayRadius * 2, _displayRadius * 2);
-        }
-
-        foreach (var c in _centers)
-        {
-            Raylib.DrawCircleV(c, 2f, Color.Red);
         }
     }
 

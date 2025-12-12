@@ -3,6 +3,7 @@ using App.Configurations.Data;
 using App.Configurations.Roots;
 using App.System.Calls.Application.Facade;
 using App.System.Services;
+using Engine.Helpers;
 using Platforms;
 using Platforms.Interfaces;
 using Platforms.Windows;
@@ -65,6 +66,11 @@ public static class Context
         SystemUser = PlatformServiceFactory.GetService<IUser>(CurrentPlatform);
         
         System.Services.Language.Load(ContextData.LanguageSelected);
+        
+        VideoReader.PrepareCache("sticker1.webm");
+        VideoReader.PrepareCache("sticker2.webm");
+        VideoReader.PrepareCache("sticker3.webm");
+        VideoReader.PrepareCache("sticker4.webm");
 
         try
         {
@@ -99,6 +105,15 @@ public static class Context
         {
             CallFacade = new CallFacade(Network.Config, Network.WebSocketClient);
         };
+    }
+    
+    public static void RecreateCallFacade()
+    {
+        if (CallFacade != null)
+            CallFacade.Clear();
+        
+        if (Network?.WebSocketClient != null)
+            CallFacade = new CallFacade(Network.Config, Network.WebSocketClient);
     }
 
     public static bool DataDirectoryInitialized() => Directory.Exists(DataDirectory);

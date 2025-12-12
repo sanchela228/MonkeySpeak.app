@@ -211,6 +211,8 @@ public class Invited : Scene
     
     protected override void Dispose()
     {
+        Console.WriteLine("[Dispose] Invited.cs dispose");
+        
         Context.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
         Context.CallFacade.OnConnected -= _onConnected;
         _onSessionStateChanged = null;
