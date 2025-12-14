@@ -92,6 +92,8 @@ public class Room : Scene
             Interlocutors = Facade?.CurrentSession().Interlocutors
         };
         
+        InterlocutorsGrid.MuteDictionary = _muteById;
+        
         AddNode(InterlocutorsGrid);
 
         InterlocutorsGrid.Size = new Vector2(Raylib.GetRenderWidth() - 100, Raylib.GetRenderHeight() - 200);

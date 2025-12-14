@@ -36,6 +36,7 @@ public class InterlocutorsGrid : Node
     public float MaxRadius = 150f;
     public float MinRadius = 20f;
     public float Spacing = 34f;
+    public Dictionary<string, bool> MuteDictionary;
 
     private readonly List<Vector2> _centers = new();
     private float _radius = 0f;
@@ -58,7 +59,10 @@ public class InterlocutorsGrid : Node
             if (!mapInterlocutorsToAvatars.ContainsKey(il))
             {
                 int r = Random.Shared.Next(1, 5);
-                var av = new Avatar($"sticker{r}.webm");
+                var av = new Avatar($"sticker{r}.webm")
+                {
+                    IsMuted = il.IsMuted
+                };
                 mapInterlocutorsToAvatars.Add(il, av);
                 AddChild(av);
             }
@@ -86,19 +90,14 @@ public class InterlocutorsGrid : Node
         {
             if (audioLevels.TryGetValue(il.Id, out var level))
                 mapInterlocutorsToAvatars[il].AudioLevel = level;
+
+            if (MuteDictionary.TryGetValue(il.Id, out bool isMuted))
+                mapInterlocutorsToAvatars[il].IsMuted = isMuted;
         }
     }
 
     public override void Draw()
     {
-        // Raylib.DrawRectangle(
-        //     (int)Collider.X, 
-        //     (int)Collider.Y, 
-        //     (int)Collider.Width, 
-        //     (int)Collider.Height, 
-        //     new Color(190, 20, 110, 150)
-        // );
-
         if (Childrens.Count == 0 || _displayRadius <= 0f) 
             return;
 

@@ -25,9 +25,11 @@ public class Avatar : Node
     private string _videoPath;
     private float _fps;
     private bool _texturesLoaded = false;
+    private Texture2D InterlocutorMutedIcon;
     
     private int _videoWidth = 512;
     private int _videoHeight = 512;
+    public bool IsMuted = false;
 
     public Avatar(string videoPath, float fps = 30f)
     {
@@ -39,6 +41,8 @@ public class Avatar : Node
         _videoPath = videoPath;
         _fps = fps;
         _frameTime = 1f / fps;
+        InterlocutorMutedIcon = Resources.Texture("Images\\Icons\\MicrophoneMuted_White.png");
+        
         
         Task.Run(() =>
         {
@@ -100,26 +104,29 @@ public class Avatar : Node
     public override void Draw()
     {
         float currentAudioLevel = AudioLevel;
+
+        if (!IsMuted)
+        {
+            float mainAudioLevel = SmoothValue(
+                currentAudioLevel,
+                ref mainSmoothedAudioLevel,
+                0.2f,
+                0.98f,
+                (Size.X / 2) + 4f
+            );
         
-        float mainAudioLevel = SmoothValue(
-            currentAudioLevel,
-            ref mainSmoothedAudioLevel,
-            0.2f,
-            0.98f,
-            (Size.X / 2) + 4f
-        );
+            float secondaryAudioLevel = SmoothValue(
+                currentAudioLevel, 
+                ref secondarySmoothedAudioLevel,
+                0.05f,
+                0.7f,
+                (Size.X / 2) + 8f, 
+                1.02f
+            );
         
-        float secondaryAudioLevel = SmoothValue(
-            currentAudioLevel, 
-            ref secondarySmoothedAudioLevel,
-            0.05f,
-            0.7f,
-            (Size.X / 2) + 8f, 
-            1.02f
-        );
-        
-        Raylib.DrawCircleV(Position, secondaryAudioLevel, new Color(10, 255, 10, 75));
-        Raylib.DrawCircleV(Position, mainAudioLevel, new Color(10, 255, 10, 100));
+            Raylib.DrawCircleV(Position, secondaryAudioLevel, new Color(10, 255, 10, 75));
+            Raylib.DrawCircleV(Position, mainAudioLevel, new Color(10, 255, 10, 100));
+        }
         
         if (shaderLoaded && FramesLoaded && _canvas is not null and {} canvas)
         {
@@ -160,7 +167,22 @@ public class Avatar : Node
         }
         else
         {
-            Raylib.DrawCircleV(Position, Size.X / 2, Color.White);
+            Raylib.DrawCircleV(Position, Size.X / 2, new Color(80, 80, 80, 50));
+        }
+        
+        if (IsMuted)
+        {
+            var rect = new Raylib_cs.Rectangle(Bounds.Position.X + Bounds.Width / 2 - 35 + 35, Bounds.Position.Y + Bounds.Height / 2 - 35 + 35, 40, 40);
+            
+            var rect2 = new Raylib_cs.Rectangle(Bounds.Position.X + Bounds.Width / 2 - 35, Bounds.Position.Y + Bounds.Height / 2 - 35, 70, 70);
+            Raylib.DrawRectangleRounded(
+                rect2, 
+                1f, 
+                22, 
+                Color.Red
+            );
+            
+            Texture.DrawPro(InterlocutorMutedIcon, rect.Position, new Vector2(40, 40));
         }
     }
     
@@ -175,12 +197,15 @@ public class Avatar : Node
         else
         {
             smoothedAudioLevel *= decaySpeed;
-    
+
             if (smoothedAudioLevel < 0.01f)
                 smoothedAudioLevel = 0;
         }
     
-        var sizeAudio = (Size.X / 2) + smoothedAudioLevel * 100;
+        var sizeAudio = Size.X / 2 + smoothedAudioLevel * 100;
+
+        if (sizeAudio == Size.X / 2)
+            sizeAudio = Size.X - 10f;
 
         if (sizeAudio > maxAudioLevel)
             sizeAudio = maxAudioLevel;
