@@ -1,13 +1,11 @@
-using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using ContextDatabase = Core.Database.Context;
 
 namespace Core.Websockets;
 
 public class MessageDispatcher
 {
-    private readonly System.Collections.Generic.Dictionary<Type, Action<IMessage, Connection>> _handlers = new();
+    private readonly Dictionary<Type, Action<IMessage, Connection>> _handlers = new();
 
     public void On<T>(Action<T, Connection> handler) where T : IMessage
     {

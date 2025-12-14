@@ -6,9 +6,9 @@ on:
 
 jobs:
   
-  build-installer:
-    runs-on: windows-latest
-
+  test-backend:
+    runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,24 +18,8 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
-      - name: Publish app
-        run: |
-          dotnet restore sources/App/App.csproj
-          dotnet publish sources/App/App.csproj `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
-            -o build/win
+      - name: Restore
+        run: dotnet restore
 
-      - name: Install Inno Setup
-        run: choco install innosetup -y
-
-      - name: Build installer
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\installer.iss
-
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: MonkeySpeakSetup
-          path: Output/MonkeySpeakSetup.exe
+      - name: Run backend tests
+        run: dotnet test sources/Backend.Tests/Backend.Tests.csproj
