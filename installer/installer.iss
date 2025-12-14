@@ -9,7 +9,7 @@ Compression=lzma
 SolidCompression=yes
 
 [Files]
-Source: "build\win\*"; DestDir: "{app}"; Flags: recursesubdirs
+Source: "..\build\win\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
 Name: "{group}\MonkeySpeak"; Filename: "{app}\MonkeySpeak.exe"
