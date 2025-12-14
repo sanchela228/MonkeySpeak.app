@@ -216,8 +216,8 @@ public class Button : Node
                 new Rectangle(
                     localBounds.X + 1, 
                     localBounds.Y + 1, 
-                    localBounds.Width - 1, 
-                    localBounds.Height - 1
+                    localBounds.Width - 2,
+                    localBounds.Height - 2
                 ), 
                 CornerRadius, 
                 10, 

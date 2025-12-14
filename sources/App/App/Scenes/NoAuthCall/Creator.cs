@@ -2,6 +2,7 @@ using System.Net;
 using System.Numerics;
 using System.Threading;
 using App.System.Calls.Application.Facade;
+using App.System.Calls.Domain;
 using App.System.Services;
 using App.System.Utils;
 using Engine;
@@ -104,6 +105,7 @@ public class Creator : Scene
 
     protected override void Dispose()
     {
+        Console.WriteLine("[Dispose] Creator.cs dispose");
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
         _cancellationTokenSource = null;
@@ -116,10 +118,14 @@ public class Creator : Scene
 
         if (_onConnected != null)
         {
-            Context.CallFacade.OnConnected += _onConnected;
+            Context.CallFacade.OnConnected -= _onConnected;
             _onConnected = null;
         }
         
-        Context.CallFacade.Hangup();
+        if (Context.CallFacade.CurrentSession() != null && 
+            Context.CallFacade.CurrentSession().State != CallState.Connected)
+        {
+            Context.CallFacade.Hangup();
+        }
     }
 }

@@ -114,8 +114,8 @@ public class Header : IDisposable
         
         Text.DrawPro(
             _fontFamilyVersion, 
-            $"{Context.AppConfig.VersionName}:{Context.AppConfig.Version}", 
-            new Vector2(Raylib.GetScreenWidth() - 70, Raylib.GetScreenHeight() - 30)
+            $"engine:old | app:{Context.AppConfig.VersionName}:{Context.AppConfig.Version}", 
+            new Vector2(Raylib.GetScreenWidth() - 150, Raylib.GetScreenHeight() - 30)
         );
     }
 

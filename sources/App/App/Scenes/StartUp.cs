@@ -30,7 +30,7 @@ public class StartUp: Scene
     {
         Network = Context.Network;
         
-        _textureMainPic = Resources.Texture("Images\\LogoMain90.png");
+        _textureMainPic = Resources.Texture("Images\\main_mks.png");
         _mainFontStartup = new FontFamily()
         {
             Font = Resources.FontEx("JetBrainsMonoNL-Regular.ttf", 24),
@@ -56,23 +56,31 @@ public class StartUp: Scene
             Position = new Vector2(Raylib.GetRenderWidth()/ 2, Raylib.GetRenderHeight() / 2 + 100),
             Padding = new Vector2(70, 18),
             Text = Language.Get("Create a room"),
-            IsActive = false
+            IsActive = false,
+            BackgroundColor = new Color(50, 130, 50, 255),
+            CornerColor = new Color(70, 170, 70, 255),
+            CornerWidth = 1f,
+            HoverBackgroundColor = new Color(70, 170, 70, 255),
+            HoverCornerColor = new Color(70, 170, 70, 255)
         };
         
         test3 = new Classic(_mainFontStartup)
         {
             Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 160),
-            Padding = new Vector2(130, 18),
+            Padding = new Vector2(140, 18),
             Text = Language.Get("Connect"),
-            IsActive = false
+            IsActive = false,
+            CornerWidth = 1f
         };
         
         test2.OnClick += (sender) => {
-            Engine.Managers.Scenes.PushScene( new Creator() );
+            Context.RecreateCallFacade();
+            Engine.Managers.Scenes.PushScene(new Creator());
         };
-        
+
         test3.OnClick += (sender) => {
-            Engine.Managers.Scenes.PushScene( new Invited() );
+            Context.RecreateCallFacade();
+            Engine.Managers.Scenes.PushScene(new Invited());
         };
         
         AddNode(test2);
@@ -212,8 +220,32 @@ public class StartUp: Scene
         
         if (_load) Loader.Draw();
         
-        Texture.DrawEx(_textureMainPic,
-            new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 110)), color: Color.White);
+        // Texture.DrawEx(
+        //     _textureMainPic,
+        //     new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 110)), 
+        //     color: Color.White
+        // );
+
+        Texture.DrawPro(
+            _textureMainPic,
+            new Vector2(Raylib.GetRenderWidth() / 2, (Raylib.GetRenderHeight() / 2 - 130)),
+            new Vector2(200, 140)
+        );
+        
+        // Raylib.DrawTexturePro(
+        //     _textureMainPic, 
+        //     new Rectangle(0, 0, _textureMainPic.Width, _textureMainPic.Height), 
+        //     new Rectangle(
+        //         Raylib.GetRenderWidth() / 2, 
+        //         Raylib.GetRenderHeight() / 2 - 110, 
+        //         140, 
+        //         100
+        //     ),
+        //     new Vector2(140 / 2, 100 / 2), 
+        //     0f, 
+        //     Color.White
+        // );
+        
         Text.DrawPro(
             _mainFontStartup,
             Language.Get("Create your p2p voice chat right now!"),
@@ -253,6 +285,6 @@ public class StartUp: Scene
 
     protected override void Dispose()
     {
-        // throw new NotImplementedException();
+        Console.WriteLine("[Dispose] StartUp.cs dispose");
     }
 }
