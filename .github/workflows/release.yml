@@ -76,12 +76,12 @@ jobs:
       # CREATE GITHUB RELEASE
       # =============================
       - name: Create GitHub Release
-          uses: softprops/action-gh-release@v2
-          with:
-            tag_name: v${{ env.APP_VERSION_NAME }}
-            name: MonkeySpeak v${{ env.APP_VERSION_NAME }}
-            files: |
-              installer/Output/MonkeySpeakSetup.exe
-              build/source.zip
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.APP_VERSION_NAME }}
+          name: MonkeySpeak v${{ env.APP_VERSION_NAME }}
+          files: |
+            installer/Output/MonkeySpeakSetup.exe
+            build/source.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
