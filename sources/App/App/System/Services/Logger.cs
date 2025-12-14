@@ -60,7 +60,7 @@ public static class Logger
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка записи в лог: {ex.Message}");
+            Console.WriteLine($"Error write to log: {ex.Message}");
         }
 #endif
 #if DEBUG

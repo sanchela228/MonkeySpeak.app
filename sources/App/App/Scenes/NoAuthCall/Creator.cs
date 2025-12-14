@@ -105,7 +105,7 @@ public class Creator : Scene
 
     protected override void Dispose()
     {
-        Console.WriteLine("[Dispose] Creator.cs dispose");
+        Logger.Write("[Dispose] Creator.cs dispose");
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
         _cancellationTokenSource = null;

@@ -48,7 +48,6 @@ public class InterlocutorsGrid : Node
 
     private void OnInterlocutorsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        Console.WriteLine("OnInterlocutorsChanged changed");
         SyncInterlocutorsWithChildrenAvatars();
     }
     

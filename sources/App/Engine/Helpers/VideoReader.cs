@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using App.System.Services;
 using FFMpegCore;
 using K4os.Compression.LZ4;
 using SixLabors.ImageSharp;
@@ -137,7 +138,7 @@ namespace Engine.Helpers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Logger.Error($"[VideoReader] catch error: {e.Message}");
             }
             
             return new List<byte[]>();

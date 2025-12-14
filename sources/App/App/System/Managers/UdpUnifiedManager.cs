@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using App.System.Services;
 
 namespace App.System.Managers;
 
@@ -52,10 +53,10 @@ public class UdpUnifiedManager : IDisposable
     public void AddInterlocutor(string interlocutorId, IPEndPoint remote)
     {
         if (_client == null) throw new InvalidOperationException("UDP not initialized");
-        Console.WriteLine($"[UDP] AddInterlocutor: {interlocutorId.Substring(0, Math.Min(8, interlocutorId.Length))} -> {remote}");
+        Logger.Write($"[UDP] AddInterlocutor: {interlocutorId.Substring(0, Math.Min(8, interlocutorId.Length))} -> {remote}");
         _interlocutorToRemote[interlocutorId] = remote;
         _remoteToInterlocutor[remote] = interlocutorId;
-        Console.WriteLine($"[UDP] Mapping created. Total interlocutors: {_interlocutorToRemote.Count}");
+        Logger.Write($"[UDP] Mapping created. Total interlocutors: {_interlocutorToRemote.Count}");
         _interlocutorConnected[interlocutorId] = _interlocutorConnected.TryGetValue(interlocutorId, out var c) && c;
 
         if (_cts != null)
@@ -213,7 +214,7 @@ public class UdpUnifiedManager : IDisposable
                         }
                         else
                         {
-                            Console.WriteLine($"[UDP] Audio from unknown endpoint: {result.RemoteEndPoint}. Known interlocutors: {_remoteToInterlocutor.Count}");
+                            Logger.Write($"[UDP] Audio from unknown endpoint: {result.RemoteEndPoint}. Known interlocutors: {_remoteToInterlocutor.Count}");
                         }
                         break;
                     

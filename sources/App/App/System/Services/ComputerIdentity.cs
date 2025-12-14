@@ -19,7 +19,7 @@ public class ComputerIdentity
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка получения MAC-адреса: {ex.Message}");
+            Logger.Error($"Ошибка получения MAC-адреса: {ex.Message}");
         }
         
         return string.Empty;

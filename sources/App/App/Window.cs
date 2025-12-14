@@ -36,15 +36,7 @@ public class Window : IDisposable
         
         Raylib.InitAudioDevice();
         if (!Raylib.IsAudioDeviceReady())
-        {
-            Console.WriteLine("Аудиоустройство не инициализировано!");
             return;
-        }
-        else
-        {
-            Console.WriteLine("Аудиоустройство готово!");
-        }
-        
         
         while (!Raylib.WindowShouldClose())
         {

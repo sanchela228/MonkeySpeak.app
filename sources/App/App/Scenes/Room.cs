@@ -126,7 +126,7 @@ public class Room : Scene
 
     protected override void Dispose()
     {
-        Console.WriteLine("[Dispose] Room.cs dispose");
+        Logger.Write("[Dispose] Room.cs dispose");
         
         if (Facade != null)
         {

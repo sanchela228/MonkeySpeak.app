@@ -37,9 +37,6 @@
       <None Update="update.bat">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="test.svg">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
       <None Update="sticker.gif">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

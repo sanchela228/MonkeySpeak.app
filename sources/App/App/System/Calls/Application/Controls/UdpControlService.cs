@@ -1,5 +1,6 @@
 using System;
 using App.System.Managers;
+using App.System.Services;
 
 namespace App.System.Calls.Application.Controls;
 
@@ -111,7 +112,7 @@ public class UdpControlService
 
             OnControl?.Invoke(code, payload);
             
-            Console.WriteLine($"HandleControlData: {code}, {payload}");
+            Logger.Write($"HandleControlData: {code}, {payload}");
 
             switch (code)
             {

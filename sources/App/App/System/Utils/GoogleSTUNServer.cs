@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Linq;
+using App.System.Services;
 
 namespace App.System.Utils;
 
@@ -39,11 +40,11 @@ public class GoogleSTUNServer
         }
         catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
         {
-            Console.WriteLine("[STUN] Socket timeout: " + ex.Message);
+            Logger.Write("[STUN] Socket timeout: " + ex.Message);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[STUN] Error: " + ex.Message);
+            Logger.Write("[STUN] Error: " + ex.Message);
         }
         finally
         {
@@ -60,7 +61,7 @@ public class GoogleSTUNServer
         
         try
         {
-            Console.WriteLine("[STUN] Socket UPD request start");
+            Logger.Write("[STUN] Socket UPD request start");
             
             udpClient = new UdpClient(localPort);
             udpClient.Client.ReceiveTimeout = 5000;
@@ -96,7 +97,7 @@ public class GoogleSTUNServer
                     var completed = await Task.WhenAny(receiveTask, Task.Delay(udpClient.Client.ReceiveTimeout, cancellationToken));
                     if (completed != receiveTask)
                     {
-                        Console.WriteLine($"[STUN] Timeout from {srv.host}:{srv.port}");
+                        Logger.Write($"[STUN] Timeout from {srv.host}:{srv.port}");
                         continue;
                     }
                     UdpReceiveResult serverResponse = receiveTask.Result;
@@ -105,30 +106,30 @@ public class GoogleSTUNServer
                     result = ParseStunResponse(responsePacket, transactionId);
                     if (result != null)
                     {
-                        Console.WriteLine($"[STUN] Success from {srv.host}:{srv.port} => {result}");
+                        Logger.Write($"[STUN] Success from {srv.host}:{srv.port} => {result}");
                         return result;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[STUN] Error for {srv.host}:{srv.port} - {ex.Message}");
+                    Logger.Write($"[STUN] Error for {srv.host}:{srv.port} - {ex.Message}");
                 }
             }
         }
         catch (SocketException ex) when (ex.SocketErrorCode == SocketError.TimedOut)
         {
-            Console.WriteLine("[STUN] Socket timeout: " + ex.Message);
+            Logger.Write("[STUN] Socket timeout: " + ex.Message);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[STUN] Error: " + ex.Message);
+            Logger.Write("[STUN] Error: " + ex.Message);
         }
         finally
         {
             udpClient?.Close();
         }
         
-        Console.WriteLine("[STUN] RESULT: " + result);
+        Logger.Write("[STUN] RESULT: " + result);
 
         return result;
     }
