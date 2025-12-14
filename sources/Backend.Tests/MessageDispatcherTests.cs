@@ -107,15 +107,15 @@ public class MessageDispatcherTests
         Assert.Contains(joiner.Id, room.Connections);
         Assert.Equal(Room.RoomState.Running, room.State);
 
-        var creatorMsg = creator.GetLastMessage<HolePunching>();
+        var creatorMsg = creator.GetLastMessage<InterlocutorJoined>();
         Assert.NotNull(creatorMsg);
         Assert.Equal("192.168.1.2:5000", creatorMsg.IpEndPoint);
-        Assert.Equal(joiner.Id.ToString(), creatorMsg.InterlocutorId);
+        Assert.Equal(joiner.Id.ToString(), creatorMsg.Id);
 
-        var joinerMsg = joiner.GetLastMessage<HolePunching>();
+        var joinerMsg = joiner.GetLastMessage<InterlocutorJoined>();
         Assert.NotNull(joinerMsg);
         Assert.Equal("192.168.1.1:5000", joinerMsg.IpEndPoint);
-        Assert.Equal(creator.Id.ToString(), joinerMsg.InterlocutorId);
+        Assert.Equal(creator.Id.ToString(), joinerMsg.Id);
     }
 
     [Fact]
