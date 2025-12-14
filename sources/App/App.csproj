@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
+        <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -17,7 +17,11 @@
 
     <ItemGroup>
       <PackageReference Include="Concentus" Version="2.2.2" />
+      <PackageReference Include="FFMediaToolkit" Version="4.8.1" />
+      <PackageReference Include="FFMpegCore" Version="5.4.0" />
+      <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
       <PackageReference Include="Raylib-cs" Version="7.0.1" />
+      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
       <PackageReference Include="SoundFlow" Version="1.2.1" />
       <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.8" />
       <PackageReference Include="YellowDogMan.RRNoise.NET" Version="0.1.6" />
@@ -33,16 +37,36 @@
       <None Update="update.bat">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="sticker.webm">
+      <None Update="test.svg">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="test.svg">
+      <None Update="sticker.gif">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="ffprobe.exe">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="ffmpeg.exe">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="sticker1.webm">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="sticker4.webm">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="sticker3.webm">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="sticker2.webm">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="Platforms\MacOS\" />
+      <Folder Include="Resources\Stickers\" />
     </ItemGroup>
+
 
 </Project>

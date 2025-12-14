@@ -223,6 +223,7 @@ public class P2PCallManager : ICallManager
             _udpCts = null;
             _connectedRaised = false;
             _activeSession = null;
+            _audioProcessStartRequested = false;
         }
        
         await Task.CompletedTask;
@@ -296,6 +297,12 @@ public class P2PCallManager : ICallManager
     {
         try
         {
+            if (_activeSession == null)
+            {
+                Logger.Write(Logger.Type.Warning, "[P2P] Received signaling message but session is null, ignoring");
+                return;
+            }
+            
             var msg = ctx.ToMessage();
             switch (msg)
             {
@@ -404,6 +411,7 @@ public class P2PCallManager : ICallManager
         catch (Exception messageReadEx)
         {
             Logger.Error($"[P2P] Failed to handle signaling message: {messageReadEx.Message}");
+            Logger.Error($"[P2P] Stack trace: {messageReadEx.StackTrace}");
         }
     }
 
