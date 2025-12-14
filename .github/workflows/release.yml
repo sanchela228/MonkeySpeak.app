@@ -54,15 +54,34 @@ jobs:
       - name: Build installer
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\installer.iss
+          
+           # =============================
+      # PACKAGE SOURCE ZIP (FROM BUILD)
+      # =============================
+      - name: Create source.zip from build
+        shell: powershell
+        run: |
+          if (Test-Path build/source.zip) {
+            Remove-Item build/source.zip
+          }
+
+          Compress-Archive `
+            -Path build/win/* `
+            -DestinationPath build/source.zip
+
+          Write-Host "source.zip created:"
+          Get-Item build/source.zip
       
       # =============================
       # CREATE GITHUB RELEASE
       # =============================
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.APP_VERSION_NAME }}
-          name: MonkeySpeak v${{ env.APP_VERSION_NAME }}
-          files: installer/Output/MonkeySpeakSetup.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: v${{ env.APP_VERSION_NAME }}
+            name: MonkeySpeak v${{ env.APP_VERSION_NAME }}
+            files: |
+              installer/Output/MonkeySpeakSetup.exe
+              build/source.zip
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

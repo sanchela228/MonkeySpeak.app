@@ -18,7 +18,7 @@ RUN VERSION=$(xmlstarlet sel -t -v '/AppConfig/Version' AppConfig.xml) && \
     echo '<Manifest>' >> /app/wwwroot/Manifest.xml && \
     echo "    <Version>$VERSION</Version>" >> /app/wwwroot/Manifest.xml && \
     echo "    <VersionName>$VERSION_NAME</VersionName>" >> /app/wwwroot/Manifest.xml && \
-    echo '    <PathDownload>download/</PathDownload>' >> /app/wwwroot/Manifest.xml && \
+    echo "    <PathDownload>https://github.com/sanchela228/MonkeySpeak/releases/download/v$VERSION_NAME/</PathDownload>" >> /app/wwwroot/Manifest.xml && \
     echo '    <FileSource>source.zip</FileSource>' >> /app/wwwroot/Manifest.xml && \
     echo '    <FileSetup>MonkeySpeakSetup.exe</FileSetup>' >> /app/wwwroot/Manifest.xml && \
     echo '</Manifest>' >> /app/wwwroot/Manifest.xml
