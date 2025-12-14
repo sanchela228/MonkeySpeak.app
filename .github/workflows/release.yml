@@ -1,0 +1,68 @@
+name: Build Installer & Release
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      # =============================
+      # READ VERSION FROM XML
+      # =============================
+      - name: Read version from AppConfig.xml
+        shell: powershell
+        run: |
+          [xml]$xml = Get-Content sources/App/AppConfig.xml
+          $versionName = $xml.AppConfig.VersionName
+          $version = $xml.AppConfig.Version
+          
+          echo "APP_VERSION_NAME=$versionName" >> $env:GITHUB_ENV
+          echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+          
+          echo "VersionName: $versionName"
+          echo "Version: $version"
+      
+      # =============================
+      # BUILD APP
+      # =============================
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Publish app
+        run: |
+          dotnet restore sources/App/App.csproj
+          dotnet publish sources/App/App.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -o build/win
+      
+      # =============================
+      # BUILD INSTALLER
+      # =============================
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\installer.iss
+      
+      # =============================
+      # CREATE GITHUB RELEASE
+      # =============================
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.APP_VERSION_NAME }}
+          name: MonkeySpeak v${{ env.APP_VERSION_NAME }}
+          files: installer/Output/MonkeySpeakSetup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

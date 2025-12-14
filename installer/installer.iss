@@ -1,6 +1,10 @@
+#define MyAppVersion GetEnv("APP_VERSION")
+#define MyAppVersionName GetEnv("APP_VERSION_NAME")
+
 [Setup]
 AppName=MonkeySpeak
-AppVersion=1.0.0
+AppVersion={#MyAppVersionName}
+AppVerName=MonkeySpeak_{#MyAppVersionName}
 DefaultDirName={pf}\MonkeySpeak
 DefaultGroupName=MonkeySpeak
 OutputDir=Output

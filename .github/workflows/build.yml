@@ -39,29 +39,3 @@ jobs:
         with:
           name: MonkeySpeakSetup
           path: Output/MonkeySpeakSetup.exe
-  
-  build-backend:
-    needs: build-installer
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download installer
-        uses: actions/download-artifact@v4
-        with:
-          name: MonkeySpeakSetup
-          path: sources/Backend/wwwroot/download
-
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push backend
-        run: |
-          docker build -t ghcr.io/${{ github.repository }}/backend:latest .
-          docker push ghcr.io/${{ github.repository }}/backend:latest
