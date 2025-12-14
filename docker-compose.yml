@@ -39,10 +39,8 @@ services:
       backend:
         condition: service_started
     volumes:
-      - ./builds:/builds
-      - downloads:/output
-      - ./sources/Backend/wwwroot/download:/output
-    command: ["bash", "-c", "mkdir -p /output && cp /build/source.zip /output/"]
+      - ./downloads:/output
+    command: ["bash", "-c", "cp -r /build/* /output"]
     
   db:
     image: postgres:18
