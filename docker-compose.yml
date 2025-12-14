@@ -22,6 +22,8 @@ services:
       - "${HTTPS_PORT_SERVER}:443"
       - "3478:3478/udp"
     restart: unless-stopped
+    volumes:
+      - downloads:/app/wwwroot/download
     depends_on:
       db:
         condition: service_healthy
@@ -38,6 +40,7 @@ services:
         condition: service_started
     volumes:
       - ./builds:/builds
+      - downloads:/output
       - ./sources/Backend/wwwroot/download:/output
     command: ["bash", "-c", "mkdir -p /output && cp /build/source.zip /output/"]
     
@@ -59,7 +62,10 @@ services:
     restart: unless-stopped
     networks:
       - network2
-        
+
 networks:
   network2:
     name: "network2"
+    
+volumes:
+  downloads:
