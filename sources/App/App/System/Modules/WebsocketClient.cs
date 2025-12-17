@@ -32,9 +32,7 @@ public class WebSocketClient(NetworkConfig conf)
 
         try
         {
-            Console.WriteLine("Пытаюсь подключиться...");
             await _webSocket.ConnectAsync(_uri, _cts.Token);
-            Console.WriteLine($"Подключено! State: {_webSocket.State}");
 
             if (_webSocket.State == WebSocketState.Open)
             {
@@ -49,7 +47,6 @@ public class WebSocketClient(NetworkConfig conf)
             OnDisconnected?.Invoke();
             Task.Delay(1000);
             
-            Console.WriteLine($"Ошибка подключения: {ex.Message}");
             await ReconnectAsync();
         }
     }
@@ -67,7 +64,7 @@ public class WebSocketClient(NetworkConfig conf)
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    Console.WriteLine("Сервер запросил закрытие соединения");
+                    Logger.Write("Server requested close");
                     await CloseAsync(WebSocketCloseStatus.NormalClosure, "Server requested close");
                     break;
                 }
@@ -83,18 +80,18 @@ public class WebSocketClient(NetworkConfig conf)
             }
             catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
             {
-                Console.WriteLine("Соединение разорвано сервером");
+                Logger.Write("Connection refused");
                 await ReconnectAsync();
                 break;
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Операция получения отменена");
+                Logger.Write("OperationCanceledException");
                 break;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка получения: {ex.Message}");
+                Logger.Write($"Error get: {ex.Message}");
                 await ReconnectAsync();
                 break;
             }
@@ -125,7 +122,7 @@ public class WebSocketClient(NetworkConfig conf)
         
         if (_webSocket?.State != WebSocketState.Open)
         {
-            Console.WriteLine("WebSocket не подключен");
+            Logger.Write("WebSocket not connected");
             return;
         }
 
@@ -140,7 +137,7 @@ public class WebSocketClient(NetworkConfig conf)
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка отправки: {ex.Message}");
+            Logger.Write($"Error send: {ex.Message}");
             await ReconnectAsync();
         }
     }
@@ -148,7 +145,7 @@ public class WebSocketClient(NetworkConfig conf)
     private async Task ReconnectAsync()
     {
         OnReconnecting?.Invoke();
-        Console.WriteLine("Попытка переподключения...");
+        Logger.Write("Retry...");
         
         await CloseAsync(WebSocketCloseStatus.Empty, "Reconnecting");
         

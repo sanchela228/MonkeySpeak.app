@@ -70,7 +70,9 @@ public class Creator : Scene
         _onConnected = async () =>
         {
             await Task.Delay(200);
-            Engine.Managers.Scenes.PushScene(new Room());
+            MainThreadDispatcher.Post(() =>
+                    Engine.Managers.Scenes.PushScene(new Room())
+            );
         };
         
         Context.CallFacade.OnConnected += _onConnected;
@@ -105,7 +107,7 @@ public class Creator : Scene
 
     protected override void Dispose()
     {
-        Console.WriteLine("[Dispose] Creator.cs dispose");
+        Logger.Write("[Dispose] Creator.cs dispose");
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
         _cancellationTokenSource = null;

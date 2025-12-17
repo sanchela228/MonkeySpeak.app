@@ -285,6 +285,6 @@ public class StartUp: Scene
 
     protected override void Dispose()
     {
-        Console.WriteLine("[Dispose] StartUp.cs dispose");
+        Logger.Write("[Dispose] StartUp.cs dispose");
     }
 }

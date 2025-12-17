@@ -34,6 +34,14 @@ public class CallFacade
         _wsClient.MessageDispatcher.On<SessionCreated>(msg => OnSessionCreated?.Invoke(msg.Value));
     }
 
+    public bool VolumeEnabled { get; set; } = true;
+
+    public void ToggleVolume()
+    {
+        VolumeEnabled = !VolumeEnabled;
+        _engine.SetVolumeStatus(VolumeEnabled);
+    }
+    
     private bool _microphoneEnabled = true;
     public bool MicrophoneEnabled
     {
@@ -76,8 +84,6 @@ public class CallFacade
     private void SetMicrophoneStatus(bool status) =>  _engine.SetMicrophoneStatus(status);
 
     public void StartAudioProcess() => _engine.StartAudioProcess();
-
-    public void ToggleDemoDenoise() => _engine.ToggleDenTEST();
     
     public Dictionary<string, float> GetAudioLevels() => _engine.GetAudioLevels();
     

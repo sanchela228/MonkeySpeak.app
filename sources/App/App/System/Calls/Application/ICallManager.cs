@@ -12,9 +12,9 @@ public interface ICallManager
     Task HangupAsync(CallSession session);
     public CallSession CurrentSession();
     void SetMicrophoneStatus(bool status);
+    void SetVolumeStatus(bool status);
 
     void StartAudioProcess();
-    void ToggleDenTEST();
     Dictionary<string, float> GetAudioLevels();
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;

@@ -52,6 +52,8 @@ public class P2PCallManager : ICallManager
         
         _localPort = SelectLocalUdpPort();
     }
+
+    public void SetVolumeStatus(bool status) => audioTranslator.TogglePlaybackAudio(status);
     
     public void SetMicrophoneStatus(bool status)
     {
@@ -83,11 +85,6 @@ public class P2PCallManager : ICallManager
     public P2PCallManager(ISignalingClient signaling, IStunClient stun, NetworkConfig netConfig)
         : this(signaling, stun, new CallConfig(netConfig))
     {
-    }
-
-    public void ToggleDenTEST()
-    {
-       audioTranslator.ToggleDenoise();
     }
     
     public Dictionary<string, float> GetAudioLevels()
@@ -293,7 +290,7 @@ public class P2PCallManager : ICallManager
         OnConnected?.Invoke();
     }
     
-    private async void HandleSignalingMessage(Models.Websocket.Context ctx)
+    private void HandleSignalingMessage(Models.Websocket.Context ctx)
     {
         try
         {

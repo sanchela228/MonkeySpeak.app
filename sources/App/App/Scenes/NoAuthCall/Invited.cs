@@ -62,14 +62,16 @@ public class Invited : Scene
         {
             _inputsRow.MarkSuccess();
             await Task.Delay(200);
-            Console.WriteLine($"[CallFacade] Connected");
-            Scenes.PushScene(new Room());
+            Logger.Write($"[CallFacade] Connected");
+            MainThreadDispatcher.Post(() =>
+                Scenes.PushScene(new Room())
+            );
         };
 
         Context.CallFacade.OnConnected += _onConnected;
         _onSessionStateChanged = (session, state) =>
         {
-            Console.WriteLine($"[CallFacade] Active session change state -> {state}");
+            Logger.Write($"[CallFacade] Active session change state -> {state}");
             if (state == CallState.Failed)
             {
                 _sendRequestAuth = false;
@@ -211,7 +213,7 @@ public class Invited : Scene
     
     protected override void Dispose()
     {
-        Console.WriteLine("[Dispose] Invited.cs dispose");
+        Logger.Write("[Dispose] Invited.cs dispose");
         
         Context.CallFacade.OnSessionStateChanged -= _onSessionStateChanged;
         Context.CallFacade.OnConnected -= _onConnected;

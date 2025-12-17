@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using App.System.Calls.Infrastructure;
+using App.System.Services;
 using App.System.Utils;
 
 namespace App.System.Calls.Infrastructure.Adapters;
@@ -36,17 +37,17 @@ public class MainServerStunClient : IStunClient
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("UDP STUN request timed out or was cancelled");
+                Logger.Write("UDP STUN request timed out or was cancelled");
                 return null;
             }
             catch (SocketException ex)
             {
-                Console.WriteLine($"Socket error: {ex.SocketErrorCode}");
+                Logger.Write($"Socket error: {ex.SocketErrorCode}");
                 return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"UDP STUN error: {ex.Message}");
+                Logger.Write($"UDP STUN error: {ex.Message}");
                 return null;
             }
         }

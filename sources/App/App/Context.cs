@@ -3,10 +3,13 @@ using App.Configurations.Data;
 using App.Configurations.Roots;
 using App.System.Calls.Application.Facade;
 using App.System.Services;
+using App.System.Utils;
 using Engine.Helpers;
+using Engine.Managers;
 using Platforms;
 using Platforms.Interfaces;
 using Platforms.Windows;
+using Raylib_cs;
 
 namespace App;
 
@@ -66,6 +69,18 @@ public static class Context
         SystemUser = PlatformServiceFactory.GetService<IUser>(CurrentPlatform);
         
         System.Services.Language.Load(ContextData.LanguageSelected);
+        
+        // DEMO COPY
+        if (!File.Exists(Path.Combine(DataDirectory, "ffmpeg.exe")) && File.Exists(Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe")))
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "ffmpeg.exe"), Path.Combine(DataDirectory, "ffmpeg.exe"));
+        
+        if (!File.Exists(Path.Combine(DataDirectory, "ffprobe.exe")) && File.Exists(Path.Combine(AppContext.BaseDirectory, "ffprobe.exe")))
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "ffprobe.exe"), Path.Combine(DataDirectory, "ffprobe.exe"));
+            
+
+        Cache.Init(Path.Combine(DataDirectory, "Cache"));
+        
+        VideoReader.СhangeFFmpegDirPath(DataDirectory);
         
         VideoReader.PrepareCache("sticker1.webm");
         VideoReader.PrepareCache("sticker2.webm");
