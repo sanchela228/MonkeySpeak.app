@@ -46,6 +46,7 @@ public class Window : IDisposable
             {
                 Header.Update(deltaTime);
                 Input.Update(deltaTime);
+                MainThreadDispatcher.ExecutePending();
                 Notificator.Update(deltaTime);
                 Engine.Managers.Scenes.Update(deltaTime);
                 Graphics.MainBackground.Instance.Update(deltaTime);

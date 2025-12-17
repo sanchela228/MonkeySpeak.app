@@ -70,7 +70,9 @@ public class Creator : Scene
         _onConnected = async () =>
         {
             await Task.Delay(200);
-            Engine.Managers.Scenes.PushScene(new Room());
+            MainThreadDispatcher.Post(() =>
+                    Engine.Managers.Scenes.PushScene(new Room())
+            );
         };
         
         Context.CallFacade.OnConnected += _onConnected;

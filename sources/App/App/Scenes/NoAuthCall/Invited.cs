@@ -63,7 +63,9 @@ public class Invited : Scene
             _inputsRow.MarkSuccess();
             await Task.Delay(200);
             Logger.Write($"[CallFacade] Connected");
-            Scenes.PushScene(new Room());
+            MainThreadDispatcher.Post(() =>
+                Scenes.PushScene(new Room())
+            );
         };
 
         Context.CallFacade.OnConnected += _onConnected;

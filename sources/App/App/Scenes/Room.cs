@@ -43,6 +43,8 @@ public class Room : Scene
             Color = Color.White
         };
         
+        var volumeOnTextureIcon = Resources.Texture("Images\\Icons\\VolumeOn_Black.png");
+        var volumeMuteTextureIcon = Resources.Texture("Images\\Icons\\VolumeMute_White.png");
         var texTest0 = Resources.Texture("Images\\Icons\\MicrophoneDefault_White.png");
         var texTest0_b = Resources.Texture("Images\\Icons\\MicrophoneDefault_Black.png");
         var texTest1 = Resources.Texture("Images\\Icons\\MicrophoneMuted_White.png");
@@ -52,6 +54,20 @@ public class Room : Scene
         {
             BackgroundColor = Color.White,
             IsActive = true
+        };
+        
+        var volumeControl = new RoomControlIcon(volumeOnTextureIcon, new Vector2(28, 28), volumeMuteTextureIcon)
+        {
+            BackgroundColor = Color.White,
+            IsActive = true
+        };
+        
+        volumeControl.OnRelease += (node) =>
+        {
+            if (Facade.VolumeEnabled) 
+                Facade.MicrophoneEnabled = false;
+            
+            Facade.ToggleVolume();
         };
         
         var hangupControl = new RoomControlIcon(texTest2, new Vector2(28, 28), texTest1)
@@ -67,8 +83,9 @@ public class Room : Scene
         
         var testList = new List<RoomControlIcon>()
         {
+            volumeControl,
             microControl,
-            hangupControl,
+            hangupControl
         };
         
         microControl.OnRelease += (node) =>

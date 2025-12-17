@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using App.System.Services;
+using Engine.Managers;
 using FFMpegCore;
 using K4os.Compression.LZ4;
 using SixLabors.ImageSharp;
@@ -24,6 +25,16 @@ namespace Engine.Helpers
         private bool _finished;
         private string originalPath;
 
+        private static string pathFFmpegFile = Path.Combine(AppContext.BaseDirectory,
+            OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
+
+        public static void СhangeFFmpegDirPath(string pathDir)
+        {
+            if (File.Exists( Path.Combine(pathDir, OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg")))
+                pathFFmpegFile = Path.Combine(pathDir, OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
+        }
+        
+
         public VideoReader(string path)
         {
             var info = FFProbe.Analyse(path);
@@ -33,15 +44,13 @@ namespace Engine.Helpers
             _frameSize = Width * Height * 4;
             _buffer = new byte[_frameSize];
 
-            string args =
-                $"-i \"{path}\" -f rawvideo -pix_fmt rgba -";
+            string args = $"-i \"{path}\" -f rawvideo -pix_fmt rgba -";
 
             _ffmpeg = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = Path.Combine(AppContext.BaseDirectory,
-                        OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg"),
+                    FileName = pathFFmpegFile,
                     Arguments = args,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -120,20 +129,13 @@ namespace Engine.Helpers
         {
             try
             {
-                string cachePath = Path.Combine(
-                    AppContext.BaseDirectory, 
-                    "cache", 
-                    Path.GetFileNameWithoutExtension(path) + ".lz4"
-                );
-            
-                if (!Directory.Exists(Path.GetDirectoryName(cachePath)))
-                    Directory.CreateDirectory(Path.GetDirectoryName(cachePath) ?? string.Empty);
-            
-                if (File.Exists(cachePath))
-                    return ReadLZ4Cache(cachePath);
+                string key = $"video:lz4:{path}";
+                
+                if (Cache.Exists(key))
+                    return ReadLZ4Cache(key);
                 
                 List<byte[]> compressedFrames = GetCompressedFrames(path);
-                SaveToLZ4Cache(cachePath, compressedFrames);
+                SaveToLZ4Cache(key, compressedFrames);
                 return compressedFrames;
             }
             catch (Exception e)
@@ -177,34 +179,31 @@ namespace Engine.Helpers
 
         private static List<byte[]> ReadLZ4Cache(string cachePath)
         {
-            using (FileStream fs = new FileStream(cachePath, FileMode.Open))
-            using (BinaryReader reader = new BinaryReader(fs))
+            using var fs = Cache.OpenRead(cachePath, permanent: true);
+            using var reader = new BinaryReader(fs);
+
+            int count = reader.ReadInt32();
+            List<byte[]> result = new(count);
+
+            for (int i = 0; i < count; i++)
             {
-                int count = reader.ReadInt32();
-                List<byte[]> result = new List<byte[]>(count);
-            
-                for (int i = 0; i < count; i++)
-                {
-                    int length = reader.ReadInt32();
-                    byte[] lz4Frame = reader.ReadBytes(length);
-                    result.Add(lz4Frame);
-                }
-            
-                return result;
+                int length = reader.ReadInt32();
+                result.Add(reader.ReadBytes(length));
             }
+
+            return result;
         }
 
         private static void SaveToLZ4Cache(string cachePath, List<byte[]> compressedFrames)
         {
-            using (FileStream fs = new FileStream(cachePath, FileMode.Create))
-            using (BinaryWriter writer = new BinaryWriter(fs))
+            using var fs = Cache.OpenWrite(cachePath, permanent: true);
+            using var writer = new BinaryWriter(fs);
+
+            writer.Write(compressedFrames.Count);
+            foreach (var frame in compressedFrames)
             {
-                writer.Write(compressedFrames.Count);
-                foreach (byte[] lz4Frame in compressedFrames)
-                {
-                    writer.Write(lz4Frame.Length);
-                    writer.Write(lz4Frame);
-                }
+                writer.Write(frame.Length);
+                writer.Write(frame);
             }
         }
         

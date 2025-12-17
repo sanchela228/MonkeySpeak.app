@@ -47,10 +47,16 @@ public class AudioTranslator : IDisposable
     
     private volatile bool _isRunning = false;
     private volatile bool _captureEnabled = true;
+    private volatile bool _playbackEnabled = true;
     private volatile bool _audioEngineReady = false;
     private readonly object _readyLock = new object();
     
     private readonly ConcurrentQueue<Action> _mixerActions = new();
+    
+    public void TogglePlaybackAudio(bool enable)
+    {
+        _playbackEnabled = enable;
+    }
     
     public void ToggleCaptureAudio(bool enable)
     {
@@ -228,7 +234,9 @@ public class AudioTranslator : IDisposable
             ReadOnlySpan<byte> decodedBytes = MemoryMarshal.AsBytes<float>(decodedFrame);
             var outBuf = new byte[decodedBytes.Length];
             decodedBytes.CopyTo(outBuf);
-            channel.Stream.Write(outBuf, 0, outBuf.Length);
+            
+            if (_playbackEnabled)
+                channel.Stream.Write(outBuf, 0, outBuf.Length);
         }
         catch (Exception ex)
         {
@@ -369,12 +377,6 @@ public class AudioTranslator : IDisposable
    
     private volatile bool _denoiseEnabled = true;
     private float _vadGain = 1.0f;
-    
-    public void ToggleDenoise()
-    {
-        _denoiseEnabled = !_denoiseEnabled;
-        Logger.Write(Logger.Type.Info, $"[AudioTranslator] Denoise {(_denoiseEnabled ? "enabled" : "disabled")}");
-    }
     
     private void StopAudioDevices()
     {
