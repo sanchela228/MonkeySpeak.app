@@ -33,16 +33,16 @@ public static class Cache
         File.WriteAllBytes(GetPath(key), Serialize(entry));
     }
 
-    public static string? Get(string key)
+    public static string? Get(string key, bool permanent = false)
     {
         EnsureInit();
 
         // memory
         if (_cache.TryGetValue(key, out var entry))
         {
-            if (IsExpired(entry))
+            if (!permanent && IsExpired(entry))
             {
-                Remove(key);
+                Remove(key, permanent);
                 return null;
             }
 
@@ -50,14 +50,14 @@ public static class Cache
         }
 
         // file
-        var path = GetPath(key);
+        var path = GetPath(key, permanent);
         if (!File.Exists(path))
             return null;
 
         entry = Deserialize(File.ReadAllBytes(path));
-        if (IsExpired(entry))
+        if (!permanent && IsExpired(entry))
         {
-            Remove(key);
+            Remove(key, permanent);
             return null;
         }
 
@@ -65,10 +65,48 @@ public static class Cache
         return Encoding.UTF8.GetString(entry.Data);
     }
 
-    public static bool Exists(string key)
+    public static bool ExistsPermanent(string key) => Exists(key, true);
+    
+    public static bool ExistsFast(string key, bool permanent = false)
     {
         EnsureInit();
-        return Get(key) != null;
+        return File.Exists(GetPath(key, permanent));
+    }
+    
+    public static bool ExistsFastPermanent(string key)
+    {
+        EnsureInit();
+        return File.Exists(GetPath(key, true));
+    }
+    
+    public static bool Exists(string key, bool permanent = false)
+    {
+        EnsureInit();
+
+        // memory
+        if (_cache.TryGetValue(key, out var entry))
+            return !IsExpired(entry);
+
+        // file
+        var path = GetPath(key, permanent);
+        if (!File.Exists(path))
+            return false;
+
+        try
+        {
+            var entryFromFile = Deserialize(File.ReadAllBytes(path));
+            if (!permanent && IsExpired(entryFromFile))
+            {
+                Remove(key, permanent);
+                return false;
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public static void SetPermanent(string key, string value)
@@ -76,10 +114,11 @@ public static class Cache
         Set(key, value, ttl: null);
     }
     
-    public static void Remove(string key)
+    public static void Remove(string key, bool permanent = false)
     {
         _cache.Remove(key);
-        var path = GetPath(key);
+
+        var path = GetPath(key, permanent);
         if (File.Exists(path))
             File.Delete(path);
     }

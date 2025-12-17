@@ -10,11 +10,13 @@ public class RoomControlIcon : Button
     public Texture2D? SecondTexture;
     public Texture2D DefaultTexture;
     
+    private bool haveSettings = false;
+    
     public RoomControlIcon(FontFamily font, string text = "") : base(font, text)
     {
     }
 
-    public RoomControlIcon(Texture2D tex, Vector2 size, Texture2D? secondTex = null) : base(tex, size)
+    public RoomControlIcon(Texture2D tex, Vector2 size, Texture2D? secondTex = null, bool _haveSettings = false) : base(tex, size)
     {
         DefaultTexture = tex;
         SecondTexture = secondTex;
@@ -25,6 +27,8 @@ public class RoomControlIcon : Button
         Padding = new Vector2(20, 20);
         HoverBackgroundColor = new Color( 40, 40, 40);
         HoverCornerColor = new Color(40, 40, 40);
+
+        haveSettings = _haveSettings;
 
         OnHoverEnter += (node) =>
         {
@@ -55,5 +59,10 @@ public class RoomControlIcon : Button
                 }
             }
         };
+
+        if (haveSettings)
+        {
+           AddChild(new SettingsPointerButton());
+        }
     }
 }
