@@ -156,7 +156,7 @@ public class Updater(NetworkConfig networkConfig)
         }
     }
 
-    private static void ApplyUpdate(string updateFolderPath, string targetFolderPath, string executableName = "MonkeySpeak.exe")
+    private static void ApplyUpdate(string updateFolderPath, string targetFolderPath, string executableName = "App.exe")
     {
         try
         {
