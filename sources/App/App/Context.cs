@@ -76,17 +76,22 @@ public static class Context
         
         if (!File.Exists(Path.Combine(DataDirectory, "ffprobe.exe")) && File.Exists(Path.Combine(AppContext.BaseDirectory, "ffprobe.exe")))
             File.Copy(Path.Combine(AppContext.BaseDirectory, "ffprobe.exe"), Path.Combine(DataDirectory, "ffprobe.exe"));
-            
-
-        Cache.Init(Path.Combine(DataDirectory, "Cache"));
         
+        Cache.Init(Path.Combine(DataDirectory, "Cache"));
         VideoReader.СhangeFFmpegDirPath(DataDirectory);
         
-        VideoReader.PrepareCache("sticker1.webm");
-        VideoReader.PrepareCache("sticker2.webm");
-        VideoReader.PrepareCache("sticker3.webm");
-        VideoReader.PrepareCache("sticker4.webm");
-
+        if (!Cache.ExistsFastPermanent($"video:lz4:sticker1.webm"))
+            VideoReader.PrepareCache("sticker1.webm");
+        
+        if (!Cache.ExistsFastPermanent($"video:lz4:sticker2.webm"))
+            VideoReader.PrepareCache("sticker2.webm");
+        
+        if (!Cache.ExistsFastPermanent($"video:lz4:sticker3.webm"))
+            VideoReader.PrepareCache("sticker3.webm");
+        
+        if (!Cache.ExistsFastPermanent($"video:lz4:sticker4.webm"))
+            VideoReader.PrepareCache("sticker4.webm");
+        
         try
         {
             _devicePrivateKey = SecureStorage.Load("device_private_key");
