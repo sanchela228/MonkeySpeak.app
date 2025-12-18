@@ -92,6 +92,8 @@ public class CallFacade
     
     public Dictionary<string, float> GetAudioLevels() => _engine.GetAudioLevels();
 
+    public float GetSelfAudioLevel() => _engine.GetSelfAudioLevel();
+
     public DeviceInfo[] GetCaptureDevices() => _engine.GetCaptureDevices();
     public void SwitchCaptureDevice(IntPtr? deviceId) => _engine.SwitchCaptureDevice(deviceId);
     

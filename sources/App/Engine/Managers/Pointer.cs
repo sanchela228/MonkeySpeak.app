@@ -12,10 +12,11 @@ public static class Pointer
     
     public static Node? PressedNode => _pressedNode;
     public static bool Pressed => _pressedNode != null; 
-    public static void SetPressedNode(Node node) => _pressedNode = node;
     public static void Clear() => _pressedNode = null;
+    public static void SetPressedNode(Node? node) => _pressedNode = node;
     
     public static bool Hovered => _hoveredNode != null;
-    public static void SetHoveredNode(Node node) => _hoveredNode = node;
     public static void ClearHovered() => _hoveredNode = null;
+    public static Node? HoveredNode => _hoveredNode;
+    public static void SetHoveredNode(Node? node) => _hoveredNode = node;
 }

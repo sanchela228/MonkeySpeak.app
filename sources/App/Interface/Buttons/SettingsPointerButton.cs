@@ -17,8 +17,8 @@ public class SettingsPointerButton : Node
             var parentBounds = Parent.Bounds;
 
             Position = Parent.Position + new System.Numerics.Vector2(
-                parentBounds.Width / 2f + 12f,
-                -parentBounds.Height / 2f - 12f
+                parentBounds.Width / 2f,
+                -parentBounds.Height / 2f
             );
         }
     }
@@ -26,9 +26,10 @@ public class SettingsPointerButton : Node
     public override void Draw()
     {
         var rect = Bounds;
-        var x = rect.X + rect.Width / 2f;
-        var y = rect.Y + rect.Height / 2f;
-        Raylib.DrawCircle((int)x, (int)y, 6, Color.Red);
+        var x = rect.X + rect.Width / 2f - 3f;
+        var y = rect.Y + rect.Height / 2f + 3f;
+        Raylib.DrawCircle((int)x, (int)y, 12.5f, Color.Gray);
+        Raylib.DrawCircle((int)x, (int)y, 11, Color.White);
     }
 
     public override void Dispose()

@@ -123,6 +123,14 @@ public class P2PCallManager : ICallManager
         return new Dictionary<string, float>();
     }
 
+    public float GetSelfAudioLevel()
+    {
+        if (audioTranslator != null)
+            return audioTranslator.GetSelfAudioLevel();
+
+        return 0f;
+    }
+
     public DeviceInfo[] GetCaptureDevices()
     {
         if (audioTranslator != null)

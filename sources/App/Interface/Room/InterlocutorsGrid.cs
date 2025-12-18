@@ -1,5 +1,6 @@
 using App.System.Calls.Domain;
 using Engine;
+using Engine.Managers;
 using Raylib_cs;
 using System.Numerics;
 using System;
@@ -135,31 +136,47 @@ public class InterlocutorsGrid : Node
 
         if (!_isDragging)
         {
-            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            if (!Raylib.IsMouseButtonPressed(MouseButton.Left))
+                return;
+
+            var pressed = Pointer.PressedNode;
+            if (pressed == null)
+                return;
+
+            int hit = -1;
+            if (pressed is Avatar)
             {
-                int hit = -1;
-                float best = float.MaxValue;
                 for (int i = 0; i < Childrens.Count; i++)
                 {
-                    float d2 = Vector2.DistanceSquared(mouse, Childrens[i].Position);
-                    if (d2 <= r2 && d2 < best)
+                    if (ReferenceEquals(Childrens[i], pressed))
                     {
-                        best = d2;
                         hit = i;
+                        break;
                     }
                 }
-                if (hit != -1)
-                {
-                    _isDragging = true;
-                    _dragIndex = hit;
-                    _dragOffset = Childrens[hit].Position - mouse; 
-                    _dragCurrentPos = mouse + _dragOffset;
-                    _dragStartCenter = _centers.Count > hit ? _centers[hit] : Childrens[hit].Position;
-                }
             }
+
+            if (hit == -1)
+                return;
+
+            if (Vector2.DistanceSquared(mouse, Childrens[hit].Position) > r2)
+                return;
+
+            _isDragging = true;
+            _dragIndex = hit;
+            _dragOffset = Childrens[hit].Position - mouse;
+            _dragCurrentPos = mouse + _dragOffset;
+            _dragStartCenter = _centers.Count > hit ? _centers[hit] : Childrens[hit].Position;
         }
         else
         {
+            if (_dragIndex < 0 || _dragIndex >= Childrens.Count || Pointer.PressedNode != Childrens[_dragIndex])
+            {
+                _isDragging = false;
+                _dragIndex = -1;
+                return;
+            }
+
             if (Raylib.IsMouseButtonDown(MouseButton.Left))
             {
                 _dragCurrentPos = mouse + _dragOffset;

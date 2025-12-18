@@ -19,6 +19,7 @@ public interface ICallManager
 
     void StartAudioProcess();
     Dictionary<string, float> GetAudioLevels();
+    float GetSelfAudioLevel();
 
     DeviceInfo[] GetCaptureDevices();
     DeviceInfo[] GetPlaybackDevices();

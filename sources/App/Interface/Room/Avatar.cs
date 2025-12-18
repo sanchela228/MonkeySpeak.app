@@ -97,35 +97,16 @@ public class Avatar : Node
         }
     }
 
-    private float mainSmoothedAudioLevel = 0f;
-    private float secondarySmoothedAudioLevel = 0f;
     private Shader circleShader;
     private bool shaderLoaded = false;
     public override void Draw()
     {
         float currentAudioLevel = AudioLevel;
 
-        if (!IsMuted)
+        if (!IsMuted && currentAudioLevel > 0.002f)
         {
-            float mainAudioLevel = SmoothValue(
-                currentAudioLevel,
-                ref mainSmoothedAudioLevel,
-                0.2f,
-                0.98f,
-                (Size.X / 2) + 4f
-            );
-        
-            float secondaryAudioLevel = SmoothValue(
-                currentAudioLevel, 
-                ref secondarySmoothedAudioLevel,
-                0.05f,
-                0.7f,
-                (Size.X / 2) + 8f, 
-                1.02f
-            );
-        
-            Raylib.DrawCircleV(Position, secondaryAudioLevel, new Color(10, 255, 10, 75));
-            Raylib.DrawCircleV(Position, mainAudioLevel, new Color(10, 255, 10, 100));
+            float radius = (Size.X / 2f) + 4f;
+            Raylib.DrawCircleLines((int)Position.X, (int)Position.Y, radius, new Color(10, 255, 10, 200));
         }
         
         if (shaderLoaded && FramesLoaded && _canvas is not null and {} canvas)
@@ -186,33 +167,6 @@ public class Avatar : Node
         }
     }
     
-    private float SmoothValue(float currentAudioLevel, ref float smoothedAudioLevel, float audioSmoothingFactor, 
-        float decaySpeed, float maxAudioLevel, float multiplier = 1f)
-    {
-        if (currentAudioLevel > 0)
-        {
-            smoothedAudioLevel = smoothedAudioLevel * (1 - audioSmoothingFactor) +
-                                 currentAudioLevel * audioSmoothingFactor;
-        }
-        else
-        {
-            smoothedAudioLevel *= decaySpeed;
-
-            if (smoothedAudioLevel < 0.01f)
-                smoothedAudioLevel = 0;
-        }
-    
-        var sizeAudio = Size.X / 2 + smoothedAudioLevel * 100;
-
-        if (sizeAudio == Size.X / 2)
-            sizeAudio = Size.X - 10f;
-
-        if (sizeAudio > maxAudioLevel)
-            sizeAudio = maxAudioLevel;
-        
-        return sizeAudio;
-    }
-
     public override void Dispose()
     {
         if (FramesLoaded)

@@ -35,6 +35,8 @@ public class Room : Scene
 
     private int _micVolumePercent = 100;
     private int _playbackVolumePercent = 100;
+
+    private SelfAudioWaveIndicator _selfAudioIndicator;
     
     public Room()
     {
@@ -129,6 +131,23 @@ public class Room : Scene
             16
         );
 
+        // Self microphone activity indicator under center controls
+        _selfAudioIndicator = new SelfAudioWaveIndicator
+        {
+            IsActive = true
+        };
+
+        var center = testList.Count > 1 ? testList[1] : testList[0];
+        var cb = center.Bounds;
+        
+        _selfAudioIndicator.Position = new Vector2(
+            Raylib.GetScreenWidth() / 2 - 25f, 
+            cb.Y - 22f
+        );
+        
+        _selfAudioIndicator.PointRendering = PointRendering.LeftTop;
+        AddNode(_selfAudioIndicator);
+
         Facade.OnRemoteMuteChangedByInterlocutor += HandleRemoteMuteChangedByInterlocutor;
 
         InterlocutorsGrid = new InterlocutorsGrid()
@@ -148,6 +167,49 @@ public class Room : Scene
     private InterlocutorsGrid InterlocutorsGrid;
     
     private readonly Dictionary<string, bool> _muteById = new();
+
+    private static void BuildDeviceLists(DeviceInfo[] devices, out List<string> labels, out List<IntPtr?> ids)
+    {
+        labels = new List<string>();
+        ids = new List<IntPtr?>();
+
+        foreach (var d in devices)
+        {
+            var name = d.Name;
+            if (d.IsDefault)
+                name += " (default)";
+
+            labels.Add(name);
+            ids.Add(d.Id);
+        }
+    }
+
+    private static int ResolveSelectedIndex(DeviceInfo[] devices, List<IntPtr?> ids, IntPtr? savedId)
+    {
+        if (savedId != null)
+        {
+            for (int i = 0; i < ids.Count; i++)
+            {
+                if (ids[i] == savedId)
+                    return i;
+            }
+        }
+
+        for (int i = 0; i < devices.Length; i++)
+        {
+            if (devices[i].IsDefault)
+                return i;
+        }
+
+        return 0;
+    }
+
+    private static void PositionPopup(Node popup, Node anchor)
+    {
+        var parentBounds = anchor.Bounds;
+        var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
+        popup.Position = popupPos;
+    }
     
     private void HandleRemoteMuteChangedByInterlocutor(string id, bool isMuted)
     {
@@ -161,7 +223,18 @@ public class Room : Scene
     
     protected override void Update(float dt)
     {
+        float raw = 0f;
+        try
+        {
+            raw = Facade.GetSelfAudioLevel();
+        }
+        catch
+        {
+            raw = 0f;
+        }
 
+        if (_selfAudioIndicator != null)
+            _selfAudioIndicator.RawLevel = raw;
     }
 
     protected override void Draw()
@@ -192,50 +265,19 @@ public class Room : Scene
 
         DeviceInfo[] devices = Facade.GetCaptureDevices();
 
-        var labels = new List<string>();
-        _micDeviceIds = new List<IntPtr?>();
-
-        foreach (var d in devices)
-        {
-            var name = d.Name;
-            if (d.IsDefault)
-                name += " (default)";
-
-            labels.Add(name);
-            _micDeviceIds.Add(d.Id);
-        }
-
-        int selectedIndex = 0;
-        if (Context.UserSettings?.CaptureDeviceId != null)
-        {
-            for (int i = 0; i < _micDeviceIds.Count; i++)
-            {
-                if (_micDeviceIds[i] == Context.UserSettings.CaptureDeviceId)
-                {
-                    selectedIndex = i;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < devices.Length; i++)
-            {
-                if (devices[i].IsDefault)
-                {
-                    selectedIndex = i;
-                    break;
-                }
-            }
-        }
+        BuildDeviceLists(devices, out var labels, out var ids);
+        _micDeviceIds = ids;
+        int selectedIndex = ResolveSelectedIndex(devices, _micDeviceIds, Context.UserSettings?.CaptureDeviceId);
 
         _micPopup = new MicrophoneSelectPopup(labels, selectedIndex: selectedIndex, initialVolumePercent: _micVolumePercent);
-
+        _micPopup.Position = new Vector2(
+            Raylib.GetRenderWidth() / 2 - _micPopup.Bounds.Width / 2, 
+            Raylib.GetRenderHeight() - (150 + _micPopup.Bounds.Height)
+        );
+        
         Facade.SetMicrophoneVolumePercent(_micVolumePercent);
 
-        var parentBounds = microControl.Bounds;
-        var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
-        _micPopup.Position = popupPos;
+        // PositionPopup(_micPopup, microControl);
 
         _micPopup.OnCloseRequested += CloseMicPopup;
         _micPopup.OnSelected += (index) =>
@@ -250,9 +292,10 @@ public class Room : Scene
 
             Logger.Write(Logger.Type.Info, $"[UI] Mic selected index={index} id={(id?.ToString() ?? "default")}");
             Facade.SwitchCaptureDevice(id);
+            
             if (Context.UserSettings != null)
                 Context.UserSettings.CaptureDeviceId = id;
-            CloseMicPopup();
+            // CloseMicPopup();
         };
 
         _micPopup.OnVolumeChanged += (volPercent) =>
@@ -275,50 +318,17 @@ public class Room : Scene
 
         DeviceInfo[] devices = Facade.GetPlaybackDevices();
 
-        var labels = new List<string>();
-        _playbackDeviceIds = new List<IntPtr?>();
-
-        foreach (var d in devices)
-        {
-            var name = d.Name;
-            if (d.IsDefault)
-                name += " (default)";
-
-            labels.Add(name);
-            _playbackDeviceIds.Add(d.Id);
-        }
-
-        int selectedIndex = 0;
-        if (Context.UserSettings?.PlaybackDeviceId != null)
-        {
-            for (int i = 0; i < _playbackDeviceIds.Count; i++)
-            {
-                if (_playbackDeviceIds[i] == Context.UserSettings.PlaybackDeviceId)
-                {
-                    selectedIndex = i;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            for (int i = 0; i < devices.Length; i++)
-            {
-                if (devices[i].IsDefault)
-                {
-                    selectedIndex = i;
-                    break;
-                }
-            }
-        }
+        BuildDeviceLists(devices, out var labels, out var ids);
+        _playbackDeviceIds = ids;
+        int selectedIndex = ResolveSelectedIndex(devices, _playbackDeviceIds, Context.UserSettings?.PlaybackDeviceId);
 
         _volumePopup = new PlaybackSelectPopup(labels, selectedIndex: selectedIndex, initialVolumePercent: _playbackVolumePercent);
-
+        _volumePopup.Position = new Vector2(
+            Raylib.GetRenderWidth() / 2 - _volumePopup.Bounds.Width / 2, 
+            Raylib.GetRenderHeight() - (150 + _volumePopup.Bounds.Height)
+        );
+        
         Facade.SetPlaybackVolumePercent(_playbackVolumePercent);
-
-        var parentBounds = volumeControl.Bounds;
-        var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
-        _volumePopup.Position = popupPos;
 
         _volumePopup.OnCloseRequested += CloseVolumePopup;
         _volumePopup.OnVolumeChanged += (volPercent) =>
@@ -339,9 +349,10 @@ public class Room : Scene
 
             Logger.Write(Logger.Type.Info, $"[UI] Playback selected index={index} id={(id?.ToString() ?? "default")}");
             Facade.SwitchPlaybackDevice(id);
+            
             if (Context.UserSettings != null)
                 Context.UserSettings.PlaybackDeviceId = id;
-            CloseVolumePopup();
+            // CloseVolumePopup();
         };
 
         AddNode(_volumePopup);

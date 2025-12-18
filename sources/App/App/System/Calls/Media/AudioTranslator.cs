@@ -55,6 +55,9 @@ public class AudioTranslator : IDisposable
 
     private volatile int _microphoneVolumePercent = 100;
     private volatile int _playbackVolumePercent = 100;
+
+    private float _selfAudioLevel = 0f;
+    private long _selfAudioLevelUpdatedAtTicks = 0;
     
     private readonly ConcurrentQueue<Action> _mixerActions = new();
     
@@ -303,6 +306,16 @@ public class AudioTranslator : IDisposable
             levels[kvp.Key] = timeSinceLastAudio.TotalMilliseconds < 500 ? kvp.Value.AudioLevel : 0f;
         }
         return levels;
+    }
+
+    public float GetSelfAudioLevel()
+    {
+        var updatedAt = new DateTime(Interlocked.Read(ref _selfAudioLevelUpdatedAtTicks), DateTimeKind.Utc);
+        var timeSince = DateTime.UtcNow - updatedAt;
+        if (timeSince.TotalMilliseconds > 500)
+            return 0f;
+
+        return _selfAudioLevel;
     }
     
     public void RemoveInterlocutorChannel(string interlocutorId)
@@ -588,6 +601,17 @@ public class AudioTranslator : IDisposable
                 inputBuffer[i] = 0f;
             else
                 inputBuffer[i] = Math.Clamp(inputBuffer[i], -1.0f, 1.0f);
+        }
+
+        float rms = 0f;
+        for (int i = 0; i < inputBuffer.Length; i++)
+            rms += inputBuffer[i] * inputBuffer[i];
+
+        if (inputBuffer.Length > 0)
+        {
+            rms = (float)Math.Sqrt(rms / inputBuffer.Length);
+            _selfAudioLevel = Math.Clamp(rms * 3f, 0f, 1f);
+            Interlocked.Exchange(ref _selfAudioLevelUpdatedAtTicks, DateTime.UtcNow.Ticks);
         }
 
         lock (rnnoiseBuffer)

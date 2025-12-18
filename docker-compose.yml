@@ -30,17 +30,17 @@ services:
     networks:
       - network2
 
-  client-build:
-    build:
-      context: .
-      dockerfile: docker/App.DockerFile
-    container_name: client
-    depends_on:
-      backend:
-        condition: service_started
-    volumes:
-      - ./downloads:/output
-    command: ["bash", "-c", "cp -r /build/* /output"]
+#  client-build:
+#    build:
+#      context: .
+#      dockerfile: docker/App.DockerFile
+#    container_name: client
+#    depends_on:
+#      backend:
+#        condition: service_started
+#    volumes:
+#      - ./downloads:/output
+#    command: ["bash", "-c", "cp -r /build/* /output"]
     
   db:
     image: postgres:18
