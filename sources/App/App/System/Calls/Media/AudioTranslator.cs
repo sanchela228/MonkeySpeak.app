@@ -52,6 +52,9 @@ public class AudioTranslator : IDisposable
     private volatile bool _playbackEnabled = true;
     private volatile bool _audioEngineReady = false;
     private readonly object _readyLock = new object();
+
+    private volatile int _microphoneVolumePercent = 100;
+    private volatile int _playbackVolumePercent = 100;
     
     private readonly ConcurrentQueue<Action> _mixerActions = new();
     
@@ -99,6 +102,20 @@ public class AudioTranslator : IDisposable
         }
         
         Logger.Write(Logger.Type.Info, $"[AudioTranslator] Audio capture {(enable ? "enabled" : "disabled")}");
+    }
+
+    public void SetMicrophoneVolumePercent(int percent)
+    {
+        percent = Math.Clamp(percent, 0, 200);
+        _microphoneVolumePercent = percent;
+        Logger.Write(Logger.Type.Info, $"[AudioTranslator] Microphone volume set to {_microphoneVolumePercent}%");
+    }
+
+    public void SetPlaybackVolumePercent(int percent)
+    {
+        percent = Math.Clamp(percent, 0, 200);
+        _playbackVolumePercent = percent;
+        Logger.Write(Logger.Type.Info, $"[AudioTranslator] Playback volume set to {_playbackVolumePercent}%");
     }
 
     public DeviceInfo[] GetCaptureDevices()
@@ -426,7 +443,19 @@ public class AudioTranslator : IDisposable
             }
 
             var decodedFrame = new float[frameSamplesTotal];
-            channel.CalculateAudioLevel(decodedFrame, bytes, frameSizePerChannel);
+            int decodedSamples = channel.CalculateAudioLevel(decodedFrame, bytes, frameSizePerChannel);
+
+            float gain = _playbackVolumePercent / 100f;
+            if (gain != 1.0f && decodedSamples > 0)
+            {
+                for (int i = 0; i < decodedSamples; i++)
+                {
+                    if (float.IsNaN(decodedFrame[i]) || float.IsInfinity(decodedFrame[i]))
+                        decodedFrame[i] = 0f;
+                    else
+                        decodedFrame[i] = Math.Clamp(decodedFrame[i] * gain, -1.0f, 1.0f);
+                }
+            }
             
             ReadOnlySpan<byte> decodedBytes = MemoryMarshal.AsBytes<float>(decodedFrame);
             var outBuf = new byte[decodedBytes.Length];
@@ -538,6 +567,19 @@ public class AudioTranslator : IDisposable
             return;
                 
         float[] inputBuffer = samples.ToArray();
+
+        float gain = _microphoneVolumePercent / 100f;
+
+        if (gain != 1.0f)
+        {
+            for (int i = 0; i < inputBuffer.Length; i++)
+            {
+                if (float.IsNaN(inputBuffer[i]) || float.IsInfinity(inputBuffer[i]))
+                    inputBuffer[i] = 0f;
+                else
+                    inputBuffer[i] = Math.Clamp(inputBuffer[i] * gain, -1.0f, 1.0f);
+            }
+        }
 
         // normalize entry
         for (int i = 0; i < inputBuffer.Length; i++)

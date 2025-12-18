@@ -32,6 +32,9 @@ public class Room : Scene
     private PlaybackSelectPopup? _volumePopup;
     private List<IntPtr?>? _micDeviceIds;
     private List<IntPtr?>? _playbackDeviceIds;
+
+    private int _micVolumePercent = 100;
+    private int _playbackVolumePercent = 100;
     
     public Room()
     {
@@ -226,7 +229,9 @@ public class Room : Scene
             }
         }
 
-        _micPopup = new MicrophoneSelectPopup(labels, selectedIndex: selectedIndex);
+        _micPopup = new MicrophoneSelectPopup(labels, selectedIndex: selectedIndex, initialVolumePercent: _micVolumePercent);
+
+        Facade.SetMicrophoneVolumePercent(_micVolumePercent);
 
         var parentBounds = microControl.Bounds;
         var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
@@ -248,6 +253,13 @@ public class Room : Scene
             if (Context.UserSettings != null)
                 Context.UserSettings.CaptureDeviceId = id;
             CloseMicPopup();
+        };
+
+        _micPopup.OnVolumeChanged += (volPercent) =>
+        {
+            _micVolumePercent = volPercent;
+            Logger.Write(Logger.Type.Info, $"[UI] Mic volume set to {_micVolumePercent}%");
+            Facade.SetMicrophoneVolumePercent(_micVolumePercent);
         };
 
         AddNode(_micPopup);
@@ -300,13 +312,21 @@ public class Room : Scene
             }
         }
 
-        _volumePopup = new PlaybackSelectPopup(labels, selectedIndex: selectedIndex);
+        _volumePopup = new PlaybackSelectPopup(labels, selectedIndex: selectedIndex, initialVolumePercent: _playbackVolumePercent);
+
+        Facade.SetPlaybackVolumePercent(_playbackVolumePercent);
 
         var parentBounds = volumeControl.Bounds;
         var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
         _volumePopup.Position = popupPos;
 
         _volumePopup.OnCloseRequested += CloseVolumePopup;
+        _volumePopup.OnVolumeChanged += (volPercent) =>
+        {
+            _playbackVolumePercent = volPercent;
+            Logger.Write(Logger.Type.Info, $"[UI] Playback volume set to {_playbackVolumePercent}%");
+            Facade.SetPlaybackVolumePercent(_playbackVolumePercent);
+        };
         _volumePopup.OnSelected += (index) =>
         {
             if (_playbackDeviceIds == null || index < 0 || index >= _playbackDeviceIds.Count)

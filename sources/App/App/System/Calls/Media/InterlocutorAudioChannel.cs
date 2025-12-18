@@ -37,7 +37,7 @@ public class InterlocutorAudioChannel : IDisposable
         }
     }
     
-    public void CalculateAudioLevel(float[] decodedFrame, byte[] bytes, int frameSizePerChannel)
+    public int CalculateAudioLevel(float[] decodedFrame, byte[] bytes, int frameSizePerChannel)
     {
         int decodedSamples = Decoder.Decode(
             bytes, 0, bytes.Length, 
@@ -54,5 +54,7 @@ public class InterlocutorAudioChannel : IDisposable
             
         TotalPacketsReceived++;
         PacketCount++;
+
+        return decodedSamples;
     }
 }

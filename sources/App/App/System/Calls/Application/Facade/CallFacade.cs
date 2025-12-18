@@ -84,6 +84,10 @@ public class CallFacade
 
     private void SetMicrophoneStatus(bool status) =>  _engine.SetMicrophoneStatus(status);
 
+    public void SetMicrophoneVolumePercent(int percent) => _engine.SetMicrophoneVolumePercent(percent);
+
+    public void SetPlaybackVolumePercent(int percent) => _engine.SetPlaybackVolumePercent(percent);
+
     public void StartAudioProcess() => _engine.StartAudioProcess();
     
     public Dictionary<string, float> GetAudioLevels() => _engine.GetAudioLevels();

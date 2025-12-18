@@ -13,7 +13,9 @@ public interface ICallManager
     Task HangupAsync(CallSession session);
     public CallSession CurrentSession();
     void SetMicrophoneStatus(bool status);
+    void SetMicrophoneVolumePercent(int percent);
     void SetVolumeStatus(bool status);
+    void SetPlaybackVolumePercent(int percent);
 
     void StartAudioProcess();
     Dictionary<string, float> GetAudioLevels();

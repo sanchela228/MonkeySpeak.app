@@ -17,16 +17,22 @@ public sealed class PlaybackSelectPopup : Node
 
     private int _selectedIndex;
 
+    private int _volumePercent;
+
+    public int VolumePercent => _volumePercent;
+
     public event Action<int>? OnSelected;
     public event Action? OnCloseRequested;
+    public event Action<int>? OnVolumeChanged;
 
-    public PlaybackSelectPopup(List<string> devices, int selectedIndex = 0)
+    public PlaybackSelectPopup(List<string> devices, int selectedIndex = 0, int initialVolumePercent = 100)
     {
         PointRendering = Engine.PointRendering.LeftTop;
         Order = 10000;
 
         _devices = devices ?? new List<string>();
         _selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(0, _devices.Count - 1));
+        _volumePercent = Math.Clamp(initialVolumePercent, 0, 200);
 
         _fontTitle = new FontFamily
         {
@@ -52,6 +58,17 @@ public sealed class PlaybackSelectPopup : Node
     public override void Update(float deltaTime)
     {
         var mousePos = Raylib.GetMousePosition();
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Up))
+        {
+            _volumePercent = Math.Clamp(_volumePercent + 10, 0, 200);
+            OnVolumeChanged?.Invoke(_volumePercent);
+        }
+        else if (Raylib.IsKeyPressed(KeyboardKey.Down))
+        {
+            _volumePercent = Math.Clamp(_volumePercent - 10, 0, 200);
+            OnVolumeChanged?.Invoke(_volumePercent);
+        }
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
         {
@@ -84,7 +101,7 @@ public sealed class PlaybackSelectPopup : Node
         Raylib.DrawRectangleRounded(rect, 0.15f, 12, new Color(20, 20, 20, 235));
         Raylib.DrawRectangleRoundedLinesEx(rect, 0.15f, 12, 1f, new Color(60, 60, 60, 255));
 
-        Text.DrawPro(_fontTitle, "Playback devices", new Vector2(rect.X + 16, rect.Y + 12), origin: new Vector2(0, 0));
+        Text.DrawPro(_fontTitle, $"Playback devices ({_volumePercent}%)", new Vector2(rect.X + 16, rect.Y + 12), origin: new Vector2(0, 0));
 
         for (int i = 0; i < _devices.Count; i++)
         {

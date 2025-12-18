@@ -54,6 +54,34 @@ public class P2PCallManager : ICallManager
     }
 
     public void SetVolumeStatus(bool status) => audioTranslator.TogglePlaybackAudio(status);
+
+    public void SetMicrophoneVolumePercent(int percent)
+    {
+        percent = Math.Clamp(percent, 0, 200);
+
+        if (audioTranslator != null)
+        {
+            audioTranslator.SetMicrophoneVolumePercent(percent);
+        }
+        else
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SetMicrophoneVolumePercent: audioTranslator is null");
+        }
+    }
+
+    public void SetPlaybackVolumePercent(int percent)
+    {
+        percent = Math.Clamp(percent, 0, 200);
+
+        if (audioTranslator != null)
+        {
+            audioTranslator.SetPlaybackVolumePercent(percent);
+        }
+        else
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SetPlaybackVolumePercent: audioTranslator is null");
+        }
+    }
     
     public void SetMicrophoneStatus(bool status)
     {
