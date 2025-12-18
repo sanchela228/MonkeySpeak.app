@@ -9,6 +9,7 @@ public class RoomControlIcon : Button
     public bool IsActive = false;
     public Texture2D? SecondTexture;
     public Texture2D DefaultTexture;
+    public SettingsPointerButton? SettingsButton { get; private set; }
     
     private bool haveSettings = false;
     
@@ -62,7 +63,8 @@ public class RoomControlIcon : Button
 
         if (haveSettings)
         {
-           AddChild(new SettingsPointerButton());
+            SettingsButton = new SettingsPointerButton();
+            AddChild(SettingsButton);
         }
     }
 }

@@ -95,6 +95,45 @@ public class P2PCallManager : ICallManager
         return new Dictionary<string, float>();
     }
 
+    public DeviceInfo[] GetCaptureDevices()
+    {
+        if (audioTranslator != null)
+            return audioTranslator.GetCaptureDevices();
+
+        return Array.Empty<DeviceInfo>();
+    }
+    
+    public DeviceInfo[] GetPlaybackDevices()
+    {
+        if (audioTranslator != null)
+            return audioTranslator.GetPlaybackDevices();
+
+        return Array.Empty<DeviceInfo>();
+    }
+
+    public void SwitchCaptureDevice(IntPtr? deviceId)
+    {
+        if (audioTranslator == null)
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SwitchCaptureDevice: audioTranslator is null");
+            return;
+        }
+
+        audioTranslator.SwitchCaptureDevice(deviceId);
+    }
+    
+    public void SwitchPlaybackDevice(IntPtr? deviceId)
+    {
+        if (audioTranslator == null)
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SwitchPlaybackDevice: audioTranslator is null");
+            return;
+        }
+
+        audioTranslator.SwitchPlaybackDevice(deviceId);
+    }
+    
+
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
 

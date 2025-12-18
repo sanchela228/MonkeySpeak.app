@@ -17,6 +17,7 @@ using Interface;
 using Interface.Buttons;
 using Interface.Room;
 using Raylib_cs;
+using SoundFlow.Structs;
 using PointRendering = Engine.PointRendering;
 using Rectangle = Raylib_cs.Rectangle;
 
@@ -27,6 +28,10 @@ public class Room : Scene
 {
     private CallFacade Facade;
     private readonly FontFamily _mainFontStartup;
+    private MicrophoneSelectPopup? _micPopup;
+    private PlaybackSelectPopup? _volumePopup;
+    private List<IntPtr?>? _micDeviceIds;
+    private List<IntPtr?>? _playbackDeviceIds;
     
     public Room()
     {
@@ -95,6 +100,22 @@ public class Room : Scene
         {
             Facade.MicrophoneEnabled = !Facade.MicrophoneEnabled;
         };
+
+        if (microControl.SettingsButton != null)
+        {
+            microControl.SettingsButton.OnClick += (_) =>
+            {
+                ToggleMicPopup(microControl);
+            };
+        }
+        
+        if (volumeControl.SettingsButton != null)
+        {
+            volumeControl.SettingsButton.OnClick += (_) =>
+            {
+                ToggleVolumePopup(volumeControl);
+            };
+        }
         
         AddNodes(testList);
         
@@ -153,5 +174,186 @@ public class Room : Scene
             Facade.OnCallEnded -= HandleCallEnded;
             Facade.OnRemoteMuteChangedByInterlocutor -= HandleRemoteMuteChangedByInterlocutor;
         }
+
+        CloseMicPopup();
+        CloseVolumePopup();
+    }
+
+    private void ToggleMicPopup(RoomControlIcon microControl)
+    {
+        if (_micPopup != null)
+        {
+            CloseMicPopup();
+            return;
+        }
+
+        DeviceInfo[] devices = Facade.GetCaptureDevices();
+
+        var labels = new List<string>();
+        _micDeviceIds = new List<IntPtr?>();
+
+        foreach (var d in devices)
+        {
+            var name = d.Name;
+            if (d.IsDefault)
+                name += " (default)";
+
+            labels.Add(name);
+            _micDeviceIds.Add(d.Id);
+        }
+
+        int selectedIndex = 0;
+        if (Context.UserSettings?.CaptureDeviceId != null)
+        {
+            for (int i = 0; i < _micDeviceIds.Count; i++)
+            {
+                if (_micDeviceIds[i] == Context.UserSettings.CaptureDeviceId)
+                {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < devices.Length; i++)
+            {
+                if (devices[i].IsDefault)
+                {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        _micPopup = new MicrophoneSelectPopup(labels, selectedIndex: selectedIndex);
+
+        var parentBounds = microControl.Bounds;
+        var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
+        _micPopup.Position = popupPos;
+
+        _micPopup.OnCloseRequested += CloseMicPopup;
+        _micPopup.OnSelected += (index) =>
+        {
+            if (_micDeviceIds == null || index < 0 || index >= _micDeviceIds.Count)
+            {
+                CloseMicPopup();
+                return;
+            }
+
+            var id = _micDeviceIds[index];
+
+            Logger.Write(Logger.Type.Info, $"[UI] Mic selected index={index} id={(id?.ToString() ?? "default")}");
+            Facade.SwitchCaptureDevice(id);
+            if (Context.UserSettings != null)
+                Context.UserSettings.CaptureDeviceId = id;
+            CloseMicPopup();
+        };
+
+        AddNode(_micPopup);
+    }
+
+    private void ToggleVolumePopup(RoomControlIcon volumeControl)
+    {
+        if (_volumePopup != null)
+        {
+            CloseVolumePopup();
+            return;
+        }
+
+        DeviceInfo[] devices = Facade.GetPlaybackDevices();
+
+        var labels = new List<string>();
+        _playbackDeviceIds = new List<IntPtr?>();
+
+        foreach (var d in devices)
+        {
+            var name = d.Name;
+            if (d.IsDefault)
+                name += " (default)";
+
+            labels.Add(name);
+            _playbackDeviceIds.Add(d.Id);
+        }
+
+        int selectedIndex = 0;
+        if (Context.UserSettings?.PlaybackDeviceId != null)
+        {
+            for (int i = 0; i < _playbackDeviceIds.Count; i++)
+            {
+                if (_playbackDeviceIds[i] == Context.UserSettings.PlaybackDeviceId)
+                {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < devices.Length; i++)
+            {
+                if (devices[i].IsDefault)
+                {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        _volumePopup = new PlaybackSelectPopup(labels, selectedIndex: selectedIndex);
+
+        var parentBounds = volumeControl.Bounds;
+        var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
+        _volumePopup.Position = popupPos;
+
+        _volumePopup.OnCloseRequested += CloseVolumePopup;
+        _volumePopup.OnSelected += (index) =>
+        {
+            if (_playbackDeviceIds == null || index < 0 || index >= _playbackDeviceIds.Count)
+            {
+                CloseVolumePopup();
+                return;
+            }
+
+            var id = _playbackDeviceIds[index];
+
+            Logger.Write(Logger.Type.Info, $"[UI] Playback selected index={index} id={(id?.ToString() ?? "default")}");
+            Facade.SwitchPlaybackDevice(id);
+            if (Context.UserSettings != null)
+                Context.UserSettings.PlaybackDeviceId = id;
+            CloseVolumePopup();
+        };
+
+        AddNode(_volumePopup);
+    }
+    
+    private void CloseMicPopup()
+    {
+        if (_micPopup == null)
+            return;
+
+        try
+        {
+            RemoveNode(_micPopup);
+        }
+        catch { }
+
+        _micPopup = null;
+        _micDeviceIds = null;
+    }
+    
+    private void CloseVolumePopup()
+    {
+        if (_volumePopup == null)
+            return;
+
+        try
+        {
+            RemoveNode(_volumePopup);
+        }
+        catch { }
+
+        _volumePopup = null;
+        _playbackDeviceIds = null;
     }
 }

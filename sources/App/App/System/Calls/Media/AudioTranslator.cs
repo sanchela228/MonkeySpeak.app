@@ -28,6 +28,8 @@ public class AudioTranslator : IDisposable
     private MiniAudioEngine audioEngine;
 
     private readonly ConcurrentDictionary<string, InterlocutorAudioChannel> _channels = new();
+
+    private IntPtr? _currentPlaybackDeviceId;
     
     public AudioTranslator(UdpUnifiedManager udpManager, CancellationTokenSource cts)
     {
@@ -56,6 +58,25 @@ public class AudioTranslator : IDisposable
     public void TogglePlaybackAudio(bool enable)
     {
         _playbackEnabled = enable;
+
+        if (enable)
+        {
+            _mixerActions.Enqueue(() =>
+            {
+                try
+                {
+                    foreach (var kvp in _channels)
+                    {
+                        try
+                        {
+                            kvp.Value?.Stream?.Clear();
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            });
+        }
     }
     
     public void ToggleCaptureAudio(bool enable)
@@ -78,6 +99,182 @@ public class AudioTranslator : IDisposable
         }
         
         Logger.Write(Logger.Type.Info, $"[AudioTranslator] Audio capture {(enable ? "enabled" : "disabled")}");
+    }
+
+    public DeviceInfo[] GetCaptureDevices()
+    {
+        try
+        {
+            return audioEngine?.CaptureDevices ?? Array.Empty<DeviceInfo>();
+        }
+        catch
+        {
+            return Array.Empty<DeviceInfo>();
+        }
+    }
+
+    public DeviceInfo[] GetPlaybackDevices()
+    {
+        try
+        {
+            return audioEngine?.PlaybackDevices ?? Array.Empty<DeviceInfo>();
+        }
+        catch
+        {
+            return Array.Empty<DeviceInfo>();
+        }
+    }
+
+    public void SwitchCaptureDevice(IntPtr? deviceId)
+    {
+        _mixerActions.Enqueue(() =>
+        {
+            try
+            {
+                if (audioEngine == null)
+                {
+                    Logger.Write(Logger.Type.Warning, "[AudioTranslator] SwitchCaptureDevice: audioEngine is null");
+                    return;
+                }
+
+                audioEngine.UpdateDevicesInfo();
+
+                DeviceInfo? selected = null;
+                if (deviceId != null)
+                {
+                    foreach (var d in audioEngine.CaptureDevices)
+                    {
+                        if (d.Id == deviceId.Value)
+                        {
+                            selected = d;
+                            break;
+                        }
+                    }
+                }
+
+                try
+                {
+                    if (captureDeviceWorker != null)
+                    {
+                        captureDeviceWorker.OnAudioProcessed -= OnAudioProcessedHandler;
+                        captureDeviceWorker.Stop();
+                        captureDeviceWorker.Dispose();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Write(Logger.Type.Warning, $"[AudioTranslator] SwitchCaptureDevice: error stopping old device: {ex.Message}");
+                }
+
+                captureDeviceWorker = audioEngine.InitializeCaptureDevice(selected, audioFormat);
+                captureDeviceWorker.OnAudioProcessed += OnAudioProcessedHandler;
+                captureDeviceWorker.Start();
+
+                lock (rnnoiseBuffer)
+                {
+                    rnnoiseBuffer.Clear();
+                }
+
+                lock (opusBuffer)
+                {
+                    opusBuffer.Clear();
+                }
+
+                Logger.Write(Logger.Type.Info,
+                    $"[AudioTranslator] Switched capture device to {(selected?.Name ?? "Default")}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Logger.Type.Error, $"[AudioTranslator] SwitchCaptureDevice error: {ex.Message}", ex);
+            }
+        });
+    }
+    
+    public void SwitchPlaybackDevice(IntPtr? deviceId)
+    {
+        _mixerActions.Enqueue(() =>
+        {
+            try
+            {
+                if (audioEngine == null)
+                {
+                    Logger.Write(Logger.Type.Warning, "[AudioTranslator] SwitchPlaybackDevice: audioEngine is null");
+                    return;
+                }
+
+                audioEngine.UpdateDevicesInfo();
+
+                _currentPlaybackDeviceId = deviceId;
+
+                DeviceInfo? selected = null;
+                if (deviceId != null)
+                {
+                    foreach (var d in audioEngine.PlaybackDevices)
+                    {
+                        if (d.Id == deviceId.Value)
+                        {
+                            selected = d;
+                            break;
+                        }
+                    }
+                }
+
+                foreach (var kvp in _channels)
+                {
+                    var channel = kvp.Value;
+                    if (channel == null)
+                        continue;
+
+                    try
+                    {
+                        if (channel.DedicatedPlaybackDevice != null && channel.Player != null)
+                        {
+                            try
+                            {
+                                channel.DedicatedPlaybackDevice.MasterMixer.RemoveComponent(channel.Player);
+                            }
+                            catch { }
+
+                            try
+                            {
+                                channel.DedicatedPlaybackDevice.Stop();
+                                channel.DedicatedPlaybackDevice.Dispose();
+                            }
+                            catch { }
+                        }
+
+                        var newDevice = audioEngine.InitializePlaybackDevice(selected, audioFormat);
+                        if (newDevice == null)
+                        {
+                            Logger.Write(Logger.Type.Warning, $"[AudioTranslator] SwitchPlaybackDevice: failed to init playback device for channel {kvp.Key}");
+                            continue;
+                        }
+
+                        channel.DedicatedPlaybackDevice = newDevice;
+                        newDevice.Start();
+                        newDevice.MasterMixer.AddComponent(channel.Player);
+                        channel.Player.Play();
+
+                        try
+                        {
+                            channel.Stream?.Clear();
+                        }
+                        catch { }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Write(Logger.Type.Warning, $"[AudioTranslator] SwitchPlaybackDevice: error rebinding channel {kvp.Key}: {ex.Message}");
+                    }
+                }
+
+                Logger.Write(Logger.Type.Info,
+                    $"[AudioTranslator] Switched playback device to {(selected?.Name ?? "Default")}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Logger.Type.Error, $"[AudioTranslator] SwitchPlaybackDevice error: {ex.Message}", ex);
+            }
+        });
     }
     
     public Dictionary<string, float> GetAudioLevels()
@@ -288,7 +485,20 @@ public class AudioTranslator : IDisposable
                 audioFormat.Channels
             );
 
-            var dedicatedPlaybackDevice = audioEngine.InitializePlaybackDevice(null, audioFormat);
+            DeviceInfo? selectedPlayback = null;
+            if (_currentPlaybackDeviceId != null)
+            {
+                foreach (var d in audioEngine.PlaybackDevices)
+                {
+                    if (d.Id == _currentPlaybackDeviceId.Value)
+                    {
+                        selectedPlayback = d;
+                        break;
+                    }
+                }
+            }
+
+            var dedicatedPlaybackDevice = audioEngine.InitializePlaybackDevice(selectedPlayback, audioFormat);
             if (dedicatedPlaybackDevice == null)
             {
                 Logger.Error($"[AudioTranslator] Failed to initialize dedicated playback device for {interlocutorId}");

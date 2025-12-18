@@ -8,6 +8,7 @@ using App.System.Calls.Infrastructure;
 using App.System.Calls.Infrastructure.Adapters;
 using App.System.Modules;
 using App.System.Models.Websocket.Messages.NoAuthCall;
+using SoundFlow.Structs;
 
 namespace App.System.Calls.Application.Facade;
 
@@ -86,6 +87,12 @@ public class CallFacade
     public void StartAudioProcess() => _engine.StartAudioProcess();
     
     public Dictionary<string, float> GetAudioLevels() => _engine.GetAudioLevels();
+
+    public DeviceInfo[] GetCaptureDevices() => _engine.GetCaptureDevices();
+    public void SwitchCaptureDevice(IntPtr? deviceId) => _engine.SwitchCaptureDevice(deviceId);
+    
+    public DeviceInfo[] GetPlaybackDevices() => _engine.GetPlaybackDevices();
+    public void SwitchPlaybackDevice(IntPtr? deviceId) => _engine.SwitchPlaybackDevice(deviceId);
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;

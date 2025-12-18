@@ -51,6 +51,13 @@ public sealed class ProducerConsumerStream : Stream
         _dataReady.Set();
     }
 
+    public void Clear()
+    {
+        while (_chunks.TryDequeue(out _))
+        {
+        }
+    }
+
     public void Complete()
     {
         _completed = true;

@@ -63,7 +63,9 @@ public class Window : IDisposable
             }
             catch (Exception e)
             {
-                break;
+                Console.WriteLine(e);
+                Engine.Managers.Scenes.Dispose();
+                Raylib.CloseWindow();
             }
         }
     }

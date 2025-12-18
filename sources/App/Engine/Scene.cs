@@ -70,7 +70,7 @@ public abstract class Scene
         if (_nodes.Count == 0)
             return;
         
-        foreach (var node in _nodes.Where(node => node.IsActive))
+        foreach (var node in _nodes.Where(node => node.IsActive).ToList())
             node.RootUpdate(deltaTime);
     }
     
@@ -79,7 +79,7 @@ public abstract class Scene
         if (_nodes.Count == 0)
             return;
 
-        foreach (var node in _nodes.Where(node => node.IsActive))
+        foreach (var node in _nodes.Where(node => node.IsActive).ToList())
             node.RootDraw();
     }
 }
