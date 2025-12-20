@@ -140,7 +140,7 @@ public class Room : Scene
         var cb = center.Bounds;
         
         _selfAudioIndicator.Position = new Vector2(
-            Raylib.GetScreenWidth() / 2 - 25f, 
+            Raylib.GetScreenWidth() / 2, 
             cb.Y - 22f
         );
         

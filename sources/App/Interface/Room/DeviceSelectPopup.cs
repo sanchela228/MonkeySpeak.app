@@ -199,7 +199,7 @@ public class DeviceSelectPopup : Node
 
         var fillRect = new Rectangle(sliderRect.X, sliderRect.Y, (knobX - sliderRect.X), sliderRect.Height);
         if (fillRect.Width > 0)
-            Raylib.DrawRectangleRounded(fillRect, 1.35f, 12, new Color(75, 75, 75, 255));
+            Raylib.DrawRectangleRounded(fillRect, 1.35f, 12, new Color(75, 185, 75, 255));
 
         Raylib.DrawCircle((int)knobX, (int)knobY, 9f, Color.White);
     }

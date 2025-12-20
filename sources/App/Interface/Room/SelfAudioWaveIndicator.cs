@@ -9,14 +9,15 @@ public class SelfAudioWaveIndicator : Node
 {
     public float RawLevel { get; set; } = 0f;
 
-    public float Length { get; set; } = 50f;
-    public float LeftFlat { get; set; } = 12f;
-    public float RightFlat { get; set; } = 12f;
+    public int OvalCount { get; set; } = 5;
+    public float OvalWidth { get; set; } = 8f;
+    public float OvalHeight { get; set; } = 8f;
+    public float OvalSpacing { get; set; } = 4f;
 
     public float Sensitivity { get; set; } = 6f;
     public float CompressionStrength { get; set; } = 2.0f;
 
-    public float MaxAmplitude { get; set; } = 16f;
+    public float MaxAmplitude { get; set; } = 12f;
     public float SilenceThreshold { get; set; } = 0.02f;
 
     public float SmoothingSpeed { get; set; } = 12f;
@@ -25,8 +26,6 @@ public class SelfAudioWaveIndicator : Node
 
     public byte MinAlpha { get; set; } = 40;
     public byte MaxAlpha { get; set; } = 255;
-
-    public float LineThickness { get; set; } = 2f;
 
     public Color Color { get; set; } = new Color(80, 200, 80, 255);
 
@@ -49,7 +48,8 @@ public class SelfAudioWaveIndicator : Node
 
         _phase += MathF.Max(0f, deltaTime) * (BaseSpeed + SpeedByLevel * _levelSmoothed);
 
-        Size = new Vector2(Length, MaxAmplitude * 2f + 2f);
+        float totalWidth = OvalCount * OvalWidth + (OvalCount - 1) * OvalSpacing;
+        Size = new Vector2(totalWidth, MaxAmplitude * 2f + OvalHeight);
     }
 
     public override void Draw()
@@ -67,46 +67,28 @@ public class SelfAudioWaveIndicator : Node
         float baseX = Position.X;
         float baseY = Position.Y;
 
-        void DrawSegment(Vector2 a, Vector2 b)
+        float totalWidth = OvalCount * OvalWidth + (OvalCount - 1) * OvalSpacing;
+        float startX = baseX - totalWidth / 2f;
+
+        int center = OvalCount / 2;
+
+        for (int i = 0; i < OvalCount; i++)
         {
-            if (LineThickness > 1.0f)
-                Raylib.DrawLineEx(a, b, LineThickness, c);
-            else
-                Raylib.DrawLineV(a, b, c);
-        }
+            float distFromCenter = MathF.Abs(i - center) / (float)Math.Max(1, center);
+            float envelope = 1f - distFromCenter * 0.6f;
 
-        if (level <= SilenceThreshold)
-        {
-            DrawSegment(new Vector2(baseX, baseY), new Vector2(baseX + Length, baseY));
-            return;
-        }
+            float phaseOffset = i * 0.5f;
+            float oscillation = MathF.Sin(_phase + phaseOffset);
 
-        float leftFlat = MathF.Max(0f, LeftFlat);
-        float rightFlat = MathF.Max(0f, RightFlat);
-        float waveLen = MathF.Max(0f, Length - leftFlat - rightFlat);
+            float baseAmplitude = level > SilenceThreshold ? MaxAmplitude * level * envelope : 0f;
+            float animatedScale = 0.5f + 0.5f * oscillation;
+            float heightIncrease = baseAmplitude * animatedScale;
+            float currentHeight = OvalHeight + heightIncrease;
 
-        float amp = MathF.Min(MaxAmplitude, MaxAmplitude * level);
+            float cx = startX + i * (OvalWidth + OvalSpacing) + OvalWidth / 2f;
+            float cy = baseY;
 
-        DrawSegment(new Vector2(baseX, baseY), new Vector2(baseX + leftFlat, baseY));
-        DrawSegment(new Vector2(baseX + leftFlat + waveLen, baseY), new Vector2(baseX + Length, baseY));
-
-        int segments = Math.Max(6, (int)MathF.Round(waveLen));
-        float step = segments > 0 ? waveLen / segments : waveLen;
-
-        float waveStartX = baseX + leftFlat;
-        var prev = new Vector2(waveStartX, baseY);
-        for (int i = 1; i <= segments; i++)
-        {
-            float x = waveStartX + i * step;
-            float t = i / (float)segments;
-
-            float env = MathF.Sin(MathF.PI * t);
-            env *= env;
-
-            float y = baseY + MathF.Sin(_phase + t * 8f) * amp * env;
-            var cur = new Vector2(x, y);
-            DrawSegment(prev, cur);
-            prev = cur;
+            Raylib.DrawEllipse((int)cx, (int)cy, OvalWidth / 2f, currentHeight / 2f, c);
         }
     }
 
