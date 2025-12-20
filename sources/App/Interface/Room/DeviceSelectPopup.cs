@@ -138,7 +138,9 @@ public class DeviceSelectPopup : Node
             }
 
             var labelPos = new Vector2(row.X + 34, row.Y + row.Height / 2f);
-            Text.DrawPro(_fontItem, _devices[i].Substring(0, 29) + "...", labelPos, origin: new Vector2(0, _fontItem.Size / 2f));
+            var deviceName = _devices[i];
+            var displayName = deviceName.Length > 29 ? deviceName.Substring(0, 29) + "..." : deviceName;
+            Text.DrawPro(_fontItem, displayName + "...", labelPos, origin: new Vector2(0, _fontItem.Size / 2f));
 
             var circleCenter = new Vector2(row.X + 16, row.Y + row.Height / 2f);
             Raylib.DrawCircle((int)circleCenter.X, (int)circleCenter.Y, 6f, new Color(80, 80, 80, 255));
