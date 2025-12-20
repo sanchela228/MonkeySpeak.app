@@ -10,6 +10,7 @@ namespace App;
 public class Window : IDisposable
 {
     protected Header Header;
+    private bool _shutdownRequested;
     
     public Window() 
     {
@@ -40,6 +41,9 @@ public class Window : IDisposable
         
         while (!Raylib.WindowShouldClose())
         {
+            if (_shutdownRequested)
+                break;
+
             float deltaTime = Raylib.GetFrameTime();
             
             try
@@ -64,8 +68,10 @@ public class Window : IDisposable
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                Engine.Managers.Scenes.Dispose();
-                Raylib.CloseWindow();
+                _shutdownRequested = true;
+                try { Engine.Managers.Scenes.Dispose(); } catch { }
+                try { if (Raylib.IsWindowReady()) Raylib.CloseWindow(); } catch { }
+                break;
             }
         }
     }
@@ -74,7 +80,8 @@ public class Window : IDisposable
     {
         Logger.Write(Logger.Type.Info, "Close application");
         
-        Engine.Managers.Scenes.Dispose();
-        Raylib.CloseWindow();
+        try { Engine.Managers.Scenes.Dispose(); } catch { }
+        try { if (Raylib.IsAudioDeviceReady()) Raylib.CloseAudioDevice(); } catch { }
+        try { if (Raylib.IsWindowReady()) Raylib.CloseWindow(); } catch { }
     }
 }

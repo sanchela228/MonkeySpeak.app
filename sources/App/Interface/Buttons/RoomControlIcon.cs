@@ -26,7 +26,7 @@ public class RoomControlIcon : Button
         CornerColor = new Color(30, 30, 30);
         
         Padding = new Vector2(20, 20);
-        HoverBackgroundColor = new Color( 40, 40, 40);
+        HoverBackgroundColor = new Color( 60, 60, 60);
         HoverCornerColor = new Color(40, 40, 40);
 
         haveSettings = _haveSettings;

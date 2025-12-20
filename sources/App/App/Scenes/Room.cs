@@ -37,9 +37,16 @@ public class Room : Scene
     private int _playbackVolumePercent = 100;
 
     private SelfAudioWaveIndicator _selfAudioIndicator;
+    private static Sound _soundMicOn = Resources.Sound("Room/miconv2.wav");
+    private static Sound _soundMicOff = Resources.Sound("Room/micoffv2.wav");
+    private static Sound _soundConnected = Resources.Sound("Room/connect.wav");
+    private static Sound _soundDisconnected = Resources.Sound("Room/disconnect.wav");
     
     public Room()
     {
+        Raylib.SetSoundVolume(_soundConnected, 1f);
+        Raylib.PlaySound(_soundConnected);
+        
         Facade = Context.CallFacade;
         Facade.OnCallEnded += HandleCallEnded;
         
@@ -104,6 +111,16 @@ public class Room : Scene
         microControl.OnRelease += (node) =>
         {
             Facade.MicrophoneEnabled = !Facade.MicrophoneEnabled;
+            if (Facade.MicrophoneEnabled)
+            {
+                Raylib.SetSoundVolume(_soundMicOn, 1f);
+                Raylib.PlaySound(_soundMicOn);
+            }
+            else
+            {
+                Raylib.SetSoundVolume(_soundMicOff, 1f);
+                Raylib.PlaySound(_soundMicOff);
+            }
         };
 
         if (microControl.SettingsButton != null)
@@ -219,7 +236,7 @@ public class Room : Scene
     
     private void HandleCallEnded()
     {
-        Engine.Managers.Scenes.PushScene(new StartUp(false));
+        Engine.Managers.Scenes.ReplaceScene(new StartUp(false));
     }
     
     protected override void Update(float dt)
@@ -244,6 +261,9 @@ public class Room : Scene
 
     protected override void Dispose()
     {
+        Raylib.SetSoundVolume(_soundDisconnected, 1f);
+        Raylib.PlaySound(_soundDisconnected);
+        
         Logger.Write("[Dispose] Room.cs dispose");
         
         if (Facade != null)
