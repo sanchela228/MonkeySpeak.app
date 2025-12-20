@@ -52,7 +52,6 @@ public class Button : Node
             localBounds.Y -= Padding.Y / 2;
             localBounds.Height += Padding.Y;
 
-            // Content sizing: prefer icon if provided, otherwise text
             if (IconTexture.HasValue)
             {
                 var tex = IconTexture.Value;

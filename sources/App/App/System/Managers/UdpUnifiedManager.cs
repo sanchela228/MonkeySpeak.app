@@ -155,14 +155,12 @@ public class UdpUnifiedManager : IDisposable
                 switch (type)
                 {
                     case MessageType.HolePunch:
-                        // Backward-compat single-remote path
                         if (!_isConnected && _remote != null && result.RemoteEndPoint.Equals(_remote))
                         {
                             _isConnected = true;
                             OnConnected?.Invoke((IPEndPoint)_client.Client.LocalEndPoint!, _remote);
                         }
 
-                        // Multi-interlocutor path
                         if (_remoteToInterlocutor.TryGetValue(result.RemoteEndPoint, out var ilId))
                         {
                             if (!_interlocutorConnected.GetValueOrDefault(ilId))

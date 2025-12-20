@@ -54,6 +54,34 @@ public class P2PCallManager : ICallManager
     }
 
     public void SetVolumeStatus(bool status) => audioTranslator.TogglePlaybackAudio(status);
+
+    public void SetMicrophoneVolumePercent(int percent)
+    {
+        percent = Math.Clamp(percent, 0, 200);
+
+        if (audioTranslator != null)
+        {
+            audioTranslator.SetMicrophoneVolumePercent(percent);
+        }
+        else
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SetMicrophoneVolumePercent: audioTranslator is null");
+        }
+    }
+
+    public void SetPlaybackVolumePercent(int percent)
+    {
+        percent = Math.Clamp(percent, 0, 200);
+
+        if (audioTranslator != null)
+        {
+            audioTranslator.SetPlaybackVolumePercent(percent);
+        }
+        else
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SetPlaybackVolumePercent: audioTranslator is null");
+        }
+    }
     
     public void SetMicrophoneStatus(bool status)
     {
@@ -94,6 +122,53 @@ public class P2PCallManager : ICallManager
         
         return new Dictionary<string, float>();
     }
+
+    public float GetSelfAudioLevel()
+    {
+        if (audioTranslator != null)
+            return audioTranslator.GetSelfAudioLevel();
+
+        return 0f;
+    }
+
+    public DeviceInfo[] GetCaptureDevices()
+    {
+        if (audioTranslator != null)
+            return audioTranslator.GetCaptureDevices();
+
+        return Array.Empty<DeviceInfo>();
+    }
+    
+    public DeviceInfo[] GetPlaybackDevices()
+    {
+        if (audioTranslator != null)
+            return audioTranslator.GetPlaybackDevices();
+
+        return Array.Empty<DeviceInfo>();
+    }
+
+    public void SwitchCaptureDevice(IntPtr? deviceId)
+    {
+        if (audioTranslator == null)
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SwitchCaptureDevice: audioTranslator is null");
+            return;
+        }
+
+        audioTranslator.SwitchCaptureDevice(deviceId);
+    }
+    
+    public void SwitchPlaybackDevice(IntPtr? deviceId)
+    {
+        if (audioTranslator == null)
+        {
+            Logger.Write(Logger.Type.Warning, "[P2P] SwitchPlaybackDevice: audioTranslator is null");
+            return;
+        }
+
+        audioTranslator.SwitchPlaybackDevice(deviceId);
+    }
+    
 
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action OnConnected;
@@ -257,6 +332,7 @@ public class P2PCallManager : ICallManager
             }
             
             audioTranslator = new AudioTranslator(_udpManager, new CancellationTokenSource());
+            
             Logger.Write(Logger.Type.Info, "[AudioTranslator] Successfully initialized");
         }
         catch (Exception ex)

@@ -32,7 +32,7 @@ public abstract class Node : IDisposable
     public bool IsActive { get; set; } = true;
     
     public Scene Scene { get; set; }
-    protected OverlapsMode Overlap { get; set; } = OverlapsMode.Exclusive;
+    public OverlapsMode Overlap { get; protected set; } = OverlapsMode.Exclusive;
 
     public bool RecursiveDrawChildren { get; set; } = false;
     public bool RecursiveUpdateChildren { get; set; } = false;
@@ -348,11 +348,10 @@ public abstract class Node : IDisposable
     protected bool _isPressed = false;
     private void HandleInput()
     {
-        
         var mousePos = Raylib.GetMousePosition();
         var wasHovered = _isHovered;
 
-        _isHovered = Raylib.CheckCollisionPointRec(mousePos, Bounds);
+        _isHovered = Pointer.HoveredNode == this;
         
         if (_isHovered && !wasHovered)
         {
@@ -363,13 +362,13 @@ public abstract class Node : IDisposable
             OnHoverExit?.Invoke(this);
         }
         
-        if (_isHovered && Raylib.IsMouseButtonPressed(MouseButton.Left))
+        if (_isHovered && Raylib.IsMouseButtonPressed(MouseButton.Left) && Pointer.PressedNode == this)
         {
             _isPressed = true;
             OnPress?.Invoke(this);
         }
         
-        if (_isPressed && Raylib.IsMouseButtonReleased(MouseButton.Left))
+        if (_isPressed && Raylib.IsMouseButtonReleased(MouseButton.Left) && Pointer.PressedNode == this)
         {
             _isPressed = false;
             if (_isHovered)
@@ -378,6 +377,8 @@ public abstract class Node : IDisposable
             }
             
             OnRelease?.Invoke(this);
+
+            Pointer.SetPressedNode((Node?)null);
         }
     }
 

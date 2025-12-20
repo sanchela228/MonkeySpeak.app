@@ -9,6 +9,7 @@ public class RoomControlIcon : Button
     public bool IsActive = false;
     public Texture2D? SecondTexture;
     public Texture2D DefaultTexture;
+    public SettingsPointerButton? SettingsButton { get; private set; }
     
     private bool haveSettings = false;
     
@@ -25,7 +26,7 @@ public class RoomControlIcon : Button
         CornerColor = new Color(30, 30, 30);
         
         Padding = new Vector2(20, 20);
-        HoverBackgroundColor = new Color( 40, 40, 40);
+        HoverBackgroundColor = new Color( 60, 60, 60);
         HoverCornerColor = new Color(40, 40, 40);
 
         haveSettings = _haveSettings;
@@ -62,7 +63,8 @@ public class RoomControlIcon : Button
 
         if (haveSettings)
         {
-           AddChild(new SettingsPointerButton());
+            SettingsButton = new SettingsPointerButton();
+            AddChild(SettingsButton);
         }
     }
 }

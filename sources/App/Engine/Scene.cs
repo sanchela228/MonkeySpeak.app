@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Engine;
 
 public abstract class Scene
@@ -43,8 +45,79 @@ public abstract class Scene
 
     public void RootUpdate(float deltaTime)
     {
+        UpdatePointerCapture();
         Update(deltaTime);
         NodesUpdate(deltaTime);
+    }
+
+    private void UpdatePointerCapture()
+    {
+        var nodes = _nodes;
+        if (nodes.Count == 0)
+        {
+            Engine.Managers.Pointer.SetHoveredNode((Node?)null);
+            return;
+        }
+
+        var mousePos = Raylib_cs.Raylib.GetMousePosition();
+
+        if (Engine.Managers.Pointer.PressedNode != null)
+        {
+            Engine.Managers.Pointer.SetHoveredNode(Engine.Managers.Pointer.PressedNode);
+            return;
+        }
+
+        var all = CollectActiveNodesWithTraversalIndex();
+
+        Node? top = null;
+        for (int i = all.Count - 1; i >= 0; i--)
+        {
+            var n = all[i];
+            if (!Raylib_cs.Raylib.CheckCollisionPointRec(mousePos, n.Bounds))
+                continue;
+
+            top = n;
+            if (n.Overlap == OverlapsMode.Exclusive)
+                break;
+        }
+
+        Engine.Managers.Pointer.SetHoveredNode(top);
+
+        if (Raylib_cs.Raylib.IsMouseButtonPressed(Raylib_cs.MouseButton.Left))
+        {
+            Engine.Managers.Pointer.SetPressedNode(top);
+        }
+    }
+
+    private List<Node> CollectActiveNodesWithTraversalIndex()
+    {
+        var collected = new List<(Node node, int order, int seq)>();
+        int seq = 0;
+
+        void Visit(Node n)
+        {
+            if (n == null || !n.IsActive)
+                return;
+
+            collected.Add((n, n.Order, seq++));
+
+            if (n.Childrens == null)
+                return;
+
+            foreach (var child in n.Childrens)
+                Visit(child);
+        }
+
+        foreach (var root in _nodes)
+            Visit(root);
+
+        collected.Sort((a, b) =>
+        {
+            int byOrder = a.order.CompareTo(b.order);
+            return byOrder != 0 ? byOrder : a.seq.CompareTo(b.seq);
+        });
+
+        return collected.Select(x => x.node).ToList();
     }
     
     public void RootDraw()
@@ -70,7 +143,7 @@ public abstract class Scene
         if (_nodes.Count == 0)
             return;
         
-        foreach (var node in _nodes.Where(node => node.IsActive))
+        foreach (var node in _nodes.Where(node => node.IsActive).ToList())
             node.RootUpdate(deltaTime);
     }
     
@@ -79,7 +152,7 @@ public abstract class Scene
         if (_nodes.Count == 0)
             return;
 
-        foreach (var node in _nodes.Where(node => node.IsActive))
+        foreach (var node in _nodes.Where(node => node.IsActive).ToList())
             node.RootDraw();
     }
 }

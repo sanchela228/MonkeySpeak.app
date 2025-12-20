@@ -5,6 +5,7 @@ public static class Scenes
     private static readonly Stack<Scene> _scenes = new();
     private static bool _shouldPopScene = false;
     private static Scene? _sceneToPop = null;
+    private static Scene? _sceneToPushAfterPop = null;
     
     public static Action OnScenePopped;
     public static Action OnScenePushed;
@@ -12,8 +13,13 @@ public static class Scenes
     public static void PushScene(Scene scene)
     {
         _scenes.Push(scene);
-        
         OnScenePushed?.Invoke();
+    }
+
+    public static void PushOnNewScene(Scene scene)
+    {
+        _scenes.Pop();
+        PushScene(scene);
     }
     
     public static void PopScene()
@@ -23,14 +29,31 @@ public static class Scenes
         
         OnScenePopped?.Invoke();
     }
+
+    public static void ReplaceScene(Scene scene)
+    {
+        _sceneToPushAfterPop = scene;
+        PopScene();
+    }
     
     private static void ProcessPop()
     {
         if (_shouldPopScene && _sceneToPop != null)
         {
-            _scenes.Pop()?.RootDispose();
+            if (_scenes.Count > 0 && ReferenceEquals(_scenes.Peek(), _sceneToPop))
+            {
+                _scenes.Pop()?.RootDispose();
+            }
+
             _shouldPopScene = false;
             _sceneToPop = null;
+
+            if (_sceneToPushAfterPop != null)
+            {
+                _scenes.Push(_sceneToPushAfterPop);
+                _sceneToPushAfterPop = null;
+                OnScenePushed?.Invoke();
+            }
         }
     }
     

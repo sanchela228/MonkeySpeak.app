@@ -8,6 +8,7 @@ using App.System.Calls.Infrastructure;
 using App.System.Calls.Infrastructure.Adapters;
 using App.System.Modules;
 using App.System.Models.Websocket.Messages.NoAuthCall;
+using SoundFlow.Structs;
 
 namespace App.System.Calls.Application.Facade;
 
@@ -83,9 +84,21 @@ public class CallFacade
 
     private void SetMicrophoneStatus(bool status) =>  _engine.SetMicrophoneStatus(status);
 
+    public void SetMicrophoneVolumePercent(int percent) => _engine.SetMicrophoneVolumePercent(percent);
+
+    public void SetPlaybackVolumePercent(int percent) => _engine.SetPlaybackVolumePercent(percent);
+
     public void StartAudioProcess() => _engine.StartAudioProcess();
     
     public Dictionary<string, float> GetAudioLevels() => _engine.GetAudioLevels();
+
+    public float GetSelfAudioLevel() => _engine.GetSelfAudioLevel();
+
+    public DeviceInfo[] GetCaptureDevices() => _engine.GetCaptureDevices();
+    public void SwitchCaptureDevice(IntPtr? deviceId) => _engine.SwitchCaptureDevice(deviceId);
+    
+    public DeviceInfo[] GetPlaybackDevices() => _engine.GetPlaybackDevices();
+    public void SwitchPlaybackDevice(IntPtr? deviceId) => _engine.SwitchPlaybackDevice(deviceId);
     
     public event Action<CallSession, CallState>? OnSessionStateChanged;
     public event Action<string>? OnSessionCreated;
