@@ -131,7 +131,6 @@ public class Room : Scene
             16
         );
 
-        // Self microphone activity indicator under center controls
         _selfAudioIndicator = new SelfAudioWaveIndicator
         {
             IsActive = true
@@ -184,7 +183,7 @@ public class Room : Scene
         }
     }
 
-    private static int ResolveSelectedIndex(DeviceInfo[] devices, List<IntPtr?> ids, IntPtr? savedId)
+    private static int ResolveSelectedIndex(DeviceInfo[] devices, List<IntPtr?> ids, IntPtr? savedId, string? savedName)
     {
         if (savedId != null)
         {
@@ -195,6 +194,15 @@ public class Room : Scene
             }
         }
 
+        if (savedName != null)
+        {
+            foreach (var d in devices)
+            {
+                if (d.Name == savedName)
+                    return Array.IndexOf(devices, d);
+            }
+        }
+
         for (int i = 0; i < devices.Length; i++)
         {
             if (devices[i].IsDefault)
@@ -202,13 +210,6 @@ public class Room : Scene
         }
 
         return 0;
-    }
-
-    private static void PositionPopup(Node popup, Node anchor)
-    {
-        var parentBounds = anchor.Bounds;
-        var popupPos = new Vector2(parentBounds.X - 180f, parentBounds.Y - 220f);
-        popup.Position = popupPos;
     }
     
     private void HandleRemoteMuteChangedByInterlocutor(string id, bool isMuted)
@@ -267,7 +268,7 @@ public class Room : Scene
 
         BuildDeviceLists(devices, out var labels, out var ids);
         _micDeviceIds = ids;
-        int selectedIndex = ResolveSelectedIndex(devices, _micDeviceIds, Context.UserSettings?.CaptureDeviceId);
+        int selectedIndex = ResolveSelectedIndex(devices, _micDeviceIds, Context.UserSettings.CaptureDeviceId, Context.UserSettings.CaptureDeviceName);
 
         _micPopup = new MicrophoneSelectPopup(labels, selectedIndex: selectedIndex, initialVolumePercent: _micVolumePercent);
         _micPopup.Position = new Vector2(
@@ -292,9 +293,12 @@ public class Room : Scene
 
             Logger.Write(Logger.Type.Info, $"[UI] Mic selected index={index} id={(id?.ToString() ?? "default")}");
             Facade.SwitchCaptureDevice(id);
-            
+
             if (Context.UserSettings != null)
+            {
                 Context.UserSettings.CaptureDeviceId = id;
+                Context.UserSettings.CaptureDeviceName = devices[index].Name;
+            }
             // CloseMicPopup();
         };
 
@@ -303,6 +307,7 @@ public class Room : Scene
             _micVolumePercent = volPercent;
             Logger.Write(Logger.Type.Info, $"[UI] Mic volume set to {_micVolumePercent}%");
             Facade.SetMicrophoneVolumePercent(_micVolumePercent);
+            Context.UserSettings.MicrophoneVolumePercent = _micVolumePercent;
         };
 
         AddNode(_micPopup);
@@ -320,7 +325,7 @@ public class Room : Scene
 
         BuildDeviceLists(devices, out var labels, out var ids);
         _playbackDeviceIds = ids;
-        int selectedIndex = ResolveSelectedIndex(devices, _playbackDeviceIds, Context.UserSettings?.PlaybackDeviceId);
+        int selectedIndex = ResolveSelectedIndex(devices, _playbackDeviceIds, Context.UserSettings.PlaybackDeviceId, Context.UserSettings.PlaybackDeviceName);
 
         _volumePopup = new PlaybackSelectPopup(labels, selectedIndex: selectedIndex, initialVolumePercent: _playbackVolumePercent);
         _volumePopup.Position = new Vector2(
@@ -336,6 +341,7 @@ public class Room : Scene
             _playbackVolumePercent = volPercent;
             Logger.Write(Logger.Type.Info, $"[UI] Playback volume set to {_playbackVolumePercent}%");
             Facade.SetPlaybackVolumePercent(_playbackVolumePercent);
+            Context.UserSettings.PlaybackVolumePercent = _playbackVolumePercent;
         };
         _volumePopup.OnSelected += (index) =>
         {
@@ -351,7 +357,10 @@ public class Room : Scene
             Facade.SwitchPlaybackDevice(id);
             
             if (Context.UserSettings != null)
+            {
                 Context.UserSettings.PlaybackDeviceId = id;
+                Context.UserSettings.PlaybackDeviceName = devices[index].Name;
+            }
             // CloseVolumePopup();
         };
 

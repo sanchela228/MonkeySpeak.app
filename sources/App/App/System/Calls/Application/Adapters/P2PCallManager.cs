@@ -332,6 +332,7 @@ public class P2PCallManager : ICallManager
             }
             
             audioTranslator = new AudioTranslator(_udpManager, new CancellationTokenSource());
+            
             Logger.Write(Logger.Type.Info, "[AudioTranslator] Successfully initialized");
         }
         catch (Exception ex)

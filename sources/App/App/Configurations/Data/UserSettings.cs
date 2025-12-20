@@ -11,11 +11,17 @@ public class UserSettingsData
 {
     public string CaptureDeviceIdString { get; set; } = string.Empty;
     public string PlaybackDeviceIdString { get; set; } = string.Empty;
+    public int MicrophoneVolumePercent { get; set; } = 100;
+    public int PlaybackVolumePercent { get; set; } = 100;
+    public string CaptureDeviceName { get; set; } = string.Empty;
+    public string PlaybackDeviceName { get; set; } = string.Empty;
+    
 }
 public class UserSettings : XmlConfigBase<UserSettings>
 {
     protected override string RootDirectory => Path.Combine(Context.DataDirectory, "Configurations");
     private event Action OnDataChange;
+    private bool _suppressAutoSave;
     
     [XmlIgnore]
     private IntPtr? _captureDeviceId;
@@ -38,6 +44,30 @@ public class UserSettings : XmlConfigBase<UserSettings>
         set
         {
             _playbackDeviceId = value;
+            OnDataChange?.Invoke();
+        } 
+    }
+    
+    [XmlIgnore]
+    private string? _playbackDeviceName;
+    [XmlIgnore]
+    public string? PlaybackDeviceName { 
+        get => _playbackDeviceName;
+        set
+        {
+            _playbackDeviceName = value;
+            OnDataChange?.Invoke();
+        } 
+    }
+    
+    [XmlIgnore]
+    private string? _captureDeviceName;
+    [XmlIgnore]
+    public string? CaptureDeviceName { 
+        get => _captureDeviceName;
+        set
+        {
+            _captureDeviceName = value;
             OnDataChange?.Invoke();
         } 
     }
@@ -68,10 +98,86 @@ public class UserSettings : XmlConfigBase<UserSettings>
         }
     }
 
+    private int _microphoneVolumePercent;
+    [XmlElement("MicrophoneVolumePercent")]
+    public int MicrophoneVolumePercent {
+        get
+        {
+            return _microphoneVolumePercent;
+        }  
+        set 
+        {
+            _microphoneVolumePercent = value;
+            OnDataChange?.Invoke();
+        } 
+    }
+    
+    private int _playbackVolumePercent;
+    [XmlElement("PlaybackVolumePercent")]
+    public int PlaybackVolumePercent {
+        get
+        {
+            return _playbackVolumePercent;
+        }  
+        set 
+        {
+            _playbackVolumePercent = value;
+            OnDataChange?.Invoke();
+        } 
+    }
+
+    [XmlElement("CaptureDeviceName")]
+    public string CaptureDeviceNameString => CaptureDeviceName ?? string.Empty;
+    [XmlElement("PlaybackDeviceName")]
+    public string PlaybackDeviceNameString => PlaybackDeviceName ?? string.Empty;
+    
+    
     public override string FileName => "UserSettings.xml";
     public UserSettings()
     {
-        OnDataChange += Save;
+        OnDataChange += () =>
+        {
+            if (!_suppressAutoSave)
+                Save();
+        };
+    }
+
+    public override void LoadOrDefault()
+    {
+        try
+        {
+            if (!Exists())
+            {
+                ApplyDefaults();
+                Save();
+                return;
+            }
+
+            var serializer = new XmlSerializer(typeof(UserSettingsData));
+            using var reader = new StreamReader(FilePath);
+            var loaded = (UserSettingsData)serializer.Deserialize(reader);
+
+            _suppressAutoSave = true;
+            try
+            {
+                _captureDeviceId = ParseIntPtrOrNull(loaded.CaptureDeviceIdString);
+                _playbackDeviceId = ParseIntPtrOrNull(loaded.PlaybackDeviceIdString);
+                _captureDeviceName = string.IsNullOrWhiteSpace(loaded.CaptureDeviceName) ? null : loaded.CaptureDeviceName;
+                _playbackDeviceName = string.IsNullOrWhiteSpace(loaded.PlaybackDeviceName) ? null : loaded.PlaybackDeviceName;
+
+                MicrophoneVolumePercent = Math.Clamp(loaded.MicrophoneVolumePercent, 0, 200);
+                PlaybackVolumePercent = Math.Clamp(loaded.PlaybackVolumePercent, 0, 200);
+            }
+            finally
+            {
+                _suppressAutoSave = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Write(Logger.Type.Error, "Ошибка при загрузке настроек", ex);
+            ApplyDefaults();
+        }
     }
 
     public override void Save()
@@ -87,7 +193,11 @@ public class UserSettings : XmlConfigBase<UserSettings>
             var data = new UserSettingsData
             {
                 CaptureDeviceIdString = CaptureDeviceIdString,
-                PlaybackDeviceIdString = PlaybackDeviceIdString
+                PlaybackDeviceIdString = PlaybackDeviceIdString,
+                MicrophoneVolumePercent = MicrophoneVolumePercent,
+                PlaybackVolumePercent = PlaybackVolumePercent,
+                CaptureDeviceName = CaptureDeviceName ?? string.Empty,
+                PlaybackDeviceName = PlaybackDeviceName ?? string.Empty
             };
             
             using var writer = new StreamWriter(FilePath);
@@ -103,11 +213,27 @@ public class UserSettings : XmlConfigBase<UserSettings>
     {
         _captureDeviceId = null;
         _playbackDeviceId = null;
+        _captureDeviceName = null;
+        _playbackDeviceName = null;
+        MicrophoneVolumePercent = 100;
+        PlaybackVolumePercent = 100;
     }
 
     protected override void CopyFrom(UserSettings other)
     {
         _captureDeviceId = other._captureDeviceId;
         _playbackDeviceId = other._playbackDeviceId;
+        _captureDeviceName = other._captureDeviceName;
+        _playbackDeviceName = other._playbackDeviceName;
+        MicrophoneVolumePercent = other.MicrophoneVolumePercent;
+        PlaybackVolumePercent = other.PlaybackVolumePercent;
+    }
+
+    private static IntPtr? ParseIntPtrOrNull(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return IntPtr.TryParse(value, out var ptr) ? ptr : null;
     }
 }

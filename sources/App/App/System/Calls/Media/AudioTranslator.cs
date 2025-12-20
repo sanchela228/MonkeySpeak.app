@@ -31,6 +31,9 @@ public class AudioTranslator : IDisposable
 
     private IntPtr? _currentPlaybackDeviceId;
     
+    private DeviceInfo? preferredCaptureDevice;
+    private DeviceInfo? preferredPlaybackDevice;
+    
     public AudioTranslator(UdpUnifiedManager udpManager, CancellationTokenSource cts)
     {
         _udpManager = udpManager ?? throw new ArgumentNullException(nameof(udpManager));
@@ -119,6 +122,48 @@ public class AudioTranslator : IDisposable
         percent = Math.Clamp(percent, 0, 200);
         _playbackVolumePercent = percent;
         Logger.Write(Logger.Type.Info, $"[AudioTranslator] Playback volume set to {_playbackVolumePercent}%");
+    }
+    
+    public DeviceInfo? SearchNecessaryCaptureDeviceInfo(IntPtr? deviceId, string? deviceName = null)
+    {
+        audioEngine.UpdateDevicesInfo();
+        foreach (var capDevice in audioEngine.CaptureDevices)
+        {
+            if (capDevice.Id == deviceId)
+                return capDevice;
+        }
+
+        if (deviceName is not null)
+        {
+            foreach (var capDevice in audioEngine.CaptureDevices)
+            {
+                if (capDevice.Name == deviceName)
+                    return capDevice;
+            }
+        }
+        
+        return null;
+    }
+    
+    public DeviceInfo? SearchNecessaryPlaybackDeviceInfo(IntPtr? deviceId, string? deviceName = null)
+    {
+        audioEngine.UpdateDevicesInfo();
+        foreach (var capDevice in audioEngine.PlaybackDevices)
+        {
+            if (capDevice.Id == deviceId)
+                return capDevice;
+        }
+
+        if (deviceName is not null)
+        {
+            foreach (var capDevice in audioEngine.PlaybackDevices)
+            {
+                if (capDevice.Name == deviceName)
+                    return capDevice;
+            }
+        }
+        
+        return null;
     }
 
     public DeviceInfo[] GetCaptureDevices()
@@ -371,8 +416,11 @@ public class AudioTranslator : IDisposable
             
             audioEngine = new MiniAudioEngine();
 
-            captureDeviceWorker = audioEngine.InitializeCaptureDevice(null, audioFormat);
-            playbackDeviceWorker = audioEngine.InitializePlaybackDevice(null, audioFormat);
+            preferredCaptureDevice = SearchNecessaryCaptureDeviceInfo(Context.UserSettings.CaptureDeviceId, Context.UserSettings.CaptureDeviceName);
+            preferredPlaybackDevice = SearchNecessaryPlaybackDeviceInfo(Context.UserSettings.PlaybackDeviceId, Context.UserSettings.PlaybackDeviceName);
+
+            captureDeviceWorker = audioEngine.InitializeCaptureDevice(preferredCaptureDevice, audioFormat);
+            playbackDeviceWorker = audioEngine.InitializePlaybackDevice(preferredPlaybackDevice, audioFormat);
             
             denoiser = new Denoiser();
 
