@@ -103,22 +103,7 @@ public class StartUp: Scene
          
         retryLink.OnClick += async (sender) => Network.ConnectServer();
         
-        authLink = new Link(fontFamilyRetry)
-        {
-            Position = new Vector2(Raylib.GetRenderWidth() / 2, Raylib.GetRenderHeight() / 2 + 235),
-            Text = Language.Get("Authorization in server"),
-            IsActive = false,
-        };
         
-        
-        authLink.OnClick += async (sender) => 
-        {
-            string authUrl = Context.Network.GenerateAuthorizationUrl();
-            Process.Start( new ProcessStartInfo(authUrl) { UseShellExecute = true } );
-        };
-        
-        
-        // AddNode(authLink);
         AddNode(retryLink);
         _load = true;
         
@@ -128,7 +113,6 @@ public class StartUp: Scene
             {
                 _load = true;
                 retryLink.IsActive = false;
-                authLink.IsActive = false;
                 _drawErrorText = false;
                 test2.IsActive = false;
                 test3.IsActive = false;
@@ -140,7 +124,6 @@ public class StartUp: Scene
                 retryLink.IsActive = true;
                 _drawErrorText = true;
             
-                authLink.IsActive = false;
                 test2.IsActive = false;
                 test3.IsActive = false;
                 
@@ -152,7 +135,6 @@ public class StartUp: Scene
                 _load = false;
                 retryLink.IsActive = false;
                 _drawErrorText = false;
-                authLink.IsActive = true;
             
                 test2.IsActive = true;
                 test3.IsActive = true;
@@ -175,7 +157,6 @@ public class StartUp: Scene
             _load = false;
             retryLink.IsActive = false;
             _drawErrorText = false;
-            authLink.IsActive = true;
             
             test2.IsActive = true;
             test3.IsActive = true;
@@ -186,7 +167,6 @@ public class StartUp: Scene
     public Button test2;
     public Button test3;
     public Link retryLink;
-    public Link authLink;
     private bool _drawErrorText;
     private bool _load;
     private bool _showLoadingUpdate;

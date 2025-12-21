@@ -4,14 +4,19 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Core.Database.Services;
+using Microsoft.Extensions.DependencyInjection;
 using ContextDatabase = Core.Database.Context;
 
 namespace Core.Websockets;
 
-public class WebsocketMiddleware(WebSocket ws, ContextDatabase dbContext, ConcurrentDictionary<Guid, Connection> connections, 
+public class WebsocketMiddleware(WebSocket ws, IServiceProvider serviceProvider,
+    ConcurrentDictionary<Guid, Connection> connections, 
     ConcurrentDictionary<string, Room> rooms)
 {
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
     public MessageDispatcher MessageDispatcher { get; } = new();
+    
     public async Task OpenWebsocketConnection(HttpContext context)
     {
         var connection = new Connection(ws);
@@ -19,7 +24,14 @@ public class WebsocketMiddleware(WebSocket ws, ContextDatabase dbContext, Concur
 
         try
         {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ContextDatabase>();
+            var userService = scope.ServiceProvider.GetRequiredService<UserService>();
+            var friendshipService = scope.ServiceProvider.GetRequiredService<FriendshipService>();
+
             MessageDispatcher.Configure(dbContext, connections, rooms, this);
+            MessageDispatcher.ConfigureAuthHandlers(_serviceProvider, connections, rooms, this);
+            
             await HandleWebSocket(connection);
         }
         catch (Exception e)
@@ -29,6 +41,17 @@ public class WebsocketMiddleware(WebSocket ws, ContextDatabase dbContext, Concur
         }
         finally
         {
+            if (connection.IsAuthenticated && connection.UserId.HasValue)
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var userService = scope.ServiceProvider.GetRequiredService<UserService>();
+                var friendshipService = scope.ServiceProvider.GetRequiredService<FriendshipService>();
+                
+                await userService.UpdateLastSeenAsync(connection.UserId.Value);
+                await MessageDispatcherAuthExtensions.NotifyFriendsPresenceChange(
+                    connection, false, connections, _serviceProvider);
+            }
+
             if (rooms.Count > 0)
             {
                 var room = rooms.Values.FirstOrDefault(r => r.Connections.ContainsKey(connection.Id));

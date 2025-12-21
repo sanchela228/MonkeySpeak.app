@@ -16,11 +16,18 @@ public class Connection
     public string PublicIp { get; set; }
 
     public StatusConnection Status { get; set; }
+    
+    public Guid? UserId { get; set; }
+    
+    public bool IsAuthenticated { get; set; }
+    
+    public string? AuthNonce { get; set; }
 
     public Connection(WebSocket WebSocket)
     {
         Id = Guid.NewGuid();
         Status = StatusConnection.Idle;
+        IsAuthenticated = false;
         this.WebSocket = WebSocket;
     }
 

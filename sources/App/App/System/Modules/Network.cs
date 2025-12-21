@@ -126,28 +126,6 @@ public class Network(NetworkConfig config) : IDisposable
     }
 
     public async Task<HttpResponseMessage> Get(string relativeUrl) => await _httpClient.GetAsync(GetUrl(relativeUrl));
-    
-    public string GenerateAuthorizationUrl()
-    {
-        var url = GetUrl("/auth");
-        
-        var secureStorage = Context.SecureStorage;
-        
-        string codeVerifier = PkceHelper.GenerateCodeVerifier();
-        secureStorage.Save("temp_code_verifier", codeVerifier);
-        
-        string codeChallenge = PkceHelper.GenerateCodeChallenge(codeVerifier);
-        string publicKey = secureStorage.Load("device_public_key");
-        
-        string websocketSession = "test";
-        url += $"?client_id=desktop_app_monkeyspeak&" +
-               $"code_challenge={codeChallenge}&" +
-               $"websocket_session={websocketSession}&" +
-               $"code_challenge_method=S256&" +
-               $"device_public_key={Uri.EscapeDataString(publicKey)}&";
-        
-        return url;
-    }
 
     private string GetUrl(string relativeUrl)
     {
