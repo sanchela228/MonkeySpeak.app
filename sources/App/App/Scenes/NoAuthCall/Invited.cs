@@ -64,7 +64,7 @@ public class Invited : Scene
             await Task.Delay(200);
             Logger.Write($"[CallFacade] Connected");
             MainThreadDispatcher.Post(() =>
-                Scenes.PushScene(new Room())
+                Scenes.ReplaceScene(new Room())
             );
         };
 

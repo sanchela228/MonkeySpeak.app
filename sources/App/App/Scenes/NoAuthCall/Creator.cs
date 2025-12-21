@@ -71,7 +71,7 @@ public class Creator : Scene
         {
             await Task.Delay(200);
             MainThreadDispatcher.Post(() =>
-                    Engine.Managers.Scenes.PushScene(new Room())
+                    Engine.Managers.Scenes.ReplaceScene(new Room())
             );
         };
         
