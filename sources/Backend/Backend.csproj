@@ -20,6 +20,7 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+      <PackageReference Include="NSec.Cryptography" Version="24.9.0" />
     </ItemGroup>
 
     <ItemGroup>

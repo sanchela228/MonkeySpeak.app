@@ -45,6 +45,39 @@ namespace MonkeySpeak.Backend.Data.Migrations
                     b.ToTable("Applications");
                 });
 
+            modelBuilder.Entity("Core.Database.Models.Friendship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FriendId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FriendId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId", "FriendId")
+                        .IsUnique();
+
+                    b.ToTable("Friendships");
+                });
+
             modelBuilder.Entity("Core.Database.Models.Session", b =>
                 {
                     b.Property<int>("Id")
@@ -80,6 +113,72 @@ namespace MonkeySpeak.Backend.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Sessions");
+                });
+
+            modelBuilder.Entity("Core.Database.Models.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("KeyFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("PublicKeyEd25519")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PublicKeyX25519")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyFingerprint");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Core.Database.Models.Friendship", b =>
+                {
+                    b.HasOne("Core.Database.Models.User", "Friend")
+                        .WithMany("ReceivedFriendships")
+                        .HasForeignKey("FriendId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Core.Database.Models.User", "User")
+                        .WithMany("InitiatedFriendships")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Friend");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Core.Database.Models.User", b =>
+                {
+                    b.Navigation("InitiatedFriendships");
+
+                    b.Navigation("ReceivedFriendships");
                 });
 #pragma warning restore 612, 618
         }

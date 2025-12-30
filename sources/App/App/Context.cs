@@ -38,11 +38,14 @@ public static class Context
     public static AppConfig AppConfig { get; private set; }
     public static ContextData ContextData { get; private set; }
     public static UserSettings UserSettings { get; private set; }
+    public static UserIdentity UserIdentity { get; private set; }
     public static System.Modules.Network Network { get; private set; }
 
     public static CallFacade CallFacade { get; private set; }
+    public static System.Auth.RegistrationManager RegistrationManager { get; private set; }
+    public static System.Friends.FriendsManager FriendsManager { get; private set; }
     
-    public static ISecureStorage SecureStorage { get; private set; }
+    // public static ISecureStorage SecureStorage { get; private set; }
     public static IUser SystemUser { get; private set; }
 
     public static void SetUp()
@@ -55,17 +58,17 @@ public static class Context
         ContextData = new ContextData();
         ContextData.LoadOrDefault();
         
-        PlatformServiceFactory.Register( new List<ISecureStorage>
-        {
-            new Platforms.Windows.SecureStorage()
-        });
+        // PlatformServiceFactory.Register( new List<ISecureStorage>
+        // {
+        //     new Platforms.Windows.SecureStorage()
+        // });
         
         PlatformServiceFactory.Register( new List<IUser>
         {
             new Platforms.Windows.User()
         });
             
-        SecureStorage = PlatformServiceFactory.GetService<ISecureStorage>(CurrentPlatform);
+        // SecureStorage = PlatformServiceFactory.GetService<ISecureStorage>(CurrentPlatform);
         SystemUser = PlatformServiceFactory.GetService<IUser>(CurrentPlatform);
         
         System.Services.Language.Load(ContextData.LanguageSelected);
@@ -92,23 +95,23 @@ public static class Context
         if (!Cache.ExistsFastPermanent($"video:lz4:sticker4.webm"))
             VideoReader.PrepareCache("sticker4.webm");
         
-        try
-        {
-            _devicePrivateKey = SecureStorage.Load("device_private_key");
-            
-            if (string.IsNullOrEmpty(_devicePrivateKey))
-            {
-                (string publicKey, string privateKey) = DeviceCrypto.GenerateKeyPair();
-                _devicePrivateKey = privateKey;
-                
-                SecureStorage.Save("device_private_key", _devicePrivateKey);
-                SecureStorage.Save("device_public_key", publicKey);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.Write(Logger.Type.Error, "Failed to ensure device keys in SecureStorage", ex);
-        }
+        // try
+        // {
+        //     _devicePrivateKey = SecureStorage.Load("device_private_key");
+        //     
+        //     if (string.IsNullOrEmpty(_devicePrivateKey))
+        //     {
+        //         (string publicKey, string privateKey) = DeviceCrypto.GenerateKeyPair();
+        //         _devicePrivateKey = privateKey;
+        //         
+        //         SecureStorage.Save("device_private_key", _devicePrivateKey);
+        //         SecureStorage.Save("device_public_key", publicKey);
+        //     }
+        // }
+        // catch (Exception ex)
+        // {
+        //     Logger.Write(Logger.Type.Error, "Failed to ensure device keys in SecureStorage", ex);
+        // }
 
         var netConfig = new NetworkConfig();
         netConfig.LoadOrDefault();
@@ -120,10 +123,35 @@ public static class Context
         UserSettings = new UserSettings();
         UserSettings.LoadOrDefault();
 
+        UserIdentity = new UserIdentity();
+        UserIdentity.LoadOrDefault();
+
         // DEMO TEST
         Network.OnServerConnected += () =>
         {
             CallFacade = new CallFacade(Network.Config, Network.WebSocketClient);
+            RegistrationManager = new System.Auth.RegistrationManager(Network.WebSocketClient, UserIdentity, UserSettings);
+            FriendsManager = new System.Friends.FriendsManager(Network.WebSocketClient);
+            
+            if (!UserIdentity.IsRegistered)
+            {
+                _ = RegistrationManager.RegisterAsync();
+            }
+            else
+            {
+                _ = RegistrationManager.AuthenticateAsync();
+            }
+            
+            RegistrationManager.OnAuthenticationSuccess += (userId, username) =>
+            {
+                _ = FriendsManager.GetFriendListAsync();
+                _ = FriendsManager.GetPendingFriendListAsync();
+            };
+            
+            RegistrationManager.OnRegistrationSuccess += (userId, fingerprint) =>
+            {
+                
+            };
         };
     }
     

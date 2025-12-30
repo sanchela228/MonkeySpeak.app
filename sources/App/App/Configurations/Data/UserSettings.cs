@@ -15,7 +15,6 @@ public class UserSettingsData
     public int PlaybackVolumePercent { get; set; } = 100;
     public string CaptureDeviceName { get; set; } = string.Empty;
     public string PlaybackDeviceName { get; set; } = string.Empty;
-    
 }
 public class UserSettings : XmlConfigBase<UserSettings>
 {
@@ -131,7 +130,6 @@ public class UserSettings : XmlConfigBase<UserSettings>
     [XmlElement("PlaybackDeviceName")]
     public string PlaybackDeviceNameString => PlaybackDeviceName ?? string.Empty;
     
-    
     public override string FileName => "UserSettings.xml";
     public UserSettings()
     {
@@ -197,7 +195,7 @@ public class UserSettings : XmlConfigBase<UserSettings>
                 MicrophoneVolumePercent = MicrophoneVolumePercent,
                 PlaybackVolumePercent = PlaybackVolumePercent,
                 CaptureDeviceName = CaptureDeviceName ?? string.Empty,
-                PlaybackDeviceName = PlaybackDeviceName ?? string.Empty
+                PlaybackDeviceName = PlaybackDeviceName ?? string.Empty,
             };
             
             using var writer = new StreamWriter(FilePath);

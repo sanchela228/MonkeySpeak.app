@@ -34,7 +34,7 @@ var wsOpts = new Microsoft.AspNetCore.Builder.WebSocketOptions
 };
 app.UseWebSockets(wsOpts);
 
-app.Map("/connector", async (HttpContext ctx, Core.Database.Context db) =>
+app.Map("/connector", async (HttpContext ctx, IServiceProvider serviceProvider) =>
 {
     if (!ctx.WebSockets.IsWebSocketRequest)
     {
@@ -44,7 +44,7 @@ app.Map("/connector", async (HttpContext ctx, Core.Database.Context db) =>
 
     using var ws = await ctx.WebSockets.AcceptWebSocketAsync();
 
-    var handler = new WebsocketMiddleware(ws, db, Backend.Core.Context.Connections, Backend.Core.Context.Rooms);
+    var handler = new WebsocketMiddleware(ws, serviceProvider, Backend.Core.Context.Connections, Backend.Core.Context.Rooms);
     await handler.OpenWebsocketConnection(ctx);
 });
 

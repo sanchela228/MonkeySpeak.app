@@ -78,9 +78,10 @@ public class DeviceSelectPopup : Node
             if (!Raylib.CheckCollisionPointRec(mousePos, Bounds))
             {
                 OnCloseRequested?.Invoke();
+                Dispose();
                 return;
             }
-
+ 
             if (Raylib.CheckCollisionPointRec(mousePos, sliderRect))
             {
                 _isDraggingSlider = true;
@@ -208,5 +209,6 @@ public class DeviceSelectPopup : Node
 
     public override void Dispose()
     {
+        OnCloseRequested?.Invoke();
     }
 }

@@ -125,7 +125,7 @@ public class Room : Scene
 
         if (microControl.SettingsButton != null)
         {
-            microControl.SettingsButton.OnClick += (_) =>
+            microControl.SettingsButton.OnRelease += (_) =>
             {
                 ToggleMicPopup(microControl);
             };
@@ -133,7 +133,7 @@ public class Room : Scene
         
         if (volumeControl.SettingsButton != null)
         {
-            volumeControl.SettingsButton.OnClick += (_) =>
+            volumeControl.SettingsButton.OnRelease += (_) =>
             {
                 ToggleVolumePopup(volumeControl);
             };

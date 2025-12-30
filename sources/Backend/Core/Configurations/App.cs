@@ -31,6 +31,8 @@ public class App
             options.UseNpgsql(connectionString));
         
         builder.Services.AddScoped<Session>();
+        builder.Services.AddScoped<Database.Services.UserService>();
+        builder.Services.AddScoped<Database.Services.FriendshipService>();
     }
     
     static WebSocketOptions webSocketOptions = new() {

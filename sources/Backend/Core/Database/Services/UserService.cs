@@ -1,0 +1,114 @@
+using System.Security.Cryptography;
+using System.Text;
+using Core.Database.Models;
+using Microsoft.EntityFrameworkCore;
+using NSec.Cryptography;
+
+namespace Core.Database.Services;
+
+public class UserService
+{
+    private readonly Context _context;
+
+    public UserService(Context context)
+    {
+        _context = context;
+    }
+
+    public async Task<User?> GetUserByIdAsync(Guid userId)
+    {
+        return await _context.Users.FindAsync(userId);
+    }
+
+    public async Task<User?> GetUserByUsernameAsync(string username)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.Username == username);
+    }
+
+    public async Task<User> CreateUserAsync(string username, byte[] publicKeyEd25519, byte[] publicKeyX25519)
+    {
+        if (await GetUserByUsernameAsync(username) != null)
+        {
+            throw new InvalidOperationException($"User with username '{username}' already exists");
+        }
+
+        var fingerprint = ComputeFingerprint(publicKeyEd25519);
+
+        var user = new User
+        {
+            Username = username,
+            PublicKeyEd25519 = publicKeyEd25519,
+            PublicKeyX25519 = publicKeyX25519,
+            KeyFingerprint = fingerprint,
+            CreatedAt = DateTime.UtcNow,
+            LastSeenAt = DateTime.UtcNow
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return user;
+    }
+
+    public async Task UpdateLastSeenAsync(Guid userId)
+    {
+        var user = await GetUserByIdAsync(userId);
+        if (user != null)
+        {
+            user.LastSeenAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<(byte[] PublicKeyEd25519, byte[] PublicKeyX25519)> GetPublicKeysAsync(Guid userId)
+    {
+        var user = await GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            throw new InvalidOperationException($"User with ID '{userId}' not found");
+        }
+
+        return (user.PublicKeyEd25519, user.PublicKeyX25519);
+    }
+
+    public bool VerifySignature(byte[] publicKeyEd25519, byte[] data, byte[] signature)
+    {
+        try
+        {
+            var algorithm = SignatureAlgorithm.Ed25519;
+            var publicKey = PublicKey.Import(algorithm, publicKeyEd25519, KeyBlobFormat.RawPublicKey);
+            return algorithm.Verify(publicKey, data, signature);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> VerifySignatureAsync(Guid userId, byte[] nonce, byte[] signature)
+    {
+        var user = await GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            return false;
+        }
+
+        return VerifySignature(user.PublicKeyEd25519, nonce, signature);
+    }
+
+    public string ComputeFingerprint(byte[] publicKey)
+    {
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(publicKey);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    public async Task<List<User>> SearchUsersAsync(string query, int limit = 20)
+    {
+        return await _context.Users
+            .Where(u => u.Username.Contains(query))
+            .Take(limit)
+            .ToListAsync();
+    }
+}
