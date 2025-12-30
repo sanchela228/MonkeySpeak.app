@@ -28,7 +28,7 @@ public class App
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         
         builder.Services.AddDbContext<ContextDatabase>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, b => b.MigrationsAssembly("monkeyspeakbackend")));
         
         builder.Services.AddScoped<Session>();
         builder.Services.AddScoped<Database.Services.UserService>();
