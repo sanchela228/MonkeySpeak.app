@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfig>
-    <Domain>localhost</Domain>
+    <Domain>95.163.230.160</Domain>
     <UseSSL>false</UseSSL>
-    <Port>5062</Port>
+    <Port>80</Port>
     <MaxRetries>2</MaxRetries>
 </NetworkConfig>

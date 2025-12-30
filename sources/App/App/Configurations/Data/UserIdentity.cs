@@ -73,6 +73,7 @@ public class UserIdentity : XmlConfigBase<UserIdentity>
             if (!Exists())
             {
                 ApplyDefaults();
+                Save();
                 return;
             }
 
