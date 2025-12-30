@@ -42,9 +42,28 @@ public class App
     public static async Task ApplyMigrations(WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         var dbContext = scope.ServiceProvider.GetRequiredService<ContextDatabase>();
-    
-        await dbContext.Database.MigrateAsync();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<App>>();
+
+        const int maxRetries = 10;
+        const int delayMs = 3000;
+
+        for (int i = 0; i < maxRetries; i++)
+        {
+            try
+            {
+                logger.LogInformation("Applying migrations (attempt {Attempt}/{Max})...", i + 1, maxRetries);
+                await dbContext.Database.MigrateAsync();
+                logger.LogInformation("Migrations applied successfully.");
+                return;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Migration attempt {Attempt} failed. Retrying in {Delay}ms...", i + 1, delayMs);
+                await Task.Delay(delayMs);
+            }
+        }
+
+        throw new Exception("Failed to apply migrations after maximum retries.");
     }
 }
