@@ -1,16 +1,51 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Backend.Data.Migrations
+namespace Backend.Migrations
 {
     /// <inheritdoc />
-    public partial class AddFriendSystemModels : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Applications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ApplicationId = table.Column<string>(type: "text", nullable: false),
+                    LastVisitAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Applications", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Sessions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ApplicationId = table.Column<string>(type: "text", nullable: false),
+                    WebSocketSessionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ClosedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Metadata = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sessions", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -21,36 +56,11 @@ namespace Backend.Data.Migrations
                     PublicKeyX25519 = table.Column<byte[]>(type: "bytea", nullable: false),
                     KeyFingerprint = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastSeenAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    IsOnline = table.Column<bool>(type: "boolean", nullable: false),
-                    ConnectionId = table.Column<Guid>(type: "uuid", nullable: true)
+                    LastSeenAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "CallSessions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    InitiatorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ParticipantIdsJson = table.Column<string>(type: "jsonb", nullable: false),
-                    RoomCode = table.Column<string>(type: "varchar(6)", maxLength: 6, nullable: true),
-                    StartedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EndedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CallSessions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_CallSessions_Users_InitiatorId",
-                        column: x => x.InitiatorId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -82,21 +92,6 @@ namespace Backend.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_CallSessions_InitiatorId",
-                table: "CallSessions",
-                column: "InitiatorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CallSessions_RoomCode",
-                table: "CallSessions",
-                column: "RoomCode");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CallSessions_Status",
-                table: "CallSessions",
-                column: "Status");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Friendships_FriendId",
                 table: "Friendships",
                 column: "FriendId");
@@ -111,11 +106,6 @@ namespace Backend.Data.Migrations
                 table: "Friendships",
                 columns: new[] { "UserId", "FriendId" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_IsOnline",
-                table: "Users",
-                column: "IsOnline");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_KeyFingerprint",
@@ -133,10 +123,13 @@ namespace Backend.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CallSessions");
+                name: "Applications");
 
             migrationBuilder.DropTable(
                 name: "Friendships");
+
+            migrationBuilder.DropTable(
+                name: "Sessions");
 
             migrationBuilder.DropTable(
                 name: "Users");
